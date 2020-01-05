@@ -9,13 +9,14 @@ import {
   IdentifierNode,
   Operator
 } from "./types";
+import { capitalize } from "../../string-utils";
 
 export const parseVariableName = (input: string): string | null => {
   // proper variable
   if (/^([A-Z][a-zA-Z]+\s){2,}$/.test(`${input} `))
     return input // transform to Xxxx Yyyy
-      .split(/\s/)
-      .map(x => x[0].toUpperCase() + x.substring(1).toLowerCase())
+      .split(/\s+/)
+      .map(x => capitalize(x))
       .join(" ");
 
   // common variable
@@ -137,10 +138,10 @@ const binaryExpressionParser = (pattern: RegExp, operator: Operator): Expression
 };
 
 const binaryExpressionParsers: ExpressionParser[] = [
-  binaryExpressionParser(/^(.+) (without|minus) (.+)$/i, "subtract"),
-  binaryExpressionParser(/^(.+) (of|times) (.+)$/i, "multiply"),
-  binaryExpressionParser(/^(.+) (over) (.+)$/i, "divide"),
-  binaryExpressionParser(/^(.+) (plus|with) (.+)$/i, "add")
+  binaryExpressionParser(/^(.+?) (without|minus) (.+)$/i, "subtract"),
+  binaryExpressionParser(/^(.+?) (of|times) (.+)$/i, "multiply"),
+  binaryExpressionParser(/^(.+?) (over) (.+)$/i, "divide"),
+  binaryExpressionParser(/^(.+?) (plus|with) (.+)$/i, "add")
 ];
 
 const compountExpressionParser = (pattern: RegExp, operator: Operator): ExpressionParser => (

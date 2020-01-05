@@ -69,6 +69,15 @@ describe("rockstar", () => {
           ["Let the children be minus fear", "the children", 'subtract(var("the children"), var("fear"))'],
           ["Let the children be without fear", "the children", 'subtract(var("the children"), var("fear"))'],
           ["Let my heart be over the moon", "my heart", 'divide(var("my heart"), var("the moon"))']
+        ],
+
+        "increment / decrement": [
+          ["Build my world up", "my world", 'add(var("my world"), 1)'],
+          ["Build my world up, up", "my world", 'add(var("my world"), 2)'],
+          ["Build my world up up", "my world", 'add(var("my world"), 2)'],
+          ["Knock the walls down", "the walls", 'subtract(var("the walls"), 1)'],
+          ["Knock the walls down, down", "the walls", 'subtract(var("the walls"), 2)'],
+          ["Knock the walls down down", "the walls", 'subtract(var("the walls"), 2)']
         ]
       };
       for (const caseName of Object.keys(cases)) {
