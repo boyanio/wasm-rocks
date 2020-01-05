@@ -1,9 +1,11 @@
 import { parse, AssignmentNode } from "../../../src/rockstar/parser";
 
+type Cases = { [key: string]: string[][] };
+
 describe("rockstar", () => {
   describe("parse", () => {
     describe("variables", () => {
-      const cases = {
+      const cases: Cases = {
         "simple variable declaration": [
           ["Variable is 1", "variable", "1"],
           ['Tommy was "a rockstar"', "tommy", '"a rockstar"'],
@@ -79,24 +81,49 @@ describe("rockstar", () => {
           ["Knock the walls down", "the walls", 'subtract(var("the walls"), 1)'],
           ["Knock the walls down, down", "the walls", 'subtract(var("the walls"), 2)'],
           ["Knock the walls down down", "the walls", 'subtract(var("the walls"), 2)']
+        ],
+
+        rounding: [
+          ["Turn up X", "x", 'ceil(var("x"))'],
+          ["Turn down X", "x", 'floor(var("x"))'],
+          ["Turn round X", "x", 'round(var("x"))'],
+          ["Turn around X", "x", 'round(var("x"))'],
+          ["X is 1.2\nTurn it up.", "x", 'ceil(var("x"))'],
+          ["X is 1.2\nTurn it around.", "x", 'round(var("x"))'],
+          ["X is 1.2\nTurn it down.", "x", 'floor(var("x"))']
         ]
       };
       for (const caseName of Object.keys(cases)) {
         describe(caseName, () => {
           for (const [input, name, expression] of cases[caseName]) {
-            it(`${input} => ${name} = ${expression}`, () => {
+            it(`${input.replace("\n", " NL ")} => ${name} = ${expression}`, () => {
               const ast = parse(input as string);
 
-              expect(ast.length).toEqual(1);
-              expect(ast[0].type).toEqual("assignment");
+              expect(ast.length).toBeTruthy();
 
-              const node = ast[0] as AssignmentNode;
-              expect(node.name).toEqual(name);
-              expect(node.expression.toString()).toEqual(expression);
+              const node = ast[ast.length - 1];
+              expect(node.type).toEqual("assignment");
+
+              const assignmentNode = node as AssignmentNode;
+              expect(assignmentNode.name).toEqual(name);
+              expect(assignmentNode.expression.toString()).toEqual(expression);
             });
           }
         });
       }
+
+      // describe("rounding", () => {
+      //   it("X is 1.2 NL Turn it up. => ", () => {
+      //     const ast = parse("X is 1.2\nTurn it up.");
+
+      //     expect(ast.length).toEqual(2);
+      //     expect(ast[1].type).toEqual("assignment");
+
+      //     const node = ast[0] as AssignmentNode;
+      //     expect(node.name).toEqual(name);
+      //     expect(node.expression.toString()).toEqual(expression);
+      //   });
+      // });
     });
   });
 });

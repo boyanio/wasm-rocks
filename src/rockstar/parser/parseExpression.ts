@@ -46,7 +46,9 @@ const parseNullExpression: ExpressionParser = (
   expression: string
 ): ExpressionNode | null => (nullWords.indexOf(expression.toLowerCase()) >= 0 ? new NullLiteralNode() : null);
 
-const booleanWords = {
+type BooleanWords = { [key: string]: boolean };
+
+const booleanWords: BooleanWords = {
   true: true,
   right: true,
   yes: true,
@@ -116,8 +118,12 @@ const simpleExpressionParsers: ExpressionParser[] = [
   parseIdentifierExpression
 ];
 
-const parseSimpleExpression = (variable: string, assignment: AssignmentType, expression: string): ExpressionNode =>
-  simpleExpressionParsers.reduce<ExpressionNode>(
+const parseSimpleExpression: ExpressionParser = (
+  variable: string,
+  assignment: AssignmentType,
+  expression: string
+): ExpressionNode | null =>
+  simpleExpressionParsers.reduce<ExpressionNode | null>(
     (node, parser) => node || parser(variable, assignment, expression),
     null
   );
@@ -171,5 +177,12 @@ const expressionParsers: ExpressionParser[] = [
   ...simpleExpressionParsers
 ];
 
-export const parseExpression = (variable: string, assignment: AssignmentType, expression: string): ExpressionNode =>
-  expressionParsers.reduce<ExpressionNode>((node, parser) => node || parser(variable, assignment, expression), null);
+export const parseExpression = (
+  variable: string,
+  assignment: AssignmentType,
+  expression: string
+): ExpressionNode | null =>
+  expressionParsers.reduce<ExpressionNode | null>(
+    (node, parser) => node || parser(variable, assignment, expression),
+    null
+  );

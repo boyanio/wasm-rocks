@@ -1,7 +1,17 @@
-import { Program, AssignmentNode, Parser, BinaryExpressionNode, IdentifierNode, NumberLiteralNode } from "./types";
+import {
+  Program,
+  AssignmentNode,
+  Parser,
+  BinaryExpressionNode,
+  IdentifierNode,
+  NumberLiteralNode,
+  FunctionCallNode
+} from "./types";
 import { parseExpression, AssignmentType, parseVariableName } from "./parseExpression";
 import { combineParsers } from "./combineParsers";
 import { countOccurrences } from "../../string-utils";
+
+const pronouns = ["it", "he", "she", "him", "her", "they", "them", "ze", "hir", "zie", "zir", "xe", "xem", "ve", "ver"];
 
 const parseVariableAssignmentByType = (
   assignment: AssignmentType,
@@ -91,9 +101,57 @@ const parseVariableDecrement: Parser = (program: Program, lines: string[], lineI
   return lineIndex + 1;
 };
 
+const parseRoundingFunctionName = (input: string): string => {
+  switch (input) {
+    case "around":
+    case "round":
+      return "round";
+    case "up":
+      return "ceil";
+    case "down":
+      return "floor";
+    default:
+      throw new Error(`Unknown turning: ${input}`);
+  }
+};
+
+const parseExplicitVariableRounding: Parser = (program: Program, lines: string[], lineIndex: number): number => {
+  const line = lines[lineIndex];
+
+  const varMatch = line.match(/^turn (around|round|up|down) (.+)/i);
+  if (!varMatch) return lineIndex;
+
+  const variable = parseVariableName(varMatch[2]);
+  if (!variable) return lineIndex;
+
+  const fn = parseRoundingFunctionName(varMatch[1]);
+
+  program.push(new AssignmentNode(variable, new FunctionCallNode(fn, [new IdentifierNode(variable)])));
+  return lineIndex + 1;
+};
+
+const parseImplicitVariableRounding: Parser = (program: Program, lines: string[], lineIndex: number): number => {
+  const line = lines[lineIndex];
+
+  const match = line.match(new RegExp(`^turn (${pronouns.join("|")}) (around|round|up|down)\\W*`, "i"));
+  if (!match) return lineIndex;
+
+  const assignmentNode = program.reverse().find(x => x.type === "assignment") as AssignmentNode;
+  if (!assignmentNode) throw new Error(`'${match[1]}' refers to the last parsed variable, but none found`);
+
+  const fn = parseRoundingFunctionName(match[2]);
+
+  program.push(
+    new AssignmentNode(assignmentNode.name, new FunctionCallNode(fn, [new IdentifierNode(assignmentNode.name)]))
+  );
+  return lineIndex + 1;
+};
+
 export const parseAssignment: Parser = combineParsers([
   parseVariableDeclaration,
   parseVariableAssignment,
   parseVariableIncrement,
-  parseVariableDecrement
+  parseVariableDecrement,
+  parseExplicitVariableRounding,
+  parseImplicitVariableRounding
 ]);

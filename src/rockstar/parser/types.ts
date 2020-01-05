@@ -85,6 +85,16 @@ export class NullLiteralNode extends ProgramNode {
   }
 }
 
+export class IdentifierNode extends ProgramNode {
+  constructor(public name: string) {
+    super("identifier");
+  }
+
+  toString(): string {
+    return `var("${this.name}")`;
+  }
+}
+
 export class BinaryExpressionNode extends ProgramNode {
   constructor(public operator: Operator, public left: ExpressionNode, public right: ExpressionNode) {
     super("binaryExpression");
@@ -95,13 +105,13 @@ export class BinaryExpressionNode extends ProgramNode {
   }
 }
 
-export class IdentifierNode extends ProgramNode {
-  constructor(public name: string) {
-    super("identifier");
+export class FunctionCallNode extends ProgramNode {
+  constructor(public name: string, public args: ExpressionNode[]) {
+    super("call");
   }
 
   toString(): string {
-    return `var("${this.name}")`;
+    return `${this.name}(${this.args.join(", ")})`;
   }
 }
 
