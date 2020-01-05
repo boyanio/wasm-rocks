@@ -1,0 +1,34 @@
+{
+  "name": "wasm-rocks",
+  "version": "1.0.0",
+  "description": "Rockstar to WebAssembly transpiler",
+  "scripts": {
+    "test": "jest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/boyanio/wasm-rocks.git"
+  },
+  "keywords": [
+    "WebAssembly",
+    "Rockstar-language",
+    "JavaScript"
+  ],
+  "author": "Boyan Mihaylov",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/boyanio/wasm-rocks/issues"
+  },
+  "homepage": "https://github.com/boyanio/wasm-rocks#readme",
+  "dependencies": {},
+  "devDependencies": {
+    "@types/jest": "^24.0.25",
+    "@typescript-eslint/eslint-plugin": "^2.14.0",
+    "@typescript-eslint/parser": "^2.14.0",
+    "eslint": "^6.8.0",
+    "jest": "^24.9.0",
+    "prettier": "^1.19.1",
+    "ts-jest": "^24.2.0",
+    "typescript": "^3.7.4"
+  }
+}
