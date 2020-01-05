@@ -26,6 +26,7 @@ describe("rockstar", () => {
 
         "constant literals": [
           ["Peter is mysterious", "peter", "mysterious"],
+          ["Peter is null", "peter", "null"],
           ["Peter is nobody", "peter", "null"],
           ["Peter is nowhere", "peter", "null"],
           ["Peter is empty", "peter", "null"],

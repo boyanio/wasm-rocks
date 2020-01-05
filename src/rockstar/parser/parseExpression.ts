@@ -38,7 +38,7 @@ const parseMysteriousExpression: ExpressionParser = (
   expression: string
 ): ExpressionNode | null => (expression.toLowerCase() === "mysterious" ? new MysteriousLiteralNode() : null);
 
-const nullWords = ["nowhere", "nothing", "nobody", "gone", "empty"];
+const nullWords = ["null", "nowhere", "nothing", "nobody", "gone", "empty"];
 
 const parseNullExpression: ExpressionParser = (
   variable: string,
