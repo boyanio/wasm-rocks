@@ -10,7 +10,7 @@ import {
 } from "./types";
 import { parseExpression, AssignmentType, parseVariableName, pronouns } from "./parseExpression";
 import { combineParsers } from "./combineParsers";
-import { countOccurrences } from "../../string-utils";
+import { countOccurrences } from "../../utils/string-utils";
 
 const parseVariableAssignmentByType = (
   assignment: AssignmentType,

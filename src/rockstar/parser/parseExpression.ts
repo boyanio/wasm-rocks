@@ -9,7 +9,7 @@ import {
   ExplicitIdentifierNode,
   Operator
 } from "./types";
-import { capitalize } from "../../string-utils";
+import { capitalize } from "../../utils/string-utils";
 
 export const parseVariableName = (input: string): string | null => {
   // proper variable

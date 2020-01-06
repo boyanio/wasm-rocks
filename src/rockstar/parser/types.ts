@@ -1,4 +1,4 @@
-import { escapeDoubleQuotes } from "../../string-utils";
+import { escapeDoubleQuotes } from "../../utils/string-utils";
 
 export type ExpressionNode =
   | NumberLiteralNode
