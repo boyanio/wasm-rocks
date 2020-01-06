@@ -1,13 +1,31 @@
-import { Program, FunctionDeclarationNode } from "./parser";
+import { Program, FunctionDeclarationNode, StatementNode } from "./parser";
+
+export type TransformedProgram = FunctionDeclarationNode[];
 
 export const transform = (ast: Program): Program => {
-  
-  if (!ast.find(a => a.type === "function" && (<FunctionDeclarationNode>a).name === "main")) {
-    const fnNodes = ast.filter(a => a.type === "function");
-    const nonFnNodes = ast.filter(a => a.type !== "function");
+  const { fnNodes, nonFnNodes } = ast.reduce(
+    (split, node) =>
+      Object.assign(
+        split,
+        node.type === "function"
+          ? { fnNodes: [...split.fnNodes, node] }
+          : { nonFnNodes: [...split.nonFnNodes, node] }
+      ),
+    { fnNodes: [] as FunctionDeclarationNode[], nonFnNodes: [] as StatementNode[] }
+  );
+
+  const hasMainFn = fnNodes.find(node => node.name === "main") != null;
+  if (hasMainFn && nonFnNodes.length > 0)
+    throw new Error(
+      "Having both global statements and a `main` function is not allowed.\n" +
+        "Either move the global statements in the `main` function, or choose another name for it."
+    );
+
+  let transformedAst = fnNodes;
+  if (!hasMainFn) {
     const mainNode = new FunctionDeclarationNode("main", nonFnNodes);
-    ast = [mainNode, ...fnNodes];
+    transformedAst = [mainNode, ...fnNodes];
   }
 
-  return ast;
+  return transformedAst;
 };
