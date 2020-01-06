@@ -26,12 +26,12 @@ export class CommentNode extends ProgramNode {
 }
 
 export class AssignmentNode extends ProgramNode {
-  constructor(public name: string, public expression: ExpressionNode) {
+  constructor(public target: IdentifierNode, public expression: ExpressionNode) {
     super("assignment");
   }
 
   toString(): string {
-    return `${this.type} { name = "${this.name}", expression = ${this.expression} }`;
+    return `${this.type} { target = "${this.target}", expression = ${this.expression} }`;
   }
 }
 
@@ -85,13 +85,25 @@ export class NullLiteralNode extends ProgramNode {
   }
 }
 
-export class IdentifierNode extends ProgramNode {
+export abstract class IdentifierNode extends ProgramNode {}
+
+export class ExplicitIdentifierNode extends IdentifierNode {
   constructor(public name: string) {
-    super("identifier");
+    super("explicitIdentifier");
   }
 
   toString(): string {
     return `var("${this.name}")`;
+  }
+}
+
+export class ImplicitIdentifierNode extends IdentifierNode {
+  constructor() {
+    super("implicitIdentifier");
+  }
+
+  toString(): string {
+    return `var()`;
   }
 }
 

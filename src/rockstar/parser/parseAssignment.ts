@@ -3,9 +3,10 @@ import {
   AssignmentNode,
   Parser,
   BinaryExpressionNode,
-  IdentifierNode,
+  ExplicitIdentifierNode,
   NumberLiteralNode,
-  FunctionCallNode
+  FunctionCallNode,
+  ImplicitIdentifierNode
 } from "./types";
 import { parseExpression, AssignmentType, parseVariableName } from "./parseExpression";
 import { combineParsers } from "./combineParsers";
@@ -24,7 +25,7 @@ const parseVariableAssignmentByType = (
   const expressionNode = parseExpression(variable, assignment, expression);
   if (!expressionNode) return null;
 
-  return new AssignmentNode(variable, expressionNode);
+  return new AssignmentNode(new ExplicitIdentifierNode(variable), expressionNode);
 };
 
 const parsePutVariableAssignment = (line: string): AssignmentNode | null => {
@@ -74,8 +75,8 @@ const parseVariableIncrement: Parser = (program: Program, lines: string[], lineI
 
   program.push(
     new AssignmentNode(
-      variable,
-      new BinaryExpressionNode("add", new IdentifierNode(variable), new NumberLiteralNode(change))
+      new ExplicitIdentifierNode(variable),
+      new BinaryExpressionNode("add", new ExplicitIdentifierNode(variable), new NumberLiteralNode(change))
     )
   );
   return lineIndex + 1;
@@ -94,8 +95,8 @@ const parseVariableDecrement: Parser = (program: Program, lines: string[], lineI
 
   program.push(
     new AssignmentNode(
-      variable,
-      new BinaryExpressionNode("subtract", new IdentifierNode(variable), new NumberLiteralNode(change))
+      new ExplicitIdentifierNode(variable),
+      new BinaryExpressionNode("subtract", new ExplicitIdentifierNode(variable), new NumberLiteralNode(change))
     )
   );
   return lineIndex + 1;
@@ -126,7 +127,12 @@ const parseExplicitVariableRounding: Parser = (program: Program, lines: string[]
 
   const fn = parseRoundingFunctionName(varMatch[1]);
 
-  program.push(new AssignmentNode(variable, new FunctionCallNode(fn, [new IdentifierNode(variable)])));
+  program.push(
+    new AssignmentNode(
+      new ExplicitIdentifierNode(variable),
+      new FunctionCallNode(fn, [new ExplicitIdentifierNode(variable)])
+    )
+  );
   return lineIndex + 1;
 };
 
@@ -136,13 +142,10 @@ const parseImplicitVariableRounding: Parser = (program: Program, lines: string[]
   const match = line.match(new RegExp(`^turn (${pronouns.join("|")}) (around|round|up|down)\\W*`, "i"));
   if (!match) return lineIndex;
 
-  const assignmentNode = program.reverse().find(x => x.type === "assignment") as AssignmentNode;
-  if (!assignmentNode) throw new Error(`'${match[1]}' refers to the last parsed variable, but none found`);
-
   const fn = parseRoundingFunctionName(match[2]);
 
   program.push(
-    new AssignmentNode(assignmentNode.name, new FunctionCallNode(fn, [new IdentifierNode(assignmentNode.name)]))
+    new AssignmentNode(new ImplicitIdentifierNode(), new FunctionCallNode(fn, [new ImplicitIdentifierNode()]))
   );
   return lineIndex + 1;
 };

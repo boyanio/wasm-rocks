@@ -6,7 +6,7 @@ import {
   StringLiteralNode,
   NumberLiteralNode,
   BinaryExpressionNode,
-  IdentifierNode,
+  ExplicitIdentifierNode,
   Operator
 } from "./types";
 import { capitalize } from "../../string-utils";
@@ -107,7 +107,7 @@ const parseIdentifierExpression: ExpressionParser = (
   variable: string,
   assignment: AssignmentType,
   expression: string
-): ExpressionNode | null => new IdentifierNode(expression);
+): ExpressionNode | null => new ExplicitIdentifierNode(expression);
 
 const simpleExpressionParsers: ExpressionParser[] = [
   parseMysteriousExpression,
@@ -140,7 +140,7 @@ const binaryExpressionParser = (pattern: RegExp, operator: Operator): Expression
   const right = parseSimpleExpression(variable, assignment, match[3]);
   if (!left || !right) return null;
 
-  return new BinaryExpressionNode(operator, new IdentifierNode(left), right);
+  return new BinaryExpressionNode(operator, new ExplicitIdentifierNode(left), right);
 };
 
 const binaryExpressionParsers: ExpressionParser[] = [
@@ -161,7 +161,7 @@ const compountExpressionParser = (pattern: RegExp, operator: Operator): Expressi
   const right = parseSimpleExpression(variable, assignment, match[2]);
   if (!right) return null;
 
-  return new BinaryExpressionNode(operator, new IdentifierNode(variable), right);
+  return new BinaryExpressionNode(operator, new ExplicitIdentifierNode(variable), right);
 };
 
 const compountExpressionParsers: ExpressionParser[] = [

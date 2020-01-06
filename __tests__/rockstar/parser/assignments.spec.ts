@@ -1,6 +1,7 @@
 import { parse, AssignmentNode } from "../../../src/rockstar/parser";
 
-type Cases = { [key: string]: string[][] };
+type CaseArg = string | null;
+type Cases = { [key: string]: CaseArg[][] };
 
 describe("rockstar", () => {
   describe("parse", () => {
@@ -88,15 +89,15 @@ describe("rockstar", () => {
           ["Turn down X", "x", 'floor(var("x"))'],
           ["Turn round X", "x", 'round(var("x"))'],
           ["Turn around X", "x", 'round(var("x"))'],
-          ["X is 1.2\nTurn it up.", "x", 'ceil(var("x"))'],
-          ["X is 1.2\nTurn it around.", "x", 'round(var("x"))'],
-          ["X is 1.2\nTurn it down.", "x", 'floor(var("x"))']
+          ["Turn it up.", null, "ceil(var())"],
+          ["Turn her around.", null, "round(var())"],
+          ["Turn them down.", null, "floor(var())"]
         ]
       };
       for (const caseName of Object.keys(cases)) {
         describe(caseName, () => {
           for (const [input, name, expression] of cases[caseName]) {
-            it(`${input.replace("\n", " NL ")} => ${name} = ${expression}`, () => {
+            it(`${input} => ${name || "var()"} = ${expression}`, () => {
               const ast = parse(input as string);
 
               expect(ast.length).toBeTruthy();
@@ -105,7 +106,7 @@ describe("rockstar", () => {
               expect(node.type).toEqual("assignment");
 
               const assignmentNode = node as AssignmentNode;
-              expect(assignmentNode.name).toEqual(name);
+              expect(assignmentNode.target.toString()).toEqual(name ? `var("${name}")` : "var()");
               expect(assignmentNode.expression.toString()).toEqual(expression);
             });
           }
