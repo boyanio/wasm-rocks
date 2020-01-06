@@ -1,8 +1,8 @@
-import { Program, FunctionDeclarationNode, StatementNode } from "./parser";
+import { Program, FunctionDeclarationNode, StatementNode, ExpressionNode, FunctionCallNode } from "./parser";
 
 export type TransformedProgram = FunctionDeclarationNode[];
 
-export const transform = (ast: Program): Program => {
+export const transform = (ast: Program): TransformedProgram => {
   const { fnNodes, nonFnNodes } = ast.reduce(
     (split, node) =>
       Object.assign(
@@ -23,7 +23,12 @@ export const transform = (ast: Program): Program => {
 
   let transformedAst = fnNodes;
   if (!hasMainFn) {
-    const mainNode = new FunctionDeclarationNode("main", nonFnNodes);
+    const lastNonFnNode = nonFnNodes[nonFnNodes.length - 1];
+    let result: ExpressionNode;
+    if (lastNonFnNode.type === "call") {
+      result = (lastNonFnNode as FunctionCallNode).
+    }
+    const mainNode = new FunctionDeclarationNode("main", [], null, nonFnNodes);
     transformedAst = [mainNode, ...fnNodes];
   }
 

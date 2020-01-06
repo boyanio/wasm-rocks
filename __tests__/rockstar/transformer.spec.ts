@@ -5,7 +5,8 @@ import {
   Program,
   AssignmentNode,
   ExplicitIdentifierNode,
-  NumberLiteralNode
+  NumberLiteralNode,
+  ImplicitIdentifierNode
 } from "../../src/rockstar/parser";
 
 describe("rockstar", () => {
@@ -29,7 +30,7 @@ describe("rockstar", () => {
     it("throws if there are global statements and a main function", () => {
       const ast: Program = [
         new AssignmentNode(new ExplicitIdentifierNode("x"), new NumberLiteralNode(5)),
-        new FunctionDeclarationNode("main", [
+        new FunctionDeclarationNode("main", [], new ImplicitIdentifierNode(), [
           new AssignmentNode(new ExplicitIdentifierNode("y"), new NumberLiteralNode(5))
         ])
       ];

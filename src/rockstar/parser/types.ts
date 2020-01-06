@@ -1,14 +1,21 @@
 import { escapeDoubleQuotes } from "../../utils/string-utils";
 
-export type ExpressionNode =
-  | NumberLiteralNode
-  | StringLiteralNode
-  | MysteriousLiteralNode
-  | NullLiteralNode
-  | BooleanLiteralNode;
+export type ProgramNodeType =
+  | "comment"
+  | "assignment"
+  | "number"
+  | "string"
+  | "null"
+  | "mysterious"
+  | "boolean"
+  | "explicitIdentifier"
+  | "implicitIdentifier"
+  | "binaryExpression"
+  | "function"
+  | "call";
 
 export abstract class ProgramNode {
-  constructor(public type: string) {}
+  constructor(public type: ProgramNodeType) {}
 
   toString(): string {
     return this.type;
@@ -37,7 +44,7 @@ export class AssignmentNode extends ProgramNode {
 
 export class NumberLiteralNode extends ProgramNode {
   constructor(public value: number) {
-    super("numberLiteral");
+    super("number");
   }
 
   toString(): string {
@@ -47,7 +54,7 @@ export class NumberLiteralNode extends ProgramNode {
 
 export class StringLiteralNode extends ProgramNode {
   constructor(public value: string) {
-    super("stringLiteral");
+    super("string");
   }
 
   toString(): string {
@@ -57,7 +64,7 @@ export class StringLiteralNode extends ProgramNode {
 
 export class BooleanLiteralNode extends ProgramNode {
   constructor(public value: boolean) {
-    super("booleanLiteral");
+    super("boolean");
   }
 
   toString(): string {
@@ -67,7 +74,7 @@ export class BooleanLiteralNode extends ProgramNode {
 
 export class MysteriousLiteralNode extends ProgramNode {
   constructor() {
-    super("mysteriousLiteral");
+    super("mysterious");
   }
 
   toString(): string {
@@ -77,7 +84,7 @@ export class MysteriousLiteralNode extends ProgramNode {
 
 export class NullLiteralNode extends ProgramNode {
   constructor() {
-    super("nullLiteral");
+    super("null");
   }
 
   toString(): string {
@@ -108,7 +115,11 @@ export class ImplicitIdentifierNode extends IdentifierNode {
 }
 
 export class BinaryExpressionNode extends ProgramNode {
-  constructor(public operator: Operator, public left: ExpressionNode, public right: ExpressionNode) {
+  constructor(
+    public operator: Operator,
+    public left: ExpressionNode,
+    public right: ExpressionNode
+  ) {
     super("binaryExpression");
   }
 
@@ -128,18 +139,37 @@ export class FunctionCallNode extends ProgramNode {
 }
 
 export class FunctionDeclarationNode extends ProgramNode {
-  constructor(public name: string, public args: ExpressionNode[]) {
+  constructor(
+    public name: string,
+    public args: ExpressionNode[],
+    public result: ExpressionNode,
+    public body: StatementNode[]
+  ) {
     super("function");
   }
 
   toString(): string {
-    return `Function { name = "${this.name}", args = [${this.args.join(", ")}] }`;
+    return `Function { name = "${this.name}", args = [${this.args.join(", ")}], result = ${
+      this.result
+    } }`;
   }
 }
 
 export type Operator = "add" | "subtract" | "divide" | "multiply";
 
-export type StatementNode = CommentNode | AssignmentNode | FunctionCallNode | FunctionDeclarationNode;
+export type ExpressionNode =
+  | NumberLiteralNode
+  | StringLiteralNode
+  | MysteriousLiteralNode
+  | NullLiteralNode
+  | BooleanLiteralNode
+  | IdentifierNode;
+
+export type StatementNode =
+  | CommentNode
+  | AssignmentNode
+  | FunctionCallNode
+  | FunctionDeclarationNode;
 
 export type Program = StatementNode[];
 
