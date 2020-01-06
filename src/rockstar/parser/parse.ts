@@ -21,7 +21,7 @@ const formatSingleQuotes = (input: string): string => input.replace(/'s\W+/g, " 
 
 export function parse(input: string): Program {
   const program: Program = [];
-  const lines = formatSingleQuotes(input)
+  const lines = formatSingleQuotes(input.trim())
     .split(/\r?\n/)
     .map(x => x.trim());
   parseLines(program, lines);

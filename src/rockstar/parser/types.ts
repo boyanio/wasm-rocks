@@ -127,9 +127,19 @@ export class FunctionCallNode extends ProgramNode {
   }
 }
 
+export class FunctionDeclarationNode extends ProgramNode {
+  constructor(public name: string, public args: ExpressionNode[]) {
+    super("function");
+  }
+
+  toString(): string {
+    return `Function { name = "${this.name}", args = [${this.args.join(", ")}] }`;
+  }
+}
+
 export type Operator = "add" | "subtract" | "divide" | "multiply";
 
-export type StatementNode = CommentNode | AssignmentNode | FunctionCallNode;
+export type StatementNode = CommentNode | AssignmentNode | FunctionCallNode | FunctionDeclarationNode;
 
 export type Program = StatementNode[];
 
