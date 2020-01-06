@@ -48,13 +48,18 @@ export const pronouns = [
 
 export type AssignmentType = "is" | "are" | "were" | "was" | "says" | "put" | "let";
 
-type ExpressionParser = (variable: string, assignment: AssignmentType, expression: string) => ExpressionNode | null;
+type ExpressionParser = (
+  variable: string,
+  assignment: AssignmentType,
+  expression: string
+) => ExpressionNode | null;
 
 const parseMysteriousExpression: ExpressionParser = (
   variable: string,
   assignment: AssignmentType,
   expression: string
-): ExpressionNode | null => (expression.toLowerCase() === "mysterious" ? new MysteriousLiteralNode() : null);
+): ExpressionNode | null =>
+  expression.toLowerCase() === "mysterious" ? new MysteriousLiteralNode() : null;
 
 const nullWords = ["null", "nowhere", "nothing", "nobody", "gone", "empty"];
 
@@ -62,7 +67,8 @@ const parseNullExpression: ExpressionParser = (
   variable: string,
   assignment: AssignmentType,
   expression: string
-): ExpressionNode | null => (nullWords.indexOf(expression.toLowerCase()) >= 0 ? new NullLiteralNode() : null);
+): ExpressionNode | null =>
+  nullWords.indexOf(expression.toLowerCase()) >= 0 ? new NullLiteralNode() : null;
 
 type BooleanWords = { [key: string]: boolean };
 
@@ -82,7 +88,9 @@ const parseBooleanExpression: ExpressionParser = (
   assignment: AssignmentType,
   expression: string
 ): ExpressionNode | null =>
-  expression.toLowerCase() in booleanWords ? new BooleanLiteralNode(booleanWords[expression.toLowerCase()]) : null;
+  expression.toLowerCase() in booleanWords
+    ? new BooleanLiteralNode(booleanWords[expression.toLowerCase()])
+    : null;
 
 const parseStringExpression: ExpressionParser = (
   variable: string,
@@ -100,10 +108,12 @@ const parsePeticNumberLiteral = (input: string): number => {
   input = input.replace(/\./g, (match, offset, all) => (all.indexOf(".") === offset ? " . " : ""));
 
   // ignore all non-alphabetical characters
-  input = input.replace(/[^A-Za-z0-9\s\.\-]/g, "");
+  input = input.replace(/[^A-Za-z0-9\s.-]/g, "");
 
   const module = (w: string): number => w.length % 10;
-  return parseFloat(input.split(/\s+/).reduce((result, word) => `${result}${word === "." ? "." : module(word)}`, ""));
+  return parseFloat(
+    input.split(/\s+/).reduce((result, word) => `${result}${word === "." ? "." : module(word)}`, "")
+  );
 };
 
 const poeticAssignmentTypes: AssignmentType[] = ["is", "are", "was", "were"];
@@ -116,7 +126,8 @@ const parseNumberExpression: ExpressionParser = (
   const num = parseFloat(expression);
   if (!isNaN(num)) return new NumberLiteralNode(num);
 
-  if (poeticAssignmentTypes.indexOf(assignment) >= 0) return new NumberLiteralNode(parsePeticNumberLiteral(expression));
+  if (poeticAssignmentTypes.indexOf(assignment) >= 0)
+    return new NumberLiteralNode(parsePeticNumberLiteral(expression));
 
   return null;
 };

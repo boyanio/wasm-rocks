@@ -6,4 +6,5 @@ node_js:
 cache: yarn
 
 script:
+  - yarn lint
   - yarn test

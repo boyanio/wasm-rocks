@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "description": "Rockstar to WebAssembly transpiler",
   "scripts": {
-    "test": "jest"
+    "test": "jest",
+    "lint": "eslint ./src ./__tests__ --ext .js,.ts"
   },
   "repository": {
     "type": "git",
