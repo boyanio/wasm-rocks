@@ -129,7 +129,7 @@ export class FunctionCallNode extends ProgramNode {
 
 export type Operator = "add" | "subtract" | "divide" | "multiply";
 
-export type StatementNode = CommentNode | AssignmentNode;
+export type StatementNode = CommentNode | AssignmentNode | FunctionCallNode;
 
 export type Program = StatementNode[];
 

@@ -8,11 +8,9 @@ import {
   FunctionCallNode,
   ImplicitIdentifierNode
 } from "./types";
-import { parseExpression, AssignmentType, parseVariableName } from "./parseExpression";
+import { parseExpression, AssignmentType, parseVariableName, pronouns } from "./parseExpression";
 import { combineParsers } from "./combineParsers";
 import { countOccurrences } from "../../string-utils";
-
-const pronouns = ["it", "he", "she", "him", "her", "they", "them", "ze", "hir", "zie", "zir", "xe", "xem", "ve", "ver"];
 
 const parseVariableAssignmentByType = (
   assignment: AssignmentType,

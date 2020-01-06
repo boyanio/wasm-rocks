@@ -5,7 +5,7 @@ type Cases = { [key: string]: CaseArg[][] };
 
 describe("rockstar", () => {
   describe("parse", () => {
-    describe("variables", () => {
+    describe("assignments", () => {
       const cases: Cases = {
         "simple variable declaration": [
           ["Variable is 1", "variable", "1"],
@@ -112,19 +112,6 @@ describe("rockstar", () => {
           }
         });
       }
-
-      // describe("rounding", () => {
-      //   it("X is 1.2 NL Turn it up. => ", () => {
-      //     const ast = parse("X is 1.2\nTurn it up.");
-
-      //     expect(ast.length).toEqual(2);
-      //     expect(ast[1].type).toEqual("assignment");
-
-      //     const node = ast[0] as AssignmentNode;
-      //     expect(node.name).toEqual(name);
-      //     expect(node.expression.toString()).toEqual(expression);
-      //   });
-      // });
     });
   });
 });

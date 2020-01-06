@@ -2,8 +2,9 @@ import { Program, Parser } from "./types";
 import { parseComment } from "./parseComment";
 import { parseAssignment } from "./parseAssignment";
 import { combineParsers } from "./combineParsers";
+import { parseFunctionCall } from "./parseFunctionCall";
 
-const parser: Parser = combineParsers([parseComment, parseAssignment]);
+const parser: Parser = combineParsers([parseComment, parseAssignment, parseFunctionCall]);
 
 const parseLines = (program: Program, lines: string[]): void => {
   let lineIndex = 0;

@@ -28,6 +28,24 @@ export const parseVariableName = (input: string): string | null => {
   return null;
 };
 
+export const pronouns = [
+  "it",
+  "he",
+  "she",
+  "him",
+  "her",
+  "they",
+  "them",
+  "ze",
+  "hir",
+  "zie",
+  "zir",
+  "xe",
+  "xem",
+  "ve",
+  "ver"
+];
+
 export type AssignmentType = "is" | "are" | "were" | "was" | "says" | "put" | "let";
 
 type ExpressionParser = (variable: string, assignment: AssignmentType, expression: string) => ExpressionNode | null;
