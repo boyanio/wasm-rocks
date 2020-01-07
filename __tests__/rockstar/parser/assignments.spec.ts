@@ -1,10 +1,10 @@
-import { parse, AssignmentNode } from "../../../src/rockstar/parser";
+import { parse, Assignment } from "../../../src/rockstar/parser";
 
 type CaseArg = string | null;
 type Cases = { [key: string]: CaseArg[][] };
 
 describe("rockstar", () => {
-  describe("parse", () => {
+  describe("parser", () => {
     describe("assignments", () => {
       const cases: Cases = {
         "simple variable declaration": [
@@ -58,56 +58,43 @@ describe("rockstar", () => {
           [
             "Let the survivors be the brave without the fallen",
             "the survivors",
-            'subtract(var("the brave"), var("the fallen"))'
+            'var("the brave") - var("the fallen")'
           ],
-          ["Put here minus there into my hands", "my hands", 'subtract(var("here"), var("there"))'],
-          ["Put here plus there into my hands", "my hands", 'add(var("here"), var("there"))'],
-          ["Put here with there into my hands", "my hands", 'add(var("here"), var("there"))'],
-          ["Put the whole of your heart into my hands", "my hands", 'multiply(var("the whole"), var("your heart"))'],
-          ["Put here times there into my hands", "my hands", 'multiply(var("here"), var("there"))'],
-          ["Put my heart over the moon into my hands", "my hands", 'divide(var("my heart"), var("the moon"))'],
-          ["Let X be times 10", "x", 'multiply(var("x"), 10)'],
-          ["Let X be of 10", "x", 'multiply(var("x"), 10)'],
-          ["Let X be with 10", "x", 'add(var("x"), 10)'],
-          ["Let X be plus 10", "x", 'add(var("x"), 10)'],
-          ["Let the children be minus fear", "the children", 'subtract(var("the children"), var("fear"))'],
-          ["Let the children be without fear", "the children", 'subtract(var("the children"), var("fear"))'],
-          ["Let my heart be over the moon", "my heart", 'divide(var("my heart"), var("the moon"))']
-        ],
-
-        "increment / decrement": [
-          ["Build my world up", "my world", 'add(var("my world"), 1)'],
-          ["Build my world up, up", "my world", 'add(var("my world"), 2)'],
-          ["Build my world up up", "my world", 'add(var("my world"), 2)'],
-          ["Knock the walls down", "the walls", 'subtract(var("the walls"), 1)'],
-          ["Knock the walls down, down", "the walls", 'subtract(var("the walls"), 2)'],
-          ["Knock the walls down down", "the walls", 'subtract(var("the walls"), 2)']
-        ],
-
-        rounding: [
-          ["Turn up X", "x", 'ceil(var("x"))'],
-          ["Turn down X", "x", 'floor(var("x"))'],
-          ["Turn round X", "x", 'round(var("x"))'],
-          ["Turn around X", "x", 'round(var("x"))'],
-          ["Turn it up.", null, "ceil(var())"],
-          ["Turn her around.", null, "round(var())"],
-          ["Turn them down.", null, "floor(var())"]
+          ["Put here minus there into my hands", "my hands", 'var("here") - var("there")'],
+          ["Put here plus there into my hands", "my hands", 'var("here") + var("there")'],
+          ["Put here with there into my hands", "my hands", 'var("here") + var("there")'],
+          [
+            "Put the whole of your heart into my hands",
+            "my hands",
+            'var("the whole") * var("your heart")'
+          ],
+          ["Put here times there into my hands", "my hands", 'var("here") * var("there")'],
+          [
+            "Put my heart over the moon into my hands",
+            "my hands",
+            'var("my heart") / var("the moon")'
+          ],
+          ["Let X be times 10", "x", "* 10"],
+          ["Let X be of 10", "x", "* 10"],
+          ["Let X be with 10", "x", "+ 10"],
+          ["Let X be plus 10", "x", "+ 10"],
+          ["Let the children be minus fear", "the children", '- var("fear")'],
+          ["Let the children be without fear", "the children", '- var("fear")'],
+          ["Let my heart be over the moon", "my heart", '/ var("the moon")']
         ]
       };
       for (const caseName of Object.keys(cases)) {
         describe(caseName, () => {
           for (const [input, name, expression] of cases[caseName]) {
-            it(`${input} => ${name || "var()"} = ${expression}`, () => {
+            it(`${input} => ${name || "pronoun()"} = ${expression}`, () => {
               const ast = parse(input as string);
 
-              expect(ast.length).toBeTruthy();
+              expect(ast.length).toEqual(1);
 
-              const node = ast[ast.length - 1];
+              const node = ast[0] as Assignment;
               expect(node.type).toEqual("assignment");
-
-              const assignmentNode = node as AssignmentNode;
-              expect(assignmentNode.target.toString()).toEqual(name ? `var("${name}")` : "var()");
-              expect(assignmentNode.expression.toString()).toEqual(expression);
+              expect(node.target.toString()).toEqual(name ? `var("${name}")` : "pronoun()");
+              expect(node.expression.toString()).toEqual(expression);
             });
           }
         });

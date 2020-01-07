@@ -1,22 +1,22 @@
 import { TransformedProgram } from "../../rockstar/transformer";
 import {
-  NumberLiteralNode,
-  BinaryExpressionNode,
-  ExpressionNode,
+  NumberLiteral,
+  BinaryOperation,
+  SimpleExpression,
   Operator,
-  FunctionCallNode,
-  FunctionDeclarationNode,
-  StatementNode
+  FunctionCall,
+  FunctionDeclaration,
+  Statement
 } from "../../rockstar/parser";
 
-export const emitStatement = (node: StatementNode): string = {
-
+export const emitStatement = (node: Statement): string => {
+  return "";
 };
 
-export const emitExpression = (node: ExpressionNode): string => {
+export const emitExpression = (node: SimpleExpression): string => {
   switch (node.type) {
     case "number": {
-      const numberNode = node as NumberLiteralNode;
+      const numberNode = node as NumberLiteral;
       // TODO: Encode the number properly in case it is float or integer
       return `(f32.const ${numberNode.value})`;
     }
@@ -36,7 +36,7 @@ const watOperators = new Map<Operator, string>([
   ["divide", "f32.div"]
 ]);
 
-export const emitWatBinaryExpression = (node: BinaryExpressionNode): string => {
+export const emitWatBinaryExpression = (node: BinaryOperation): string => {
   if (!watOperators.has(node.operator)) throw new Error(`Unsupported operator: ${node.operator}`);
 
   const left = emitExpression(node.left);
@@ -45,13 +45,13 @@ export const emitWatBinaryExpression = (node: BinaryExpressionNode): string => {
   return `(${op} ${left} ${right})`;
 };
 
-export const emitWatFunctionCall = (node: FunctionCallNode): string => {
+export const emitWatFunctionCall = (node: FunctionCall): string => {
   const watArgs = node.args.map(a => emitExpression(a));
   const watCall = `call $${node.name} ${watArgs.join(" ")}`.trim();
   return `(${watCall})`;
 };
 
-export const emitWatFunctionDeclaration = (node: FunctionDeclarationNode): string => {
+export const emitWatFunctionDeclaration = (node: FunctionDeclaration): string => {
   const params = node.args.map((a, i) => `(param $${i} f32)`).join(" ");
   const result = node.result ? `(result f32)` : null;
   const watFunctionParamsAndResult = `func $${node.name} ${params} ${result}`.trim();
@@ -63,12 +63,12 @@ export const emitWatModule = (contents: string[]): string => {
   return `(module ${contents.join(" ")})`;
 };
 
-export const emitWatImport = (path: string[], node: FunctionCallNode): string => {
-  const formattedPath = path.map(x => `"${x}"`).join(" ");
-  const fnArgs = node.args.map((a, i))
-  const fn = `(func $${node.name})`;
-  return `(import ${formattedPath} ${emitWatFunctionDeclaration(node)})`;
-};
+// export const emitWatImport = (path: string[], node: FunctionCall): string => {
+//   const formattedPath = path.map(x => `"${x}"`).join(" ");
+//   const fnArgs = node.args.map((a, i))
+//   const fn = `(func $${node.name})`;
+//   return `(import ${formattedPath} ${emitWatFunctionDeclaration(node)})`;
+// };
 
 export const emitWatMemory = (): string => "(memory $0 1)";
 
@@ -81,21 +81,21 @@ export const emitWatExport = (path: string[], what: string, name: string): strin
 
 export const emitWat = (ast: TransformedProgram): string => {
   const declaredFunctionNames = new Set<string>(ast.map(x => x.name));
-  const calledFunctions: { [fnName: string]: FunctionCallNode } = ast
-    .reduce<FunctionCallNode[]>(
+  const calledFunctions: { [fnName: string]: FunctionCall } = ast
+    .reduce<FunctionCall[]>(
       (calledFns, fnNode) => [
         ...calledFns,
-        ...(fnNode.body.filter(x => x.type === "call") as FunctionCallNode[])
+        ...(fnNode.body.filter(x => x.type === "call") as FunctionCall[])
       ],
-      [] as FunctionCallNode[]
+      [] as FunctionCall[]
     )
     .reduce((calledFns, fn) => Object.assign(calledFns, { [fn.name]: fn }), {});
   const importedFunctions = Object.keys(calledFunctions)
     .filter(fnName => !declaredFunctionNames.has(fnName))
     .map(fnName => calledFunctions[fnName]);
 
-  const watImports = importedFunctions.map(fn => emitWatImport(["env", fn.name], fn));
+  //const watImports = importedFunctions.map(fn => emitWatImport(["env", fn.name], fn));
   return emitWatModule([
-    ...watImports
+    //  ...watImports
   ]);
 };

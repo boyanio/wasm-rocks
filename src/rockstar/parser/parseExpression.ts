@@ -1,34 +1,20 @@
 import {
-  ExpressionNode,
-  MysteriousLiteralNode,
-  NullLiteralNode,
-  BooleanLiteralNode,
-  StringLiteralNode,
-  NumberLiteralNode,
-  BinaryExpressionNode,
-  ExplicitIdentifierNode,
-  Operator
+  SimpleExpression,
+  Mysterious,
+  NullLiteral,
+  BooleanLiteral,
+  StringLiteral,
+  NumberLiteral,
+  BinaryOperation,
+  Variable,
+  Operator,
+  Pronoun,
+  Expression,
+  UnaryOperation
 } from "./types";
 import { capitalize } from "../../utils/string-utils";
 
-export const parseVariableName = (input: string): string | null => {
-  // proper variable
-  if (/^([A-Z][a-zA-Z]+\s){2,}$/.test(`${input} `))
-    return input // transform to Xxxx Yyyy
-      .split(/\s+/)
-      .map(x => capitalize(x))
-      .join(" ");
-
-  // common variable
-  if (/^(a|an|my|your|the)\s/i.test(input)) return input.toLowerCase();
-
-  // simple variable
-  if (/^[a-zA-Z]+$/.test(input)) return input.toLowerCase();
-
-  return null;
-};
-
-export const pronouns = [
+const pronouns = [
   "it",
   "he",
   "she",
@@ -46,29 +32,47 @@ export const pronouns = [
   "ver"
 ];
 
+export const isPronoun = (what: string): boolean => pronouns.includes(what.toLowerCase());
+
 export type AssignmentType = "is" | "are" | "were" | "was" | "says" | "put" | "let";
 
-type ExpressionParser = (
-  variable: string,
-  assignment: AssignmentType,
-  expression: string
-) => ExpressionNode | null;
+type ExpressionParser = (assignment: AssignmentType, expression: string) => Expression | null;
 
-const parseMysteriousExpression: ExpressionParser = (
-  variable: string,
+export const parseVariable = (input: string): Variable | null => {
+  // proper variable
+  if (/^([A-Z][a-zA-Z]+\s){2,}$/.test(`${input} `)) {
+    const properVariable = input // transform to Xxxx Yyyy
+      .split(/\s+/)
+      .map(x => capitalize(x))
+      .join(" ");
+    return new Variable(properVariable);
+  }
+
+  // common variable
+  if (/^(a|an|my|your|the)\s/i.test(input)) return new Variable(input.toLowerCase());
+
+  // simple variable
+  if (/^[a-zA-Z]+$/.test(input)) return new Variable(input.toLowerCase());
+
+  return null;
+};
+
+export const parsePronoun = (input: string): Pronoun | null => {
+  return isPronoun(input) ? new Pronoun() : null;
+};
+
+const parseMysterious: ExpressionParser = (
   assignment: AssignmentType,
   expression: string
-): ExpressionNode | null =>
-  expression.toLowerCase() === "mysterious" ? new MysteriousLiteralNode() : null;
+): Expression | null => (expression.toLowerCase() === "mysterious" ? new Mysterious() : null);
 
 const nullWords = ["null", "nowhere", "nothing", "nobody", "gone", "empty"];
 
-const parseNullExpression: ExpressionParser = (
-  variable: string,
+const parseNullLiteral: ExpressionParser = (
   assignment: AssignmentType,
   expression: string
-): ExpressionNode | null =>
-  nullWords.indexOf(expression.toLowerCase()) >= 0 ? new NullLiteralNode() : null;
+): Expression | null =>
+  nullWords.indexOf(expression.toLowerCase()) >= 0 ? new NullLiteral() : null;
 
 type BooleanWords = { [key: string]: boolean };
 
@@ -83,27 +87,25 @@ const booleanWords: BooleanWords = {
   wrong: false
 };
 
-const parseBooleanExpression: ExpressionParser = (
-  variable: string,
+const parseBooleanLiteral: ExpressionParser = (
   assignment: AssignmentType,
   expression: string
-): ExpressionNode | null =>
+): Expression | null =>
   expression.toLowerCase() in booleanWords
-    ? new BooleanLiteralNode(booleanWords[expression.toLowerCase()])
+    ? new BooleanLiteral(booleanWords[expression.toLowerCase()])
     : null;
 
-const parseStringExpression: ExpressionParser = (
-  variable: string,
+const parseStringLiteral: ExpressionParser = (
   assignment: AssignmentType,
   expression: string
-): ExpressionNode | null =>
+): Expression | null =>
   assignment === "says"
-    ? new StringLiteralNode(expression)
+    ? new StringLiteral(expression)
     : expression.length > 1 && expression[0] === '"' && expression[expression.length - 1] === '"'
-    ? new StringLiteralNode(expression.substring(1, expression.length - 1))
+    ? new StringLiteral(expression.substring(1, expression.length - 1))
     : null;
 
-const parsePeticNumberLiteral = (input: string): number => {
+const parsePoeticNumberLiteral = (input: string): number => {
   // replace all dot occurrences, but the first one
   input = input.replace(/\./g, (match, offset, all) => (all.indexOf(".") === offset ? " . " : ""));
 
@@ -118,100 +120,94 @@ const parsePeticNumberLiteral = (input: string): number => {
 
 const poeticAssignmentTypes: AssignmentType[] = ["is", "are", "was", "were"];
 
-const parseNumberExpression: ExpressionParser = (
-  variable: string,
+const parseNumberLiteral: ExpressionParser = (
   assignment: AssignmentType,
   expression: string
-): ExpressionNode | null => {
+): Expression | null => {
   const num = parseFloat(expression);
-  if (!isNaN(num)) return new NumberLiteralNode(num);
+  if (!isNaN(num)) return new NumberLiteral(num);
 
   if (poeticAssignmentTypes.indexOf(assignment) >= 0)
-    return new NumberLiteralNode(parsePeticNumberLiteral(expression));
+    return new NumberLiteral(parsePoeticNumberLiteral(expression));
 
   return null;
 };
 
-const parseIdentifierExpression: ExpressionParser = (
-  variable: string,
+const parseVariableIdentifier: ExpressionParser = (
   assignment: AssignmentType,
   expression: string
-): ExpressionNode | null => new ExplicitIdentifierNode(expression);
+): Expression | null => parseVariable(expression);
 
 const simpleExpressionParsers: ExpressionParser[] = [
-  parseMysteriousExpression,
-  parseNullExpression,
-  parseStringExpression,
-  parseBooleanExpression,
-  parseNumberExpression,
-  parseIdentifierExpression
+  parseMysterious,
+  parseNullLiteral,
+  parseStringLiteral,
+  parseBooleanLiteral,
+  parseNumberLiteral,
+  parseVariableIdentifier
 ];
 
 const parseSimpleExpression: ExpressionParser = (
-  variable: string,
   assignment: AssignmentType,
   expression: string
-): ExpressionNode | null =>
-  simpleExpressionParsers.reduce<ExpressionNode | null>(
-    (node, parser) => node || parser(variable, assignment, expression),
+): Expression | null =>
+  simpleExpressionParsers.reduce<SimpleExpression | null>(
+    (node, parser) => node || parser(assignment, expression),
     null
   );
 
-const binaryExpressionParser = (pattern: RegExp, operator: Operator): ExpressionParser => (
-  variable: string,
+const arithmeticOperationParser = (pattern: RegExp, operator: Operator): ExpressionParser => (
   assignment: AssignmentType,
   expression: string
-): ExpressionNode | null => {
+): Expression | null => {
   const match = expression.match(pattern);
   if (!match) return null;
 
-  const left = parseVariableName(match[1]);
-  const right = parseSimpleExpression(variable, assignment, match[3]);
+  const left = parseVariable(match[1]);
+  const right = parseSimpleExpression(assignment, match[3]);
   if (!left || !right) return null;
 
-  return new BinaryExpressionNode(operator, new ExplicitIdentifierNode(left), right);
+  return new BinaryOperation(operator, left, right);
 };
 
-const binaryExpressionParsers: ExpressionParser[] = [
-  binaryExpressionParser(/^(.+?) (without|minus) (.+)$/i, "subtract"),
-  binaryExpressionParser(/^(.+?) (of|times) (.+)$/i, "multiply"),
-  binaryExpressionParser(/^(.+?) (over) (.+)$/i, "divide"),
-  binaryExpressionParser(/^(.+?) (plus|with) (.+)$/i, "add")
+const arithmeticOperationParsers: ExpressionParser[] = [
+  arithmeticOperationParser(/^(.+?) (without|minus) (.+)$/i, "subtract"),
+  arithmeticOperationParser(/^(.+?) (of|times) (.+)$/i, "multiply"),
+  arithmeticOperationParser(/^(.+?) (over) (.+)$/i, "divide"),
+  arithmeticOperationParser(/^(.+?) (plus|with) (.+)$/i, "add")
 ];
 
-const compountExpressionParser = (pattern: RegExp, operator: Operator): ExpressionParser => (
-  variable: string,
+const compoundExpressionParser = (pattern: RegExp, operator: Operator): ExpressionParser => (
   assignment: AssignmentType,
   expression: string
-): ExpressionNode | null => {
+): Expression | null => {
   const match = expression.match(pattern);
   if (!match) return null;
 
-  const right = parseSimpleExpression(variable, assignment, match[2]);
+  const right = parseSimpleExpression(assignment, match[2]);
   if (!right) return null;
 
-  return new BinaryExpressionNode(operator, new ExplicitIdentifierNode(variable), right);
+  return new UnaryOperation(operator, right);
 };
 
-const compountExpressionParsers: ExpressionParser[] = [
-  compountExpressionParser(/^(without|minus) (.+)$/i, "subtract"),
-  compountExpressionParser(/^(of|times) (.+)$/i, "multiply"),
-  compountExpressionParser(/^(over) (.+)$/i, "divide"),
-  compountExpressionParser(/^(plus|with) (.+)$/i, "add")
+const compoundExpressionParsers: ExpressionParser[] = [
+  compoundExpressionParser(/^(without|minus) (.+)$/i, "subtract"),
+  compoundExpressionParser(/^(of|times) (.+)$/i, "multiply"),
+  compoundExpressionParser(/^(over) (.+)$/i, "divide"),
+  compoundExpressionParser(/^(plus|with) (.+)$/i, "add")
 ];
 
 const expressionParsers: ExpressionParser[] = [
-  ...binaryExpressionParsers,
-  ...compountExpressionParsers,
+  ...arithmeticOperationParsers,
+  ...compoundExpressionParsers,
   ...simpleExpressionParsers
 ];
 
 export const parseExpression = (
-  variable: string,
   assignment: AssignmentType,
   expression: string
-): ExpressionNode | null =>
-  expressionParsers.reduce<ExpressionNode | null>(
-    (node, parser) => node || parser(variable, assignment, expression),
+): Expression | null =>
+  expressionParsers.reduce<SimpleExpression | null>(
+    (node, parser) => node || parser(assignment, expression),
     null
   );

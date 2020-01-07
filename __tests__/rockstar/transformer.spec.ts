@@ -1,12 +1,12 @@
 import { transform } from "../../src/rockstar/transformer";
 import {
   parse,
-  FunctionDeclarationNode,
+  FunctionDeclaration,
   Program,
-  AssignmentNode,
-  ExplicitIdentifierNode,
-  NumberLiteralNode,
-  ImplicitIdentifierNode
+  Assignment,
+  Variable,
+  NumberLiteral,
+  Pronoun
 } from "../../src/rockstar/parser";
 
 describe("rockstar", () => {
@@ -23,15 +23,15 @@ describe("rockstar", () => {
       // We put all global stamements in main
       expect(transformedAst.length).toEqual(1);
 
-      const fnNode = transformedAst[0] as FunctionDeclarationNode;
+      const fnNode = transformedAst[0] as FunctionDeclaration;
       expect(fnNode.name).toEqual("main");
     });
 
     it("throws if there are global statements and a main function", () => {
       const ast: Program = [
-        new AssignmentNode(new ExplicitIdentifierNode("x"), new NumberLiteralNode(5)),
-        new FunctionDeclarationNode("main", [], new ImplicitIdentifierNode(), [
-          new AssignmentNode(new ExplicitIdentifierNode("y"), new NumberLiteralNode(5))
+        new Assignment(new Variable("x"), new NumberLiteral(5)),
+        new FunctionDeclaration("main", [], new Pronoun(), [
+          new Assignment(new Variable("y"), new NumberLiteral(5))
         ])
       ];
       expect(() => transform(ast)).toThrow();

@@ -1,35 +1,31 @@
-import { Program, Parser, ExplicitIdentifierNode, FunctionCallNode, ImplicitIdentifierNode } from "./types";
-import { parseVariableName, pronouns } from "./parseExpression";
+import { Program, Parser, FunctionCall } from "./types";
+import { parseVariable, parsePronoun } from "./parseExpression";
 
-type FunctionCallParser = (line: string) => FunctionCallNode | null;
+type FunctionCallParser = (line: string) => FunctionCall | null;
 
-const explicitArgumentFunctionCallParser = (fn: string, pattern: RegExp): FunctionCallParser => (
-  line: string
-): FunctionCallNode | null => {
+const functionCallWithSingleArgumentParser = (
+  functionName: string,
+  pattern: RegExp,
+  variableMatchIndex: number
+): FunctionCallParser => (line: string): FunctionCall | null => {
   const match = line.match(pattern);
   if (!match) return null;
 
-  const variable = parseVariableName(match[1]);
-  if (!variable) return null;
+  const arg = parsePronoun(match[variableMatchIndex]) || parseVariable(match[variableMatchIndex]);
+  if (!arg) return null;
 
-  return new FunctionCallNode(fn, [new ExplicitIdentifierNode(variable)]);
-};
-
-const implicitArgumentFunctionCallParser = (fn: string, pattern: RegExp): FunctionCallParser => (
-  line: string
-): FunctionCallNode | null => {
-  const match = line.match(pattern);
-  if (!match) return null;
-
-  return new FunctionCallNode(fn, [new ImplicitIdentifierNode()]);
+  return new FunctionCall(functionName, [arg]);
 };
 
 const parsers: FunctionCallParser[] = [
-  explicitArgumentFunctionCallParser("say", /^shout (.+)/i),
-  implicitArgumentFunctionCallParser("say", new RegExp(`^shout (${pronouns.join("|")})\\W*`, "i"))
+  functionCallWithSingleArgumentParser("say", /^(shout|whisper|say|scream) ([a-zA-Z\s]+)/i, 2)
 ];
 
-export const parseFunctionCall: Parser = (program: Program, lines: string[], lineIndex: number): number => {
+export const parseFunctionCall: Parser = (
+  program: Program,
+  lines: string[],
+  lineIndex: number
+): number => {
   const line = lines[lineIndex];
 
   for (const parser of parsers) {

@@ -3,19 +3,23 @@ import { parse } from "../../../src/rockstar/parser";
 type Cases = string[][];
 
 describe("rockstar", () => {
-  describe("parse", () => {
-    describe("calls", () => {
+  describe("parser", () => {
+    describe("function calls", () => {
       const cases: Cases = [
-        ["Shout X", 'say(var("x"))'],
-        ["Shout it.", "say(var())"]
+        ["Shout Y", 'say(var("y"))'],
+        ["Shout it", "say(pronoun())"],
+        ["Shout it.", "say(pronoun())"],
+        ["Whisper Y", 'say(var("y"))'],
+        ["Scream Y", 'say(var("y"))'],
+        ["Say Y", 'say(var("y"))']
       ];
       for (const [input, expression] of cases) {
         it(`${input} => ${expression}`, () => {
-          const ast = parse(input as string);
+          const ast = parse(input);
 
-          expect(ast.length).toBeTruthy();
+          expect(ast.length).toEqual(1);
 
-          const node = ast[ast.length - 1];
+          const node = ast[0];
           expect(node.type).toEqual("call");
           expect(node.toString()).toEqual(expression);
         });

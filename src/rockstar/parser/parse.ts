@@ -3,8 +3,14 @@ import { parseComment } from "./parseComment";
 import { parseAssignment } from "./parseAssignment";
 import { combineParsers } from "./combineParsers";
 import { parseFunctionCall } from "./parseFunctionCall";
+import { parseInPlaceOperation } from "./parseInPlaceOperation";
 
-const parser: Parser = combineParsers([parseComment, parseAssignment, parseFunctionCall]);
+const parser: Parser = combineParsers([
+  parseComment,
+  parseAssignment,
+  parseInPlaceOperation,
+  parseFunctionCall
+]);
 
 const parseLines = (program: Program, lines: string[]): void => {
   let lineIndex = 0;
@@ -17,7 +23,8 @@ const parseLines = (program: Program, lines: string[]): void => {
   } while (lineIndex < lines.length);
 };
 
-const formatSingleQuotes = (input: string): string => input.replace(/'s\W+/g, " is ").replace("'", "");
+const formatSingleQuotes = (input: string): string =>
+  input.replace(/'s\W+/g, " is ").replace("'", "");
 
 export function parse(input: string): Program {
   const program: Program = [];

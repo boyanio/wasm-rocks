@@ -8,9 +8,11 @@ export type ProgramNodeType =
   | "null"
   | "mysterious"
   | "boolean"
-  | "explicitIdentifier"
-  | "implicitIdentifier"
-  | "binaryExpression"
+  | "variable"
+  | "pronoun"
+  | "binaryOperation"
+  | "unaryOperation"
+  | "inPlace"
   | "function"
   | "call";
 
@@ -22,7 +24,7 @@ export abstract class ProgramNode {
   }
 }
 
-export class CommentNode extends ProgramNode {
+export class Comment extends ProgramNode {
   constructor(public value: string) {
     super("comment");
   }
@@ -32,17 +34,7 @@ export class CommentNode extends ProgramNode {
   }
 }
 
-export class AssignmentNode extends ProgramNode {
-  constructor(public target: IdentifierNode, public expression: ExpressionNode) {
-    super("assignment");
-  }
-
-  toString(): string {
-    return `${this.type} { target = "${this.target}", expression = ${this.expression} }`;
-  }
-}
-
-export class NumberLiteralNode extends ProgramNode {
+export class NumberLiteral extends ProgramNode {
   constructor(public value: number) {
     super("number");
   }
@@ -52,7 +44,7 @@ export class NumberLiteralNode extends ProgramNode {
   }
 }
 
-export class StringLiteralNode extends ProgramNode {
+export class StringLiteral extends ProgramNode {
   constructor(public value: string) {
     super("string");
   }
@@ -62,7 +54,7 @@ export class StringLiteralNode extends ProgramNode {
   }
 }
 
-export class BooleanLiteralNode extends ProgramNode {
+export class BooleanLiteral extends ProgramNode {
   constructor(public value: boolean) {
     super("boolean");
   }
@@ -72,7 +64,7 @@ export class BooleanLiteralNode extends ProgramNode {
   }
 }
 
-export class MysteriousLiteralNode extends ProgramNode {
+export class Mysterious extends ProgramNode {
   constructor() {
     super("mysterious");
   }
@@ -82,7 +74,7 @@ export class MysteriousLiteralNode extends ProgramNode {
   }
 }
 
-export class NullLiteralNode extends ProgramNode {
+export class NullLiteral extends ProgramNode {
   constructor() {
     super("null");
   }
@@ -92,11 +84,9 @@ export class NullLiteralNode extends ProgramNode {
   }
 }
 
-export abstract class IdentifierNode extends ProgramNode {}
-
-export class ExplicitIdentifierNode extends IdentifierNode {
+export class Variable extends ProgramNode {
   constructor(public name: string) {
-    super("explicitIdentifier");
+    super("variable");
   }
 
   toString(): string {
@@ -104,32 +94,61 @@ export class ExplicitIdentifierNode extends IdentifierNode {
   }
 }
 
-export class ImplicitIdentifierNode extends IdentifierNode {
+export class Pronoun extends ProgramNode {
   constructor() {
-    super("implicitIdentifier");
+    super("pronoun");
   }
 
   toString(): string {
-    return `var()`;
+    return `pronoun()`;
   }
 }
 
-export class BinaryExpressionNode extends ProgramNode {
+export class Assignment extends ProgramNode {
+  constructor(public target: Identifier, public expression: Expression) {
+    super("assignment");
+  }
+
+  toString(): string {
+    return `${this.type} { target = "${this.target}", expression = ${this.expression} }`;
+  }
+}
+
+export type Operator = "add" | "subtract" | "divide" | "multiply";
+
+const operatorSymbols: { [key: string]: string } = {
+  add: "+",
+  subtract: "-",
+  divide: "/",
+  multiply: "*"
+};
+
+export class BinaryOperation extends ProgramNode {
   constructor(
     public operator: Operator,
-    public left: ExpressionNode,
-    public right: ExpressionNode
+    public left: SimpleExpression,
+    public right: SimpleExpression
   ) {
-    super("binaryExpression");
+    super("binaryOperation");
   }
 
   toString(): string {
-    return `${this.operator}(${this.left}, ${this.right})`;
+    return `${this.left} ${operatorSymbols[this.operator]} ${this.right}`;
   }
 }
 
-export class FunctionCallNode extends ProgramNode {
-  constructor(public name: string, public args: ExpressionNode[]) {
+export class UnaryOperation extends ProgramNode {
+  constructor(public operator: Operator, public expression: SimpleExpression) {
+    super("unaryOperation");
+  }
+
+  toString(): string {
+    return `${operatorSymbols[this.operator]} ${this.expression}`;
+  }
+}
+
+export class FunctionCall extends ProgramNode {
+  constructor(public name: string, public args: SimpleExpression[]) {
     super("call");
   }
 
@@ -138,12 +157,12 @@ export class FunctionCallNode extends ProgramNode {
   }
 }
 
-export class FunctionDeclarationNode extends ProgramNode {
+export class FunctionDeclaration extends ProgramNode {
   constructor(
     public name: string,
-    public args: ExpressionNode[],
-    public result: ExpressionNode,
-    public body: StatementNode[]
+    public args: Variable[],
+    public result: SimpleExpression,
+    public body: Statement[]
   ) {
     super("function");
   }
@@ -155,22 +174,33 @@ export class FunctionDeclarationNode extends ProgramNode {
   }
 }
 
-export type Operator = "add" | "subtract" | "divide" | "multiply";
+export type InPlaceOperationType = "buildUp" | "knockDown" | "turnUp" | "turnDown" | "turnRound";
 
-export type ExpressionNode =
-  | NumberLiteralNode
-  | StringLiteralNode
-  | MysteriousLiteralNode
-  | NullLiteralNode
-  | BooleanLiteralNode
-  | IdentifierNode;
+export class InPlaceOperation extends ProgramNode {
+  constructor(public operationType: InPlaceOperationType, public target: Identifier) {
+    super("inPlace");
+  }
 
-export type StatementNode =
-  | CommentNode
-  | AssignmentNode
-  | FunctionCallNode
-  | FunctionDeclarationNode;
+  toString(): string {
+    return `${this.operationType}(${this.target})`;
+  }
+}
 
-export type Program = StatementNode[];
+export type Identifier = Variable | Pronoun;
+
+export type Literal = NumberLiteral | StringLiteral | BooleanLiteral | Mysterious | NullLiteral;
+
+export type SimpleExpression = Literal | Identifier;
+
+export type Expression = SimpleExpression | BinaryOperation | UnaryOperation | FunctionCall;
+
+export type Statement =
+  | Comment
+  | Assignment
+  | FunctionCall
+  | FunctionDeclaration
+  | InPlaceOperation;
+
+export type Program = Statement[];
 
 export type Parser = (program: Program, lines: string[], lineIndex: number) => number;
