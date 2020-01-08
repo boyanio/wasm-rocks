@@ -1,1 +1,1 @@
-export * from "./watEmitter";
+export { emitWat } from "./watEmitter";

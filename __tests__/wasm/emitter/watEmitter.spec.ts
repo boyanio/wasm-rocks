@@ -6,7 +6,7 @@ import {
   emitWatExport,
   emitWatModule,
   emitWatFunctionDeclaration
-} from "../../../src/wasm/emitter";
+} from "../../../src/wasm/emitter/watEmitter";
 import {
   NumberLiteral,
   BinaryOperation,
