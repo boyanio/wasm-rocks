@@ -1,4 +1,4 @@
-import { transform } from "../../src/rockstar/transformer";
+import { transform } from "../../src/wasm/transformer";
 import {
   parse,
   FunctionDeclaration,
@@ -9,7 +9,7 @@ import {
   Pronoun
 } from "../../src/rockstar/parser";
 
-describe("rockstar", () => {
+describe("wasm", () => {
   describe("transformer", () => {
     it("creates a main function with global statements, if none exists", () => {
       const code = `

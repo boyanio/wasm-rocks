@@ -1,4 +1,4 @@
-import { TransformedProgram } from "../../rockstar/transformer";
+import { TransformedProgram, MainProcedure } from "../transformer";
 import {
   NumberLiteral,
   BinaryOperation,
@@ -9,8 +9,12 @@ import {
   Statement
 } from "../../rockstar/parser";
 
+const formatWatPath = (path: string[]): string => path.map(x => `"${x}"`).join(" ");
+
+const enclose = (what: string): string => `(${what})`;
+
 export const emitStatement = (node: Statement): string => {
-  return "";
+  return "()";
 };
 
 export const emitExpression = (node: SimpleExpression): string => {
@@ -52,50 +56,57 @@ export const emitWatFunctionCall = (node: FunctionCall): string => {
 };
 
 export const emitWatFunctionDeclaration = (node: FunctionDeclaration): string => {
-  const params = node.args.map((a, i) => `(param $${i} f32)`).join(" ");
-  const result = node.result ? `(result f32)` : null;
-  const watFunctionParamsAndResult = `func $${node.name} ${params} ${result}`.trim();
-  const body = node.body.map(x => emitStatement(x)).join(" ");
-  return `(${watFunctionParamsAndResult} ${body})`;
+  // TODO: args and results are always f32
+  const watArgs = node.args.map((a, i) => `(param $${i} f32)`).join(" ");
+  const watResult = "(result f32)";
+  const watFunctionNameAndArgs = `func $${node.name} ${watArgs}`.trim();
+  const watBody = node.body.map(emitStatement).join(" ");
+  return enclose(`${watFunctionNameAndArgs} ${watResult} ${watBody}`.trim());
 };
 
 export const emitWatModule = (contents: string[]): string => {
   return `(module ${contents.join(" ")})`;
 };
 
-// export const emitWatImport = (path: string[], node: FunctionCall): string => {
-//   const formattedPath = path.map(x => `"${x}"`).join(" ");
-//   const fnArgs = node.args.map((a, i))
-//   const fn = `(func $${node.name})`;
-//   return `(import ${formattedPath} ${emitWatFunctionDeclaration(node)})`;
-// };
+export const emitWatMemory = (index: number, minSize: number, maxSize?: number): string =>
+  enclose(`memory $${index} ${minSize} ${maxSize || ""}`.trim());
 
-export const emitWatMemory = (): string => "(memory $0 1)";
+export type WatExportType = "func" | "memory" | "table" | "global";
 
-export const emitWatExportMemory = (): string => '(export "memory" (memory $0))';
+export const emitWatExport = (path: string[], what: WatExportType, name: string): string =>
+  `(export ${formatWatPath(path)} (${what} $${name}))`;
 
-export const emitWatExport = (path: string[], what: string, name: string): string => {
-  const formattedPath = path.map(x => `"${x}"`).join(" ");
-  return `(export ${formattedPath} (${what} $${name}))`;
-};
+export const emitWatMain = (main: MainProcedure): string =>
+  `(func $${main.name} (result i32) ${main.body.map(emitStatement).join(" ")} (i32.const 0))`;
 
 export const emitWat = (ast: TransformedProgram): string => {
-  const declaredFunctionNames = new Set<string>(ast.map(x => x.name));
-  const calledFunctions: { [fnName: string]: FunctionCall } = ast
-    .reduce<FunctionCall[]>(
-      (calledFns, fnNode) => [
-        ...calledFns,
-        ...(fnNode.body.filter(x => x.type === "call") as FunctionCall[])
-      ],
-      [] as FunctionCall[]
-    )
-    .reduce((calledFns, fn) => Object.assign(calledFns, { [fn.name]: fn }), {});
-  const importedFunctions = Object.keys(calledFunctions)
-    .filter(fnName => !declaredFunctionNames.has(fnName))
-    .map(fnName => calledFunctions[fnName]);
+  // TODO: determine imports
+  // const declaredFunctionNames = new Set<string>(
+  //   ast.filter(x => x.type !== "main").map(x => x.name)
+  // );
 
-  //const watImports = importedFunctions.map(fn => emitWatImport(["env", fn.name], fn));
+  // const calledFunctions: { [fnName: string]: FunctionCall } = ast
+  //   .reduce<FunctionCall[]>(
+  //     (calledFns, fnNode) => [
+  //       ...calledFns,
+  //       ...(fnNode.body.filter(x => x.type === "call") as FunctionCall[])
+  //     ],
+  //     []
+  //   )
+  //   .reduce((calledFns, fn) => Object.assign(calledFns, { [fn.name]: fn }), {});
+
+  // const watImports = Object.keys(calledFunctions)
+  //   .filter(fnName => !declaredFunctionNames.has(fnName))
+  //   .map(fnName => emitWatImport(["env", fnName], calledFunctions[fnName]));
+
+  const main = ast.find(x => x.type === "main") as MainProcedure;
+  if (!main) throw new Error("The provided AST does not contain a `main` procedure");
+
+  const memoryIndex = 0;
   return emitWatModule([
-    //  ...watImports
+    emitWatMemory(memoryIndex, 1),
+    emitWatExport(["memory"], "memory", `${memoryIndex}`),
+    emitWatExport(["main"], "func", main.name),
+    emitWatMain(main)
   ]);
 };

@@ -1,25 +1,7 @@
 import { escapeDoubleQuotes } from "../../utils/string-utils";
 
-export type ProgramNodeType =
-  | "comment"
-  | "assignment"
-  | "number"
-  | "string"
-  | "null"
-  | "mysterious"
-  | "boolean"
-  | "variable"
-  | "pronoun"
-  | "binaryOperation"
-  | "unaryOperation"
-  | "inPlaceMutation"
-  | "function"
-  | "call"
-  | "say"
-  | "variable";
-
 export abstract class ProgramNode {
-  constructor(public type: ProgramNodeType) {}
+  constructor(public type: string) {}
 
   toString(): string {
     return this.type;

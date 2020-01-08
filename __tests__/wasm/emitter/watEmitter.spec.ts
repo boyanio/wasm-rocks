@@ -1,14 +1,20 @@
 import {
   emitExpression,
   emitWatBinaryExpression,
-  emitWatFunctionCall
+  emitWatFunctionCall,
+  emitWatMemory,
+  emitWatExport,
+  emitWatModule,
+  emitWatFunctionDeclaration
 } from "../../../src/wasm/emitter";
 import {
   NumberLiteral,
   BinaryOperation,
   NullLiteral,
   Mysterious,
-  FunctionCall
+  FunctionCall,
+  FunctionDeclaration,
+  Variable
 } from "../../../src/rockstar/parser";
 
 describe("wasm", () => {
@@ -76,6 +82,58 @@ describe("wasm", () => {
           new FunctionCall("say", [new NumberLiteral(4), new NumberLiteral(5)])
         );
         expect(wat).toEqual("(call $say (f32.const 4) (f32.const 5))");
+      });
+    });
+
+    describe("memory", () => {
+      it("emits memory with min size", () => {
+        const wat = emitWatMemory(1, 5);
+        expect(wat).toEqual("(memory $1 5)");
+      });
+
+      it("emits memory with min and max size", () => {
+        const wat = emitWatMemory(1, 5, 10);
+        expect(wat).toEqual("(memory $1 5 10)");
+      });
+    });
+
+    describe("exports", () => {
+      it("emits memory export", () => {
+        const wat = emitWatExport(["a", "b"], "memory", "0");
+        expect(wat).toEqual('(export "a" "b" (memory $0))');
+      });
+
+      it("emits function export", () => {
+        const wat = emitWatExport(["what"], "func", "fnname");
+        expect(wat).toEqual('(export "what" (func $fnname))');
+      });
+    });
+
+    describe("module", () => {
+      it("emits module", () => {
+        const wat = emitWatModule(["test"]);
+        expect(wat).toEqual("(module test)");
+      });
+    });
+
+    describe("functions", () => {
+      it("emits always function with float result", () => {
+        const wat = emitWatFunctionDeclaration(
+          new FunctionDeclaration("test", [], new Variable("var"), [])
+        );
+        expect(wat).toEqual("(func $test (result f32))");
+      });
+
+      it("emits arguments with increasing index", () => {
+        const wat = emitWatFunctionDeclaration(
+          new FunctionDeclaration(
+            "test",
+            [new Variable("a"), new Variable("b")],
+            new Variable("var"),
+            []
+          )
+        );
+        expect(wat).toEqual("(func $test (param $0 f32) (param $1 f32) (result f32))");
       });
     });
   });

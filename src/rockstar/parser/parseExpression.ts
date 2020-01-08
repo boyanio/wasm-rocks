@@ -122,16 +122,9 @@ const literalParsers: ExpressionParser[] = [
 export const parseLiteral = (input: string): Literal | null =>
   literalParsers.reduce<Literal | null>((node, parser) => node || parser(input), null);
 
-const simpleExpressionParsers: ExpressionParser[] = [
-  parseMysterious,
-  parseNullLiteral,
-  parseStringLiteral,
-  parseBooleanLiteral,
-  parseNumberLiteral,
-  parseVariable
-];
+const simpleExpressionParsers: ExpressionParser[] = [parseLiteral, parsePronoun, parseVariable];
 
-const parseSimpleExpression: ExpressionParser = (input: string): SimpleExpression | null =>
+export const parseSimpleExpression = (input: string): SimpleExpression | null =>
   simpleExpressionParsers.reduce<SimpleExpression | null>(
     (node, parser) => node || parser(input),
     null
