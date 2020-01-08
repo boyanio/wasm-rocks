@@ -1,11 +1,11 @@
-import { parse, InPlaceOperation } from "../../../src/rockstar/parser";
+import { parse, InPlaceMutation } from "../../../src/rockstar/parser";
 
 type CaseArg = string | number | null;
 type Cases = { [key: string]: CaseArg[][] };
 
 describe("rockstar", () => {
   describe("parser", () => {
-    describe("in-place operations", () => {
+    describe("in-place mutations", () => {
       const cases: Cases = {
         "increment / decrement": [
           ["Build my world up", "buildUp", 'var("my world")', 1],
@@ -37,10 +37,10 @@ describe("rockstar", () => {
               // all are equal
               expect(new Set<string>(ast.map(x => x.toString())).size).toEqual(1);
 
-              const node = ast[0] as InPlaceOperation;
-              expect(node.type).toEqual("inPlace");
+              const node = ast[0] as InPlaceMutation;
+              expect(node.type).toEqual("inPlaceMutation");
               expect(node.target.toString()).toEqual(identifier);
-              expect(node.operationType).toEqual(operationType);
+              expect(node.mutationType).toEqual(operationType);
             });
           }
         });

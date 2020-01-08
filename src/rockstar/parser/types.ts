@@ -12,9 +12,11 @@ export type ProgramNodeType =
   | "pronoun"
   | "binaryOperation"
   | "unaryOperation"
-  | "inPlace"
+  | "inPlaceMutation"
   | "function"
-  | "call";
+  | "call"
+  | "say"
+  | "variable";
 
 export abstract class ProgramNode {
   constructor(public type: ProgramNodeType) {}
@@ -114,6 +116,16 @@ export class Assignment extends ProgramNode {
   }
 }
 
+export class VariableDeclaration extends ProgramNode {
+  constructor(public variable: Variable, public value: Literal) {
+    super("variable");
+  }
+
+  toString(): string {
+    return `${this.variable} = ${this.value}`;
+  }
+}
+
 export type Operator = "add" | "subtract" | "divide" | "multiply";
 
 const operatorSymbols: { [key: string]: string } = {
@@ -174,15 +186,25 @@ export class FunctionDeclaration extends ProgramNode {
   }
 }
 
-export type InPlaceOperationType = "buildUp" | "knockDown" | "turnUp" | "turnDown" | "turnRound";
+export type InPlaceMutationType = "buildUp" | "knockDown" | "turnUp" | "turnDown" | "turnRound";
 
-export class InPlaceOperation extends ProgramNode {
-  constructor(public operationType: InPlaceOperationType, public target: Identifier) {
-    super("inPlace");
+export class InPlaceMutation extends ProgramNode {
+  constructor(public mutationType: InPlaceMutationType, public target: Identifier) {
+    super("inPlaceMutation");
   }
 
   toString(): string {
-    return `${this.operationType}(${this.target})`;
+    return `${this.mutationType}(${this.target})`;
+  }
+}
+
+export class SayCall extends ProgramNode {
+  constructor(public what: SimpleExpression) {
+    super("say");
+  }
+
+  toString(): string {
+    return `${this.type}(${this.what})`;
   }
 }
 
@@ -199,7 +221,9 @@ export type Statement =
   | Assignment
   | FunctionCall
   | FunctionDeclaration
-  | InPlaceOperation;
+  | InPlaceMutation
+  | SayCall
+  | VariableDeclaration;
 
 export type Program = Statement[];
 

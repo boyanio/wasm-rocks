@@ -11,7 +11,9 @@ describe("rockstar", () => {
         ["Shout it.", "say(pronoun())"],
         ["Whisper Y", 'say(var("y"))'],
         ["Scream Y", 'say(var("y"))'],
-        ["Say Y", 'say(var("y"))']
+        ["Say Y", 'say(var("y"))'],
+        ["Say 5", "say(5)"],
+        ['Say "5"', 'say("5")']
       ];
       for (const [input, expression] of cases) {
         it(`${input} => ${expression}`, () => {
@@ -20,7 +22,7 @@ describe("rockstar", () => {
           expect(ast.length).toEqual(1);
 
           const node = ast[0];
-          expect(node.type).toEqual("call");
+          expect(node.type).toEqual("say");
           expect(node.toString()).toEqual(expression);
         });
       }

@@ -2,14 +2,16 @@ import { Program, Parser } from "./types";
 import { parseComment } from "./parseComment";
 import { parseAssignment } from "./parseAssignment";
 import { combineParsers } from "./combineParsers";
-import { parseFunctionCall } from "./parseFunctionCall";
-import { parseInPlaceOperation } from "./parseInPlaceOperation";
+import { parseIO } from "./parseIO";
+import { parseInPlaceMutation } from "./parseInPlaceMutation";
+import { parseVariableDeclaration } from "./parseVariableDeclaration";
 
 const parser: Parser = combineParsers([
   parseComment,
   parseAssignment,
-  parseInPlaceOperation,
-  parseFunctionCall
+  parseVariableDeclaration,
+  parseInPlaceMutation,
+  parseIO
 ]);
 
 const parseLines = (program: Program, lines: string[]): void => {

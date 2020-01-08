@@ -1,4 +1,4 @@
-import { Program, Parser, Pronoun, InPlaceOperation, InPlaceOperationType } from "./types";
+import { Program, Parser, Pronoun, InPlaceMutation, InPlaceMutationType } from "./types";
 import { parseVariable, isPronoun, parsePronoun } from "./parseExpression";
 import { combineParsers } from "./combineParsers";
 import { countOccurrences } from "../../utils/string-utils";
@@ -15,7 +15,7 @@ const parseIncrement: Parser = (program: Program, lines: string[], lineIndex: nu
   const change = countOccurrences(line, " up");
   Array.prototype.push.apply(
     program,
-    Array.from(Array(change)).map(() => new InPlaceOperation("buildUp", identifier))
+    Array.from(Array(change)).map(() => new InPlaceMutation("buildUp", identifier))
   );
   return lineIndex + 1;
 };
@@ -32,12 +32,12 @@ const parseDecrement: Parser = (program: Program, lines: string[], lineIndex: nu
   const change = countOccurrences(line, " down");
   Array.prototype.push.apply(
     program,
-    Array.from(Array(change)).map(() => new InPlaceOperation("knockDown", identifier))
+    Array.from(Array(change)).map(() => new InPlaceMutation("knockDown", identifier))
   );
   return lineIndex + 1;
 };
 
-const parseInPlaceOperationType = (input: string): InPlaceOperationType => {
+const parseInPlaceMutationType = (input: string): InPlaceMutationType => {
   switch (input) {
     case "around":
     case "round":
@@ -64,8 +64,8 @@ const parseVariableRounding: Parser = (
   const variable = parseVariable(match[2]);
   if (!variable) return lineIndex;
 
-  const operationType = parseInPlaceOperationType(match[1]);
-  program.push(new InPlaceOperation(operationType, variable));
+  const operationType = parseInPlaceMutationType(match[1]);
+  program.push(new InPlaceMutation(operationType, variable));
   return lineIndex + 1;
 };
 
@@ -81,12 +81,12 @@ const parsePronounRounding: Parser = (
 
   if (!isPronoun(match[1])) return lineIndex;
 
-  const operationType = parseInPlaceOperationType(match[2]);
-  program.push(new InPlaceOperation(operationType, new Pronoun()));
+  const operationType = parseInPlaceMutationType(match[2]);
+  program.push(new InPlaceMutation(operationType, new Pronoun()));
   return lineIndex + 1;
 };
 
-export const parseInPlaceOperation: Parser = combineParsers([
+export const parseInPlaceMutation: Parser = combineParsers([
   parseIncrement,
   parseDecrement,
   parseVariableRounding,
