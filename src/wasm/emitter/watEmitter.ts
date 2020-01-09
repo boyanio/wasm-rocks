@@ -8,10 +8,9 @@ import {
   FunctionDeclaration,
   Statement
 } from "../../rockstar/parser";
+import { WatFormatter } from "./watFormatter";
 
 const formatWatPath = (path: string[]): string => path.map(x => `"${x}"`).join(" ");
-
-const enclose = (what: string): string => `(${what})`;
 
 export const emitStatement = (node: Statement): string => {
   return "()";
@@ -49,11 +48,8 @@ export const emitWatBinaryExpression = (node: BinaryOperation): string => {
   return `(${op} ${left} ${right})`;
 };
 
-export const emitWatFunctionCall = (node: FunctionCall): string => {
-  const watArgs = node.args.map(a => emitExpression(a));
-  const watCall = `call $${node.name} ${watArgs.join(" ")}`.trim();
-  return `(${watCall})`;
-};
+export const emitWatFunctionCall = (formatter: WatFormatter, node: FunctionCall): string =>
+  formatter(`call $${node.name}`, node.args.map(emitExpression));
 
 export const emitWatFunctionDeclaration = (node: FunctionDeclaration): string => {
   // TODO: args and results are always f32
@@ -61,25 +57,32 @@ export const emitWatFunctionDeclaration = (node: FunctionDeclaration): string =>
   const watResult = "(result f32)";
   const watFunctionNameAndArgs = `func $${node.name} ${watArgs}`.trim();
   const watBody = node.body.map(emitStatement).join(" ");
-  return enclose(`${watFunctionNameAndArgs} ${watResult} ${watBody}`.trim());
+  return `${watFunctionNameAndArgs} ${watResult} ${watBody}`.trim();
 };
 
-export const emitWatModule = (contents: string[]): string => {
-  return `(module ${contents.join(" ")})`;
-};
+export const emitWatModule = (formatter: WatFormatter, contents: string[]): string =>
+  formatter("module", contents);
 
-export const emitWatMemory = (index: number, minSize: number, maxSize?: number): string =>
-  enclose(`memory $${index} ${minSize} ${maxSize || ""}`.trim());
+export const emitWatMemory = (
+  formatter: WatFormatter,
+  index: number,
+  minSize: number,
+  maxSize?: number
+): string => formatter(`memory $${index} ${minSize} ${maxSize || ""}`.trim());
 
 export type WatExportType = "func" | "memory" | "table" | "global";
 
-export const emitWatExport = (path: string[], what: WatExportType, name: string): string =>
-  `(export ${formatWatPath(path)} (${what} $${name}))`;
+export const emitWatExport = (
+  formatter: WatFormatter,
+  path: string[],
+  what: WatExportType,
+  name: string
+): string => formatter(`export ${formatWatPath(path)} (${what} $${name})`);
 
-export const emitWatMain = (main: MainProcedure): string =>
-  `(func $${main.name} (result i32) ${main.body.map(emitStatement).join(" ")} (i32.const 0))`;
+export const emitWatMain = (formatter: WatFormatter, main: MainProcedure): string =>
+  formatter(`func $${main.name} (result i32)`, [...main.body.map(emitStatement), "(i32.const 0)"]);
 
-export const emitWat = (ast: TransformedProgram): string => {
+export const emitWat = (formatter: WatFormatter, ast: TransformedProgram): string => {
   // TODO: determine imports
   // const declaredFunctionNames = new Set<string>(
   //   ast.filter(x => x.type !== "main").map(x => x.name)
@@ -103,10 +106,10 @@ export const emitWat = (ast: TransformedProgram): string => {
   if (!main) throw new Error("The provided AST does not contain a `main` procedure");
 
   const memoryIndex = 0;
-  return emitWatModule([
-    emitWatMemory(memoryIndex, 1),
-    emitWatExport(["memory"], "memory", `${memoryIndex}`),
-    emitWatExport(["main"], "func", main.name),
-    emitWatMain(main)
+  return emitWatModule(formatter, [
+    emitWatMemory(formatter, memoryIndex, 1),
+    emitWatExport(formatter, ["memory"], "memory", `${memoryIndex}`),
+    emitWatExport(formatter, ["main"], "func", main.name),
+    emitWatMain(formatter, main)
   ]);
 };
