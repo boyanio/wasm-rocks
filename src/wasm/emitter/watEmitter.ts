@@ -51,13 +51,16 @@ export const emitWatBinaryExpression = (node: BinaryOperation): string => {
 export const emitWatFunctionCall = (formatter: WatFormatter, node: FunctionCall): string =>
   formatter(`call $${node.name}`, node.args.map(emitExpression));
 
-export const emitWatFunctionDeclaration = (node: FunctionDeclaration): string => {
+export const emitWatFunctionDeclaration = (
+  formatter: WatFormatter,
+  node: FunctionDeclaration
+): string => {
   // TODO: args and results are always f32
   const watArgs = node.args.map((a, i) => `(param $${i} f32)`).join(" ");
   const watResult = "(result f32)";
   const watFunctionNameAndArgs = `func $${node.name} ${watArgs}`.trim();
-  const watBody = node.body.map(emitStatement).join(" ");
-  return `${watFunctionNameAndArgs} ${watResult} ${watBody}`.trim();
+  const watBody = node.body.map(emitStatement);
+  return formatter(`${watFunctionNameAndArgs} ${watResult}`, watBody);
 };
 
 export const emitWatModule = (formatter: WatFormatter, contents: string[]): string =>

@@ -16,6 +16,7 @@ import {
   FunctionDeclaration,
   Variable
 } from "../../../src/rockstar/parser";
+import { noFormat } from "../../../src/wasm/emitter";
 
 describe("wasm", () => {
   describe("watEmitter", () => {
@@ -68,17 +69,21 @@ describe("wasm", () => {
 
     describe("calls", () => {
       it("emits function call without argument", () => {
-        const wat = emitWatFunctionCall(new FunctionCall("say", []));
+        const wat = emitWatFunctionCall(noFormat(), new FunctionCall("say", []));
         expect(wat).toEqual("(call $say)");
       });
 
       it("emits function call with one argument", () => {
-        const wat = emitWatFunctionCall(new FunctionCall("say", [new NumberLiteral(4)]));
+        const wat = emitWatFunctionCall(
+          noFormat(),
+          new FunctionCall("say", [new NumberLiteral(4)])
+        );
         expect(wat).toEqual("(call $say (f32.const 4))");
       });
 
       it("emits function call with multiple arguments", () => {
         const wat = emitWatFunctionCall(
+          noFormat(),
           new FunctionCall("say", [new NumberLiteral(4), new NumberLiteral(5)])
         );
         expect(wat).toEqual("(call $say (f32.const 4) (f32.const 5))");
@@ -87,31 +92,31 @@ describe("wasm", () => {
 
     describe("memory", () => {
       it("emits memory with min size", () => {
-        const wat = emitWatMemory(1, 5);
+        const wat = emitWatMemory(noFormat(), 1, 5);
         expect(wat).toEqual("(memory $1 5)");
       });
 
       it("emits memory with min and max size", () => {
-        const wat = emitWatMemory(1, 5, 10);
+        const wat = emitWatMemory(noFormat(), 1, 5, 10);
         expect(wat).toEqual("(memory $1 5 10)");
       });
     });
 
     describe("exports", () => {
       it("emits memory export", () => {
-        const wat = emitWatExport(["a", "b"], "memory", "0");
+        const wat = emitWatExport(noFormat(), ["a", "b"], "memory", "0");
         expect(wat).toEqual('(export "a" "b" (memory $0))');
       });
 
       it("emits function export", () => {
-        const wat = emitWatExport(["what"], "func", "fnname");
+        const wat = emitWatExport(noFormat(), ["what"], "func", "fnname");
         expect(wat).toEqual('(export "what" (func $fnname))');
       });
     });
 
     describe("module", () => {
       it("emits module", () => {
-        const wat = emitWatModule(["test"]);
+        const wat = emitWatModule(noFormat(), ["test"]);
         expect(wat).toEqual("(module test)");
       });
     });
@@ -119,6 +124,7 @@ describe("wasm", () => {
     describe("functions", () => {
       it("emits always function with float result", () => {
         const wat = emitWatFunctionDeclaration(
+          noFormat(),
           new FunctionDeclaration("test", [], new Variable("var"), [])
         );
         expect(wat).toEqual("(func $test (result f32))");
@@ -126,6 +132,7 @@ describe("wasm", () => {
 
       it("emits arguments with increasing index", () => {
         const wat = emitWatFunctionDeclaration(
+          noFormat(),
           new FunctionDeclaration(
             "test",
             [new Variable("a"), new Variable("b")],
