@@ -1,8 +1,13 @@
 const path = require("path");
+const CopyPlugin = require("copy-webpack-plugin");
 
 module.exports = {
   entry: "./src/index.ts",
   mode: "production",
+  output: {
+    filename: "index.js",
+    path: path.resolve(__dirname, "build")
+  },
   module: {
     rules: [
       {
@@ -18,8 +23,5 @@ module.exports = {
   resolve: {
     extensions: [".ts", ".js"]
   },
-  output: {
-    filename: "index.js",
-    path: path.resolve(__dirname, "public")
-  }
+  plugins: [new CopyPlugin([{ from: "public" }])]
 };
