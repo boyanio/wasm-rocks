@@ -24,6 +24,12 @@ const parseLetAssignment = (line: string): Assignment | null => {
   return match ? parseIdentifierAssignment(match[1], match[2]) : null;
 };
 
+/**
+ * Parses a Let/Put assignment
+ *
+ *    Let <variable> be <expression>
+ *    Put <expression> into <variable>
+ */
 export const parseAssignment: Parser = (
   program: Program,
   lines: string[],

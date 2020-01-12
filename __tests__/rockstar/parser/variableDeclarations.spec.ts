@@ -59,7 +59,7 @@ describe("rockstar", () => {
               expect(ast.length).toEqual(1);
 
               const node = ast[0] as VariableDeclaration;
-              expect(node.type).toEqual("variable");
+              expect(node.type).toEqual("variableDeclaration");
               expect(node.variable.name).toEqual(variable);
               expect(node.value.toString()).toEqual(literal);
             });

@@ -1,6 +1,5 @@
-import { parse } from "./rockstar/parser";
-import { transform } from "./wasm/transformer";
-import { emitWat, withIdentation } from "./wasm/emitter";
+import { withIdentation } from "./wasm/emitter";
+import { toWat } from "./transpiler";
 
 (function init(): void {
   const sourceEditor = document.getElementById("rockstar-source") as HTMLTextAreaElement;
@@ -9,7 +8,7 @@ import { emitWat, withIdentation } from "./wasm/emitter";
   sourceEditor.addEventListener("keyup", () => {
     let what: string;
     try {
-      what = emitWat(withIdentation(2), transform(parse(sourceEditor.value)));
+      what = toWat(sourceEditor.value, withIdentation(2));
     } catch (err) {
       what = err.toString();
     }

@@ -1,5 +1,14 @@
 import { Parser, Program, Comment } from "./types";
 
+/**
+ * Parses a comment
+ *
+ *    (<anystring>)
+ *
+ * @param program
+ * @param lines
+ * @param lineIndex
+ */
 export const parseComment: Parser = (
   program: Program,
   lines: string[],

@@ -9,8 +9,10 @@ export abstract class ProgramNode {
 }
 
 export class Comment extends ProgramNode {
+  static type = "comment";
+
   constructor(public value: string) {
-    super("comment");
+    super(Comment.type);
   }
 
   toString(): string {
@@ -19,8 +21,10 @@ export class Comment extends ProgramNode {
 }
 
 export class NumberLiteral extends ProgramNode {
+  static type = "number";
+
   constructor(public value: number) {
-    super("number");
+    super(NumberLiteral.type);
   }
 
   toString(): string {
@@ -29,8 +33,10 @@ export class NumberLiteral extends ProgramNode {
 }
 
 export class StringLiteral extends ProgramNode {
+  static type = "string";
+
   constructor(public value: string) {
-    super("string");
+    super(StringLiteral.type);
   }
 
   toString(): string {
@@ -39,8 +45,10 @@ export class StringLiteral extends ProgramNode {
 }
 
 export class BooleanLiteral extends ProgramNode {
+  static type = "boolean";
+
   constructor(public value: boolean) {
-    super("boolean");
+    super(BooleanLiteral.type);
   }
 
   toString(): string {
@@ -49,28 +57,34 @@ export class BooleanLiteral extends ProgramNode {
 }
 
 export class Mysterious extends ProgramNode {
+  static type = "mysterious";
+
   constructor() {
-    super("mysterious");
+    super(Mysterious.type);
   }
 
   toString(): string {
-    return "mysterious";
+    return Mysterious.type;
   }
 }
 
 export class NullLiteral extends ProgramNode {
+  static type = "null";
+
   constructor() {
-    super("null");
+    super(NullLiteral.type);
   }
 
   toString(): string {
-    return "null";
+    return NullLiteral.type;
   }
 }
 
 export class Variable extends ProgramNode {
+  static type = "variable";
+
   constructor(public name: string) {
-    super("variable");
+    super(Variable.type);
   }
 
   toString(): string {
@@ -79,8 +93,10 @@ export class Variable extends ProgramNode {
 }
 
 export class Pronoun extends ProgramNode {
+  static type = "pronoun";
+
   constructor() {
-    super("pronoun");
+    super(Pronoun.type);
   }
 
   toString(): string {
@@ -89,8 +105,10 @@ export class Pronoun extends ProgramNode {
 }
 
 export class Assignment extends ProgramNode {
+  static type = "assignment";
+
   constructor(public target: Identifier, public expression: Expression) {
-    super("assignment");
+    super(Assignment.type);
   }
 
   toString(): string {
@@ -99,8 +117,10 @@ export class Assignment extends ProgramNode {
 }
 
 export class VariableDeclaration extends ProgramNode {
+  static type = "variableDeclaration";
+
   constructor(public variable: Variable, public value: Literal) {
-    super("variable");
+    super(VariableDeclaration.type);
   }
 
   toString(): string {
@@ -118,12 +138,14 @@ const operatorSymbols: { [key: string]: string } = {
 };
 
 export class BinaryOperation extends ProgramNode {
+  static type = "binaryOperation";
+
   constructor(
     public operator: Operator,
     public left: SimpleExpression,
     public right: SimpleExpression
   ) {
-    super("binaryOperation");
+    super(BinaryOperation.type);
   }
 
   toString(): string {
@@ -132,8 +154,10 @@ export class BinaryOperation extends ProgramNode {
 }
 
 export class UnaryOperation extends ProgramNode {
+  static type = "unaryOperation";
+
   constructor(public operator: Operator, public expression: SimpleExpression) {
-    super("unaryOperation");
+    super(UnaryOperation.type);
   }
 
   toString(): string {
@@ -142,8 +166,10 @@ export class UnaryOperation extends ProgramNode {
 }
 
 export class FunctionCall extends ProgramNode {
+  static type = "call";
+
   constructor(public name: string, public args: SimpleExpression[]) {
-    super("call");
+    super(FunctionCall.type);
   }
 
   toString(): string {
@@ -152,13 +178,15 @@ export class FunctionCall extends ProgramNode {
 }
 
 export class FunctionDeclaration extends ProgramNode {
+  static type = "function";
+
   constructor(
     public name: string,
     public args: Variable[],
     public result: SimpleExpression,
     public body: Statement[]
   ) {
-    super("function");
+    super(FunctionDeclaration.type);
   }
 
   toString(): string {
@@ -168,21 +196,73 @@ export class FunctionDeclaration extends ProgramNode {
   }
 }
 
-export type InPlaceMutationType = "buildUp" | "knockDown" | "turnUp" | "turnDown" | "turnRound";
+export class RoundOperation extends ProgramNode {
+  static type = "round";
 
-export class InPlaceMutation extends ProgramNode {
-  constructor(public mutationType: InPlaceMutationType, public target: Identifier) {
-    super("inPlaceMutation");
+  constructor(public target: Identifier) {
+    super(RoundOperation.type);
   }
 
   toString(): string {
-    return `${this.mutationType}(${this.target})`;
+    return `${this.type}(${this.target})`;
+  }
+}
+
+export class RoundUpOperation extends ProgramNode {
+  static type = "roundUp";
+
+  constructor(public target: Identifier) {
+    super(RoundUpOperation.type);
+  }
+
+  toString(): string {
+    return `${this.type}(${this.target})`;
+  }
+}
+
+export class RoundDownOperation extends ProgramNode {
+  static type = "roundDown";
+
+  constructor(public target: Identifier) {
+    super(RoundDownOperation.type);
+  }
+
+  toString(): string {
+    return `${this.type}(${this.target})`;
+  }
+}
+
+export type ArithmeticRoundingOperation = RoundOperation | RoundUpOperation | RoundDownOperation;
+
+export class IncrementOperation extends ProgramNode {
+  static type = "increment";
+
+  constructor(public target: Identifier) {
+    super(IncrementOperation.type);
+  }
+
+  toString(): string {
+    return `increment(${this.target})`;
+  }
+}
+
+export class DecrementOperation extends ProgramNode {
+  static type = "decrement";
+
+  constructor(public target: Identifier) {
+    super(DecrementOperation.type);
+  }
+
+  toString(): string {
+    return `decrement(${this.target})`;
   }
 }
 
 export class SayCall extends ProgramNode {
+  static type = "say";
+
   constructor(public what: SimpleExpression) {
-    super("say");
+    super(SayCall.type);
   }
 
   toString(): string {
@@ -192,9 +272,24 @@ export class SayCall extends ProgramNode {
 
 export type Identifier = Variable | Pronoun;
 
+export const isIdentifier = (node: ProgramNode): boolean =>
+  [Variable.type, Pronoun.type].includes(node.type);
+
 export type Literal = NumberLiteral | StringLiteral | BooleanLiteral | Mysterious | NullLiteral;
 
+export const isLiteral = (node: ProgramNode): boolean =>
+  [
+    NumberLiteral.type,
+    StringLiteral.type,
+    BooleanLiteral.type,
+    Mysterious.type,
+    NullLiteral.type
+  ].includes(node.type);
+
 export type SimpleExpression = Literal | Identifier;
+
+export const isSimpleExpression = (node: ProgramNode): boolean =>
+  isLiteral(node) || isIdentifier(node);
 
 export type Expression = SimpleExpression | BinaryOperation | UnaryOperation | FunctionCall;
 
@@ -203,9 +298,11 @@ export type Statement =
   | Assignment
   | FunctionCall
   | FunctionDeclaration
-  | InPlaceMutation
   | SayCall
-  | VariableDeclaration;
+  | VariableDeclaration
+  | RoundOperation
+  | IncrementOperation
+  | DecrementOperation;
 
 export type Program = Statement[];
 

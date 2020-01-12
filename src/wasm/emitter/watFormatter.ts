@@ -1,20 +1,52 @@
-export type WatFormatter = (header: string, body?: string[]) => string;
+export type WatFormatter = (...data: string[]) => string;
 
 const enclose = (what: string): string => `(${what})`;
 
-export const noFormat = (): WatFormatter => (header: string, body?: string[]): string =>
-  enclose([header, ...(body || [])].join(" "));
+export const noFormat = (): WatFormatter => (...data: string[]): string => enclose(data.join(" "));
 
-export const withIdentation = (identation: number): WatFormatter => (
-  header: string,
-  body?: string[]
-): string => {
+export const withIdentation = (identation: number): WatFormatter => (...data: string[]): string => {
+  if (data.length === 1) return data[0];
+
+  let header = "";
+  let body = "";
+  let footer = "";
+
   const whitespace = " ".repeat(identation);
   const nlWithWhitespace = `\n${whitespace}`;
-  const finalNL = body && body.length > 0 ? `\n` : "";
-  return enclose(
-    `${[header, ...(body || [])]
-      .map(x => x.replace(/\n/g, nlWithWhitespace))
-      .join(nlWithWhitespace)}`.trim() + finalNL
-  );
+
+  switch (data[0]) {
+    case "module": {
+      header = "(module" + nlWithWhitespace;
+      footer = "\n)";
+      body = data
+        .slice(1)
+        .map(x => x.replace(/\n/g, nlWithWhitespace))
+        .join(nlWithWhitespace);
+      break;
+    }
+    case "func": {
+      const paramsAndResultData = data
+        .slice(2)
+        .filter(x => x.startsWith("(param ") || x.startsWith("(result "));
+      const bodyData = data.slice(2 + paramsAndResultData.length);
+      const hasBody = bodyData.length > 0;
+
+      header = `(func ${data[1]} ${paramsAndResultData.join(" ")}`.trim();
+      if (hasBody) {
+        body = nlWithWhitespace + bodyData.join(nlWithWhitespace);
+        footer = "\n)";
+      } else {
+        footer = ")";
+      }
+      break;
+    }
+    default: {
+      header = "(";
+      footer = ")";
+      body = data.join(" ");
+      break;
+    }
+  }
+
+  return header + body + footer;
 };

@@ -3,14 +3,16 @@ import { parseComment } from "./parseComment";
 import { parseAssignment } from "./parseAssignment";
 import { combineParsers } from "./combineParsers";
 import { parseIO } from "./parseIO";
-import { parseInPlaceMutation } from "./parseInPlaceMutation";
+import { parseIncrementDecrement } from "./parseIncrementDecrement";
 import { parseVariableDeclaration } from "./parseVariableDeclaration";
+import { parseArithmeticRounding } from "./parseArithmeticRounding";
 
 const parser: Parser = combineParsers([
   parseComment,
   parseAssignment,
   parseVariableDeclaration,
-  parseInPlaceMutation,
+  parseIncrementDecrement,
+  parseArithmeticRounding,
   parseIO
 ]);
 
