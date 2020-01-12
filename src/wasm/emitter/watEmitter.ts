@@ -88,8 +88,8 @@ export const emitWat = (formatter: WatFormatter, ast: Module): string => {
   };
 
   return emitModule([
-    ...(ast.memories || []).map(emitMemory),
     ...(ast.imports || []).map(emitImport),
+    ...(ast.memories || []).map(emitMemory),
     ...(ast.functions || []).map(emitFunction),
     ...(ast.exports || []).map(emitExport)
   ]);
