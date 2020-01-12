@@ -1,4 +1,5 @@
 import { noFormat, emitWat } from "../../../src/wasm/emitter";
+import { Comment } from "src/wasm/ast";
 
 describe("wasm", () => {
   describe("watEmitter", () => {
@@ -58,6 +59,26 @@ describe("wasm", () => {
           exports: [{ name: "memory", id: "$0", exportType: "memory" }]
         });
         expect(wat).toEqual('(module (export "memory" (memory $0)))');
+      });
+
+      it("emits function export", () => {
+        const wat = emitWat(noFormat(), {
+          exports: [{ name: "hello", id: "$hello", exportType: "func" }]
+        });
+        expect(wat).toEqual('(module (export "hello" (func $hello)))');
+      });
+    });
+
+    describe("functions", () => {
+      it("emits comment in a function", () => {
+        const comment: Comment = {
+          instructionType: "comment",
+          value: "hello"
+        };
+        const wat = emitWat(noFormat(), {
+          functions: [{ id: "$hello", instructions: [comment] }]
+        });
+        expect(wat).toEqual("(module (func $hello (; hello ;)))");
       });
 
       it("emits function export", () => {

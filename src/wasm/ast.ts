@@ -10,7 +10,7 @@ export type ValueType = "f32" | "i32";
 export type ResultType = "f32" | "i32" | null;
 
 export type FunctionType = {
-  params: ValueType[];
+  params?: ValueType[];
   result?: ResultType;
 };
 
@@ -21,9 +21,9 @@ export type Local = {
 
 export type Function = {
   id: Identifier;
-  functionType: FunctionType;
-  locals: Local[];
-  instructions: Instruction[];
+  functionType?: FunctionType;
+  locals?: Local[];
+  instructions?: Instruction[];
 };
 
 export type VariableInstruction = {
@@ -101,7 +101,6 @@ export type Import = {
 };
 
 export type Module = {
-  types?: FunctionType[];
   functions?: Function[];
   exports?: Export[];
   imports?: Import[];

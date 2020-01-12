@@ -7,7 +7,8 @@ import {
   ConstInstruction,
   Memory,
   Export,
-  Import
+  Import,
+  Comment
 } from "../ast";
 
 export const emitWat = (formatter: WatFormatter, ast: Module): string => {
@@ -22,14 +23,14 @@ export const emitWat = (formatter: WatFormatter, ast: Module): string => {
     );
 
   const emitFunction = (func: Function): string => {
-    const { id, locals, instructions, functionType } = func;
+    const { id, locals = [], instructions = [], functionType = {} } = func;
     const body: string[] = [];
 
     // (local XX)
-    body.push(...locals.map(l => formatter("local", l.localType)));
+    body.push(...(locals || []).map(l => formatter("local", l.localType)));
 
     // body
-    for (const instruction of instructions) {
+    for (const instruction of instructions || []) {
       switch (instruction.instructionType) {
         case "variable": {
           const variable = instruction as VariableInstruction;
@@ -48,6 +49,12 @@ export const emitWat = (formatter: WatFormatter, ast: Module): string => {
           body.push(formatter(`${constInst.valueType}.const`, constInst.value.toString()));
           break;
         }
+
+        case "comment": {
+          const comment = instruction as Comment;
+          body.push(formatter(`; ${comment.value} ;`));
+          break;
+        }
       }
     }
 
@@ -55,7 +62,7 @@ export const emitWat = (formatter: WatFormatter, ast: Module): string => {
     return formatter(
       "func",
       id,
-      ...functionType.params.map(p => formatter("param", p)),
+      ...(functionType.params || []).map(p => formatter("param", p)),
       ...(functionType.result ? [functionType.result] : []).map(r => formatter("result", r)),
       ...body
     );
