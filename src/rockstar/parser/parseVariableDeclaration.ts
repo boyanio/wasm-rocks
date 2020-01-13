@@ -1,4 +1,5 @@
-import { Program, Parser, VariableDeclaration } from "./types";
+import { Parser } from "./types";
+import { Program, VariableDeclaration } from "../ast";
 import {
   parsePoeticNumberLiteral,
   parsePoeticStringLiteral,
@@ -16,7 +17,12 @@ const parseWithPoeticString = (line: string): VariableDeclaration | null => {
   const value = parsePoeticStringLiteral(match[2]);
   if (!value) return null;
 
-  return new VariableDeclaration(variable, value);
+  const variableDeclaration: VariableDeclaration = {
+    type: "variableDeclaration",
+    variable,
+    value
+  };
+  return variableDeclaration;
 };
 
 const parseWithNonStringPoeticLiteral = (line: string): VariableDeclaration | null => {
@@ -29,7 +35,12 @@ const parseWithNonStringPoeticLiteral = (line: string): VariableDeclaration | nu
   const value = parseLiteral(match[3]) || parsePoeticNumberLiteral(match[3]);
   if (!value) return null;
 
-  return new VariableDeclaration(variable, value);
+  const variableDeclaration: VariableDeclaration = {
+    type: "variableDeclaration",
+    variable,
+    value
+  };
+  return variableDeclaration;
 };
 
 export const parseVariableDeclaration: Parser = (

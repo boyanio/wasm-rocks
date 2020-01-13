@@ -1,4 +1,4 @@
-import { Program, Parser } from "./types";
+import { Program } from "../ast";
 import { parseComment } from "./parseComment";
 import { parseAssignment } from "./parseAssignment";
 import { combineParsers } from "./combineParsers";
@@ -6,6 +6,7 @@ import { parseIO } from "./parseIO";
 import { parseIncrementDecrement } from "./parseIncrementDecrement";
 import { parseVariableDeclaration } from "./parseVariableDeclaration";
 import { parseArithmeticRounding } from "./parseArithmeticRounding";
+import { Parser } from "./types";
 
 const parser: Parser = combineParsers([
   parseComment,

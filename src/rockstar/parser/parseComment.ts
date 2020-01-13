@@ -1,4 +1,5 @@
-import { Parser, Program, Comment } from "./types";
+import { Parser } from "./types";
+import { Program, Comment } from "../ast";
 
 /**
  * Parses a comment
@@ -17,7 +18,11 @@ export const parseComment: Parser = (
   const line = lines[lineIndex];
   const isComment = line.charAt(0) === "(" && line.charAt(line.length - 1) === ")";
   if (isComment) {
-    program.push(new Comment(line.substring(1, line.length - 1)));
+    const comment: Comment = {
+      type: "comment",
+      comment: line.substring(1, line.length - 1)
+    };
+    program.push(comment);
     return lineIndex + 1;
   }
   return lineIndex;

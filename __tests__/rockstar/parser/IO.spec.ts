@@ -1,31 +1,69 @@
 import { parse } from "../../../src/rockstar/parser";
-
-type Cases = string[][];
+import { SayCall, Variable, NumberLiteral, StringLiteral } from "src/rockstar/ast";
 
 describe("rockstar", () => {
   describe("parser", () => {
-    describe("function calls", () => {
-      const cases: Cases = [
-        ["Shout Y", 'say(var("y"))'],
-        ["Shout it", "say(pronoun())"],
-        ["Shout it.", "say(pronoun())"],
-        ["Whisper Y", 'say(var("y"))'],
-        ["Scream Y", 'say(var("y"))'],
-        ["Say Y", 'say(var("y"))'],
-        ["Say 5", "say(5)"],
-        ['Say "5"', 'say("5")']
-      ];
-      for (const [input, expression] of cases) {
-        it(`${input} => ${expression}`, () => {
-          const ast = parse(input);
+    describe("say", () => {
+      describe("say literal", () => {
+        it("Say 5", () => {
+          const ast = parse("Say 5");
 
           expect(ast.length).toEqual(1);
+          expect(ast[0].type).toEqual("say");
 
-          const node = ast[0];
-          expect(node.type).toEqual("say");
-          expect(node.toString()).toEqual(expression);
+          const node = ast[0] as SayCall;
+          expect(node.what.type).toEqual("number");
+          expect((node.what as NumberLiteral).value).toEqual(5);
         });
-      }
+
+        it('Say "5"', () => {
+          const ast = parse('Say "5"');
+
+          expect(ast.length).toEqual(1);
+          expect(ast[0].type).toEqual("say");
+
+          const node = ast[0] as SayCall;
+          expect(node.what.type).toEqual("string");
+          expect((node.what as StringLiteral).value).toEqual("5");
+        });
+      });
+
+      describe("say variable", () => {
+        type Cases = [string, string][];
+        const cases: Cases = [
+          ["Shout Y", "y"],
+          ["Whisper Y", "y"],
+          ["Scream Y", "y"],
+          ["Say Y", "y"]
+        ];
+        for (const [expression, variable] of cases) {
+          it(expression, () => {
+            const ast = parse(expression);
+
+            expect(ast.length).toEqual(1);
+            expect(ast[0].type).toEqual("say");
+
+            const node = ast[0] as SayCall;
+            expect(node.what.type).toEqual("variable");
+            expect((node.what as Variable).name).toEqual(variable);
+          });
+        }
+      });
+
+      describe("say pronoun", () => {
+        const cases = ["Shout it", "Shout it."];
+        for (const expression of cases) {
+          it(expression, () => {
+            const ast = parse(expression);
+
+            expect(ast.length).toEqual(1);
+            expect(ast[0].type).toEqual("say");
+
+            const node = ast[0] as SayCall;
+            expect(node.what.type).toEqual("pronoun");
+          });
+        }
+      });
     });
   });
 });

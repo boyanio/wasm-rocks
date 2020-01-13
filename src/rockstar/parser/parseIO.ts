@@ -1,4 +1,5 @@
-import { Program, Parser, SayCall } from "./types";
+import { Parser } from "./types";
+import { Program, SayCall } from "../ast";
 import { parseSimpleExpression } from "./parseExpression";
 
 const parseSay = (line: string): SayCall | null => {
@@ -8,7 +9,11 @@ const parseSay = (line: string): SayCall | null => {
   const what = parseSimpleExpression(match[2]);
   if (!what) return null;
 
-  return new SayCall(what);
+  const say: SayCall = {
+    type: "say",
+    what
+  };
+  return say;
 };
 
 export const parseIO: Parser = (program: Program, lines: string[], lineIndex: number): number => {

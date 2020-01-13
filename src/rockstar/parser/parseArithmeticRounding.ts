@@ -1,15 +1,15 @@
 import {
   Program,
-  Parser,
-  Pronoun,
   ArithmeticRoundingOperation,
   Identifier,
   RoundOperation,
   RoundUpOperation,
-  RoundDownOperation
-} from "./types";
+  RoundDownOperation,
+  Pronoun
+} from "../ast";
 import { parseVariable, isPronoun } from "./parseExpression";
 import { combineParsers } from "./combineParsers";
+import { Parser } from "./types";
 
 const createArithmeticRoundingOperation = (
   rounding: string,
@@ -17,12 +17,28 @@ const createArithmeticRoundingOperation = (
 ): ArithmeticRoundingOperation => {
   switch (rounding.toLowerCase()) {
     case "around":
-    case "round":
-      return new RoundOperation(target);
-    case "up":
-      return new RoundUpOperation(target);
-    case "down":
-      return new RoundDownOperation(target);
+    case "round": {
+      const operation: RoundOperation = {
+        type: "round",
+        target
+      };
+      return operation;
+    }
+
+    case "up": {
+      const operation: RoundUpOperation = {
+        type: "roundUp",
+        target
+      };
+      return operation;
+    }
+    case "down": {
+      const operation: RoundDownOperation = {
+        type: "roundDown",
+        target
+      };
+      return operation;
+    }
   }
 
   throw new Error(`Unknown rounding: ${rounding}`);
@@ -57,7 +73,10 @@ const parsePronounRounding: Parser = (
 
   if (!isPronoun(match[1])) return lineIndex;
 
-  program.push(createArithmeticRoundingOperation(match[2], new Pronoun()));
+  const pronoun: Pronoun = {
+    type: "pronoun"
+  };
+  program.push(createArithmeticRoundingOperation(match[2], pronoun));
   return lineIndex + 1;
 };
 

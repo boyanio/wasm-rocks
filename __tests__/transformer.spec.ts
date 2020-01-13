@@ -1,5 +1,6 @@
 import { transform } from "../src/transformer";
-import * as rockstar from "../src/rockstar/parser";
+import { parse } from "../src/rockstar/parser";
+import { Program as rockstarProgram } from "../src/rockstar/ast";
 
 describe("transformer", () => {
   it("creates an exported main function with global statements, if none exists", () => {
@@ -7,7 +8,7 @@ describe("transformer", () => {
     X is 5
     Shout it.
     `;
-    const rockstarAst = rockstar.parse(code);
+    const rockstarAst = parse(code);
     const wasmAst = transform(rockstarAst);
 
     expect(wasmAst.functions).toBeTruthy();
@@ -23,18 +24,32 @@ describe("transformer", () => {
   });
 
   it("throws if there are global statements and a main function", () => {
-    const rockstarAst: rockstar.Program = [
-      new rockstar.Assignment(new rockstar.Variable("x"), new rockstar.NumberLiteral(5)),
-      new rockstar.FunctionDeclaration("main", [], new rockstar.Pronoun(), [
-        new rockstar.Assignment(new rockstar.Variable("y"), new rockstar.NumberLiteral(5))
-      ])
+    const rockstarAst: rockstarProgram = [
+      {
+        type: "simpleAssignment",
+        target: { type: "variable", name: "x" },
+        expression: { type: "number", value: 5 }
+      },
+      {
+        type: "function",
+        name: "main",
+        args: [],
+        result: { type: "pronoun" },
+        statements: [
+          {
+            type: "simpleAssignment",
+            target: { type: "variable", name: "y" },
+            expression: { type: "number", value: 5 }
+          }
+        ]
+      }
     ];
     expect(() => transform(rockstarAst)).toThrow();
   });
 
   it("adds an import when calling a non-defined function", () => {
-    const rockstarAst: rockstar.Program = [
-      new rockstar.FunctionCall("alert", [new rockstar.NumberLiteral(5)])
+    const rockstarAst: rockstarProgram = [
+      { type: "call", name: "alert", args: [{ type: "number", value: 5 }] }
     ];
     const wasmAst = transform(rockstarAst);
 

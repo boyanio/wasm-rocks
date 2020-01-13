@@ -1,73 +1,57 @@
-import {
-  parse,
-  RoundOperation,
-  RoundUpOperation,
-  RoundDownOperation
-} from "../../../src/rockstar/parser";
-
-type Case = [string, string];
-type Cases = Case[];
+import { parse } from "../../../src/rockstar/parser";
+import { RoundOperation, Variable, ArithmeticRoundingOperation } from "../../../src/rockstar/ast";
 
 describe("rockstar", () => {
   describe("parser", () => {
     describe("arithmetic rounding", () => {
-      describe("round", () => {
-        const cases: Cases = [
-          ["Turn round X", 'var("x")'],
-          ["Turn around X", 'var("x")'],
-          ["Turn her around.", "pronoun()"],
-          ["Turn them round.", "pronoun()"]
-        ];
-        for (const [input, identifier] of cases) {
-          it(`${input} => round(${identifier})`, () => {
-            const ast = parse(input as string);
-
-            expect(ast.length).toEqual(1);
-
-            const firstNode = ast[0] as RoundOperation;
-            expect(firstNode.type).toEqual(RoundOperation.type);
-            expect(firstNode.target.toString()).toEqual(identifier);
-          });
+      type Cases = { [operation: string]: { variable: [string, string][]; pronoun: string[] } };
+      const cases: Cases = {
+        round: {
+          variable: [
+            ["Turn round X", "x"],
+            ["Turn around X", "x"]
+          ],
+          pronoun: ["Turn her around.", "Turn them round."]
+        },
+        roundUp: {
+          variable: [["Turn up X", "x"]],
+          pronoun: ["Turn it up", "Turn it up."]
+        },
+        roundDown: {
+          variable: [["Turn down X", "x"]],
+          pronoun: ["Turn it down", "Turn it down."]
         }
-      });
+      };
+      for (const operation of Object.keys(cases)) {
+        describe(`${operation} variable`, () => {
+          for (const [expression, variable] of cases[operation].variable) {
+            it(expression, () => {
+              const ast = parse(expression);
 
-      describe("round up", () => {
-        const cases: Cases = [
-          ["Turn up X", 'var("x")'],
-          ["Turn it up", "pronoun()"],
-          ["Turn it up.", "pronoun()"]
-        ];
-        for (const [input, identifier] of cases) {
-          it(`${input} => roundUp(${identifier})`, () => {
-            const ast = parse(input as string);
+              expect(ast.length).toEqual(1);
+              expect(ast[0].type).toEqual(operation);
 
-            expect(ast.length).toEqual(1);
+              const firstNode = ast[0] as RoundOperation;
+              expect(firstNode.target.type).toEqual("variable");
+              expect((firstNode.target as Variable).name).toEqual(variable);
+            });
+          }
+        });
 
-            const firstNode = ast[0] as RoundUpOperation;
-            expect(firstNode.type).toEqual(RoundUpOperation.type);
-            expect(firstNode.target.toString()).toEqual(identifier);
-          });
-        }
-      });
+        describe(`${operation} pronoun`, () => {
+          for (const expression of cases[operation].pronoun) {
+            it(expression, () => {
+              const ast = parse(expression);
 
-      describe("round down", () => {
-        const cases: Cases = [
-          ["Turn down X", 'var("x")'],
-          ["Turn them down", "pronoun()"],
-          ["Turn them down.", "pronoun()"]
-        ];
-        for (const [input, identifier] of cases) {
-          it(`${input} => roundDown(${identifier})`, () => {
-            const ast = parse(input as string);
+              expect(ast.length).toEqual(1);
+              expect(ast[0].type).toEqual(operation);
 
-            expect(ast.length).toEqual(1);
-
-            const firstNode = ast[0] as RoundDownOperation;
-            expect(firstNode.type).toEqual(RoundDownOperation.type);
-            expect(firstNode.target.toString()).toEqual(identifier);
-          });
-        }
-      });
+              const firstNode = ast[0] as ArithmeticRoundingOperation;
+              expect(firstNode.target.type).toEqual("pronoun");
+            });
+          }
+        });
+      }
     });
   });
 });

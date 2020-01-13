@@ -1,50 +1,53 @@
-import { parse, IncrementOperation, DecrementOperation } from "../../../src/rockstar/parser";
+import { parse } from "../../../src/rockstar/parser";
+import { IncrementOperation, DecrementOperation, Variable } from "../../../src/rockstar/ast";
 
 type Case = [string, string, number];
 type Cases = Case[];
 
 describe("rockstar", () => {
   describe("parser", () => {
-    describe("increment", () => {
+    describe("increment variable", () => {
       const cases: Cases = [
-        ["Build my world up", 'var("my world")', 1],
-        ["Build my world up, up", 'var("my world")', 2],
-        ["Build my world up up", 'var("my world")', 2]
+        ["Build my world up", "my world", 1],
+        ["Build my world up, up", "my world", 2],
+        ["Build my world up up", "my world", 2]
       ];
-      for (const [input, identifier, times] of cases) {
-        it(`${input} => ${times} x inrement(${identifier})`, () => {
-          const ast = parse(input as string);
+      for (const [expression, variable, times] of cases) {
+        it(expression, () => {
+          const ast = parse(expression);
 
           expect(ast.length).toEqual(times);
 
-          // all are equal
-          expect(new Set<string>(ast.map(x => x.toString())).size).toEqual(1);
+          for (let i = 0; i < times; i++) {
+            expect(ast[i].type).toEqual("increment");
 
-          const firstNode = ast[0] as IncrementOperation;
-          expect(firstNode.type).toEqual(IncrementOperation.type);
-          expect(firstNode.target.toString()).toEqual(identifier);
+            const node = ast[i] as IncrementOperation;
+            expect(node.target.type).toEqual("variable");
+            expect((node.target as Variable).name).toEqual(variable);
+          }
         });
       }
     });
 
-    describe("decrement", () => {
+    describe("decrement variable", () => {
       const cases: Cases = [
-        ["Knock the walls down", 'var("the walls")', 1],
-        ["Knock the walls down, down", 'var("the walls")', 2],
-        ["Knock the walls down down", 'var("the walls")', 2]
+        ["Knock the walls down", "the walls", 1],
+        ["Knock the walls down, down", "the walls", 2],
+        ["Knock the walls down down", "the walls", 2]
       ];
-      for (const [input, identifier, times] of cases) {
-        it(`${input} => ${times} x decrement(${identifier})`, () => {
-          const ast = parse(input as string);
+      for (const [expression, variable, times] of cases) {
+        it(expression, () => {
+          const ast = parse(expression);
 
           expect(ast.length).toEqual(times);
 
-          // all are equal
-          expect(new Set<string>(ast.map(x => x.toString())).size).toEqual(1);
+          for (let i = 0; i < times; i++) {
+            expect(ast[i].type).toEqual("decrement");
 
-          const firstNode = ast[0] as DecrementOperation;
-          expect(firstNode.type).toEqual(DecrementOperation.type);
-          expect(firstNode.target.toString()).toEqual(identifier);
+            const node = ast[i] as IncrementOperation;
+            expect(node.target.type).toEqual("variable");
+            expect((node.target as Variable).name).toEqual(variable);
+          }
         });
       }
     });

@@ -1,4 +1,4 @@
-import * as rockstar from "./rockstar/parser";
+import * as rockstar from "./rockstar/ast";
 import * as wasm from "./wasm/ast";
 
 export const transform = (ast: rockstar.Program): wasm.Module => {
@@ -28,7 +28,7 @@ export const transform = (ast: rockstar.Program): wasm.Module => {
       rockstarExpression: rockstar.SimpleExpression
     ): wasm.Instruction => {
       switch (rockstarExpression.type) {
-        case rockstar.NumberLiteral.type: {
+        case "number": {
           const wasmInstr: wasm.ConstInstruction = {
             instructionType: "const",
             value: (rockstarExpression as rockstar.NumberLiteral).value,
@@ -37,8 +37,8 @@ export const transform = (ast: rockstar.Program): wasm.Module => {
           return wasmInstr;
         }
 
-        case rockstar.Mysterious.type:
-        case rockstar.NullLiteral.type: {
+        case "mysterious":
+        case "null": {
           const wasmInstr: wasm.ConstInstruction = {
             instructionType: "const",
             value: 0,
@@ -47,7 +47,7 @@ export const transform = (ast: rockstar.Program): wasm.Module => {
           return wasmInstr;
         }
 
-        case rockstar.Variable.type: {
+        case "variable": {
           const wasmInstr: wasm.VariableInstruction = {
             instructionType: "variable",
             operation: "get",
@@ -56,7 +56,7 @@ export const transform = (ast: rockstar.Program): wasm.Module => {
           return wasmInstr;
         }
 
-        case rockstar.Pronoun.type: {
+        case "pronoun": {
           if (!locals.size) throw new Error("Cannot resolve pronoun - no variables declared");
 
           const wasmInstr: wasm.VariableInstruction = {
@@ -91,7 +91,7 @@ export const transform = (ast: rockstar.Program): wasm.Module => {
 
     for (const statement of statements) {
       switch (statement.type) {
-        case rockstar.VariableDeclaration.type: {
+        case "variableDeclaration": {
           const { variable, value } = statement as rockstar.VariableDeclaration;
           const wasmSetLocal: wasm.VariableInstruction = {
             instructionType: "variable",
@@ -102,13 +102,13 @@ export const transform = (ast: rockstar.Program): wasm.Module => {
           break;
         }
 
-        case rockstar.SayCall.type: {
+        case "say": {
           const { what } = statement as rockstar.SayCall;
-          transformFunctionCall(new rockstar.FunctionCall("print", [what]));
+          transformFunctionCall({ type: "call", name: "print", args: [what] });
           break;
         }
 
-        case rockstar.FunctionCall.type: {
+        case "call": {
           transformFunctionCall(statement as rockstar.FunctionCall);
           break;
         }

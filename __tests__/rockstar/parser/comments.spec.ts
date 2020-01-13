@@ -1,4 +1,5 @@
-import { parse, Comment } from "../../../src/rockstar/parser";
+import { parse } from "../../../src/rockstar/parser";
+import { Comment } from "../../../src/rockstar/ast";
 
 describe("rockstar", () => {
   describe("parser", () => {
@@ -9,7 +10,7 @@ describe("rockstar", () => {
         expect(ast.length).toEqual(1);
 
         const node = ast[0] as Comment;
-        expect(node.value).toEqual("Initialise Tommy = 1337");
+        expect(node.comment).toEqual("Initialise Tommy = 1337");
       });
     });
   });

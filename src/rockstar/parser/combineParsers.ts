@@ -1,4 +1,5 @@
-import { Parser, Program } from "./types";
+import { Parser } from "./types";
+import { Program } from "../ast";
 
 export const combineParsers = (parsers: Parser[]): Parser => (
   program: Program,
