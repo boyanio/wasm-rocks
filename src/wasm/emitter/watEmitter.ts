@@ -8,7 +8,9 @@ import {
   Memory,
   Export,
   Import,
-  Comment
+  Comment,
+  BinaryOperationInstruction,
+  UnaryOperationInstruction
 } from "../ast";
 
 export const emitWat = (formatter: WatFormatter, ast: Module): string => {
@@ -53,6 +55,18 @@ export const emitWat = (formatter: WatFormatter, ast: Module): string => {
         case "comment": {
           const comment = instruction as Comment;
           body.push(formatter(`; ${comment.value} ;`));
+          break;
+        }
+
+        case "binaryOperation": {
+          const binaryOperation = instruction as BinaryOperationInstruction;
+          body.push(binaryOperation.operation);
+          break;
+        }
+
+        case "unaryOperation": {
+          const unaryOperation = instruction as UnaryOperationInstruction;
+          body.push(unaryOperation.operation);
           break;
         }
       }

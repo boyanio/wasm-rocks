@@ -26,9 +26,11 @@ export type Function = {
   instructions?: Instruction[];
 };
 
+export type VariableInstructionOperation = "get" | "set" | "tee";
+
 export type VariableInstruction = {
   instructionType: "variable";
-  operation: "set" | "get" | "tee";
+  operation: VariableInstructionOperation;
   index: number;
 };
 
@@ -38,14 +40,18 @@ export type ConstInstruction = {
   valueType: ValueType;
 };
 
+export type BinaryOperation = "f32.add" | "f32.mul" | "f32.sub" | "f32.div";
+
 export type BinaryOperationInstruction = {
   instructionType: "binaryOperation";
-  operation: "f32.add" | "f32.mul";
+  operation: BinaryOperation;
 };
+
+export type UnaryOperation = "f32.nearest" | "f32.ceil" | "f32.floor";
 
 export type UnaryOperationInstruction = {
   instructionType: "unaryOperation";
-  operation: "f32.nearest";
+  operation: UnaryOperation;
 };
 
 export type NumericInstruction =
