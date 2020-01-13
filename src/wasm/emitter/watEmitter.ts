@@ -25,7 +25,7 @@ export const emitWat = (formatter: WatFormatter, ast: Module): string => {
     );
 
   const emitFunction = (func: Function): string => {
-    const { id, locals = [], instructions = [], functionType = {} } = func;
+    const { id, locals, instructions, functionType } = func;
     const body: string[] = [];
 
     // (local XX)
@@ -76,7 +76,7 @@ export const emitWat = (formatter: WatFormatter, ast: Module): string => {
     return formatter(
       "func",
       id,
-      ...(functionType.params || []).map(p => formatter("param", p)),
+      ...functionType.params.map(p => formatter("param", p)),
       ...(functionType.result ? [functionType.result] : []).map(r => formatter("result", r)),
       ...body
     );

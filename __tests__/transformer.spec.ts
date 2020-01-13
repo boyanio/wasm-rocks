@@ -1,23 +1,26 @@
 import { transform } from "../src/transformer";
-import { parse } from "../src/rockstar/parser";
 import { Program as rockstarProgram } from "../src/rockstar/ast";
+import { Function } from "src/wasm/ast";
 
 describe("transformer", () => {
   it("creates an exported main function with global statements, if none exists", () => {
-    const code = `
-    X is 5
-    Shout it.
-    `;
-    const rockstarAst = parse(code);
-    const wasmAst = transform(rockstarAst);
+    const wasmAst = transform([
+      {
+        type: "variableDeclaration",
+        variable: { type: "variable", name: "x" },
+        value: { type: "number", value: 5 }
+      },
+      {
+        type: "call",
+        name: "say",
+        args: [{ type: "pronoun" }]
+      }
+    ]);
 
-    expect(wasmAst.functions).toBeTruthy();
-    expect(wasmAst.exports).toBeTruthy();
-
-    const mainFnDeclaration = (wasmAst.functions || []).find(f => f.id === "$main");
+    const mainFnDeclaration = wasmAst.functions.find(f => f.id === "$main");
     expect(mainFnDeclaration).toBeTruthy();
 
-    const mainFnExport = (wasmAst.exports || []).find(
+    const mainFnExport = wasmAst.exports.find(
       e => e.exportType === "func" && e.id === "$main" && e.name === "main"
     );
     expect(mainFnExport).toBeTruthy();
@@ -53,9 +56,7 @@ describe("transformer", () => {
     ];
     const wasmAst = transform(rockstarAst);
 
-    expect(wasmAst.imports).toBeTruthy();
-
-    const imports = (wasmAst.imports || []).filter(
+    const imports = wasmAst.imports.filter(
       im =>
         im.module === "env" &&
         im.name === "alert" &&
@@ -63,5 +64,34 @@ describe("transformer", () => {
         im.importType.id === "$alert"
     );
     expect(imports.length).toEqual(1);
+  });
+
+  it("transforms compound assignment", () => {
+    const wasmAst = transform([
+      {
+        type: "variableDeclaration",
+        variable: { type: "variable", name: "x" },
+        value: { type: "number", value: 5 }
+      },
+      {
+        type: "compoundAssignment",
+        operator: "subtract",
+        target: { type: "variable", name: "x" },
+        right: { type: "number", value: 5 }
+      }
+    ]);
+
+    const mainFn = wasmAst.functions.find(f => f.id === "$main") as Function;
+    expect(mainFn).toBeTruthy();
+    expect(mainFn.locals.length).toEqual(1);
+    expect(mainFn.instructions).toEqual([
+      { instructionType: "const", value: 5, valueType: "f32" },
+      { instructionType: "variable", index: 0, operation: "set" },
+      { instructionType: "variable", index: 0, operation: "get" },
+      { instructionType: "const", value: 5, valueType: "f32" },
+      { instructionType: "binaryOperation", operation: "f32.sub" },
+      { instructionType: "variable", index: 0, operation: "set" },
+      { instructionType: "const", value: 0, valueType: "i32" } // main fn ends with this
+    ]);
   });
 });

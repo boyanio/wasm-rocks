@@ -52,27 +52,24 @@ const parseSimpleAssignment = (input: string, target: Identifier): SimpleAssignm
   return simpleAssignment;
 };
 
-const parseLetOrPutAssignment = (
-  identifierString: string,
-  expressionString: string
-): Assignment | null => {
-  const target = parseVariable(identifierString);
-  if (!target) return null;
-
-  return (
-    parseCompoundAssignment(expressionString, target) ||
-    parseSimpleAssignment(expressionString, target)
-  );
-};
-
 const parsePutAssignment = (line: string): Assignment | null => {
   const match = line.match(/^put (.+?) into (.+)$/i);
-  return match ? parseLetOrPutAssignment(match[2], match[1]) : null;
+  if (!match) return null;
+
+  const target = parseVariable(match[2]);
+  if (!target) return null;
+
+  return parseSimpleAssignment(match[1], target);
 };
 
 const parseLetAssignment = (line: string): Assignment | null => {
   const match = line.match(/^let (.+?) be (.+)$/i);
-  return match ? parseLetOrPutAssignment(match[1], match[2]) : null;
+  if (!match) return null;
+
+  const target = parseVariable(match[1]);
+  if (!target) return null;
+
+  return parseCompoundAssignment(match[2], target) || parseSimpleAssignment(match[2], target);
 };
 
 /**

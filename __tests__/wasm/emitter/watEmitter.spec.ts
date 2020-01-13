@@ -1,5 +1,7 @@
 import { noFormat, emitWat } from "../../../src/wasm/emitter";
 import {
+  Module,
+  Memory,
   Comment,
   CallControlInstruction,
   VariableInstruction,
@@ -9,21 +11,45 @@ import {
   BinaryOperationInstruction,
   BinaryOperation,
   UnaryOperation,
-  UnaryOperationInstruction
+  UnaryOperationInstruction,
+  Import,
+  Export,
+  Function
 } from "src/wasm/ast";
+
+type ModuleOptions = {
+  memories?: Memory[];
+  imports?: Import[];
+  exports?: Export[];
+  functions?: Function[];
+};
+
+const createModule = (options: ModuleOptions): Module =>
+  Object.assign<Module, ModuleOptions>(
+    {
+      exports: [],
+      memories: [],
+      imports: [],
+      functions: []
+    },
+    options
+  );
+
+const emitWithWithNoFormat = (options: ModuleOptions): string =>
+  emitWat(noFormat(), createModule(options));
 
 describe("wasm", () => {
   describe("watEmitter", () => {
     describe("memories", () => {
       it("emits memory with min", () => {
-        const wat = emitWat(noFormat(), {
+        const wat = emitWithWithNoFormat({
           memories: [{ id: "$0", memoryType: { minSize: 1 } }]
         });
         expect(wat).toEqual("(module (memory $0 1))");
       });
 
       it("emits memory with min and max", () => {
-        const wat = emitWat(noFormat(), {
+        const wat = emitWithWithNoFormat({
           memories: [{ id: "$0", memoryType: { minSize: 1, maxSize: 2 } }]
         });
         expect(wat).toEqual("(module (memory $0 1 2))");
@@ -32,7 +58,7 @@ describe("wasm", () => {
 
     describe("imports", () => {
       it("emits memory import", () => {
-        const wat = emitWat(noFormat(), {
+        const wat = emitWithWithNoFormat({
           imports: [
             {
               module: "env",
@@ -45,7 +71,7 @@ describe("wasm", () => {
       });
 
       it("emits function import", () => {
-        const wat = emitWat(noFormat(), {
+        const wat = emitWithWithNoFormat({
           imports: [
             {
               module: "env",
@@ -66,14 +92,14 @@ describe("wasm", () => {
 
     describe("exports", () => {
       it("emits memory export", () => {
-        const wat = emitWat(noFormat(), {
+        const wat = emitWithWithNoFormat({
           exports: [{ name: "memory", id: "$0", exportType: "memory" }]
         });
         expect(wat).toEqual('(module (export "memory" (memory $0)))');
       });
 
       it("emits function export", () => {
-        const wat = emitWat(noFormat(), {
+        const wat = emitWithWithNoFormat({
           exports: [{ name: "hello", id: "$hello", exportType: "func" }]
         });
         expect(wat).toEqual('(module (export "hello" (func $hello)))');
@@ -86,8 +112,15 @@ describe("wasm", () => {
           instructionType: "comment",
           value: "hello"
         };
-        const wat = emitWat(noFormat(), {
-          functions: [{ id: "$hello", instructions: [comment] }]
+        const wat = emitWithWithNoFormat({
+          functions: [
+            {
+              id: "$hello",
+              instructions: [comment],
+              locals: [],
+              functionType: { params: [], result: null }
+            }
+          ]
         });
         expect(wat).toEqual("(module (func $hello (; hello ;)))");
       });
@@ -97,8 +130,15 @@ describe("wasm", () => {
           instructionType: "call",
           id: "$there"
         };
-        const wat = emitWat(noFormat(), {
-          functions: [{ id: "$hello", instructions: [call] }]
+        const wat = emitWithWithNoFormat({
+          functions: [
+            {
+              id: "$hello",
+              instructions: [call],
+              locals: [],
+              functionType: { params: [], result: null }
+            }
+          ]
         });
         expect(wat).toEqual("(module (func $hello (call $there)))");
       });
@@ -110,8 +150,15 @@ describe("wasm", () => {
             index: 0,
             operation
           };
-          const wat = emitWat(noFormat(), {
-            functions: [{ id: "$hello", instructions: [variable] }]
+          const wat = emitWithWithNoFormat({
+            functions: [
+              {
+                id: "$hello",
+                instructions: [variable],
+                locals: [],
+                functionType: { params: [], result: null }
+              }
+            ]
           });
           expect(wat).toEqual(`(module (func $hello (local.${operation} 0)))`);
         });
@@ -123,8 +170,15 @@ describe("wasm", () => {
           value: 10,
           valueType: "i32"
         };
-        const wat = emitWat(noFormat(), {
-          functions: [{ id: "$hello", instructions: [constInstr] }]
+        const wat = emitWithWithNoFormat({
+          functions: [
+            {
+              id: "$hello",
+              instructions: [constInstr],
+              locals: [],
+              functionType: { params: [], result: null }
+            }
+          ]
         });
         expect(wat).toEqual("(module (func $hello (i32.const 10)))");
       });
@@ -135,8 +189,15 @@ describe("wasm", () => {
             instructionType: "binaryOperation",
             operation
           };
-          const wat = emitWat(noFormat(), {
-            functions: [{ id: "$hello", instructions: [binaryOperation] }]
+          const wat = emitWithWithNoFormat({
+            functions: [
+              {
+                id: "$hello",
+                instructions: [binaryOperation],
+                locals: [],
+                functionType: { params: [], result: null }
+              }
+            ]
           });
           expect(wat).toEqual(`(module (func $hello ${operation}))`);
         });
@@ -148,8 +209,15 @@ describe("wasm", () => {
             instructionType: "unaryOperation",
             operation
           };
-          const wat = emitWat(noFormat(), {
-            functions: [{ id: "$hello", instructions: [unaryOperation] }]
+          const wat = emitWithWithNoFormat({
+            functions: [
+              {
+                id: "$hello",
+                instructions: [unaryOperation],
+                locals: [],
+                functionType: { params: [], result: null }
+              }
+            ]
           });
           expect(wat).toEqual(`(module (func $hello ${operation}))`);
         });
@@ -164,8 +232,15 @@ describe("wasm", () => {
           index: 1,
           localType: "i32"
         };
-        const wat = emitWat(noFormat(), {
-          functions: [{ id: "$hello", locals: [local0, local1] }]
+        const wat = emitWithWithNoFormat({
+          functions: [
+            {
+              id: "$hello",
+              locals: [local0, local1],
+              instructions: [],
+              functionType: { params: [], result: null }
+            }
+          ]
         });
         expect(wat).toEqual("(module (func $hello (local f32) (local i32)))");
       });
