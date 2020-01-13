@@ -1,12 +1,4 @@
-import {
-  Program,
-  ArithmeticRoundingOperation,
-  Identifier,
-  RoundOperation,
-  RoundUpOperation,
-  RoundDownOperation,
-  Pronoun
-} from "../ast";
+import { Program, ArithmeticRoundingOperation, Identifier, Pronoun } from "../ast";
 import { parseVariable, isPronoun } from "./parseExpression";
 import { combineParsers } from "./combineParsers";
 import { Parser } from "./types";
@@ -17,28 +9,26 @@ const createArithmeticRoundingOperation = (
 ): ArithmeticRoundingOperation => {
   switch (rounding.toLowerCase()) {
     case "around":
-    case "round": {
-      const operation: RoundOperation = {
+    case "round":
+      return {
         type: "round",
-        target
+        target,
+        direction: "upOrDown"
       };
-      return operation;
-    }
 
-    case "up": {
-      const operation: RoundUpOperation = {
-        type: "roundUp",
-        target
+    case "up":
+      return {
+        type: "round",
+        target,
+        direction: "up"
       };
-      return operation;
-    }
-    case "down": {
-      const operation: RoundDownOperation = {
-        type: "roundDown",
-        target
+
+    case "down":
+      return {
+        type: "round",
+        target,
+        direction: "down"
       };
-      return operation;
-    }
   }
 
   throw new Error(`Unknown rounding: ${rounding}`);

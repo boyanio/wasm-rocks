@@ -70,22 +70,13 @@ export type FunctionDeclaration = {
   statements: Statement[];
 };
 
-export type RoundOperation = {
+export type ArithmeticRoundingDirection = "up" | "down" | "upOrDown";
+
+export type ArithmeticRoundingOperation = {
   type: "round";
   target: Identifier;
+  direction: ArithmeticRoundingDirection;
 };
-
-export type RoundUpOperation = {
-  type: "roundUp";
-  target: Identifier;
-};
-
-export type RoundDownOperation = {
-  type: "roundDown";
-  target: Identifier;
-};
-
-export type ArithmeticRoundingOperation = RoundOperation | RoundUpOperation | RoundDownOperation;
 
 export type IncrementOperation = {
   type: "increment";

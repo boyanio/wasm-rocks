@@ -36,6 +36,35 @@ export const transform = (rockstarAst: rockstar.Program): wasm.Module => {
       return locals.get(variable.name) as number;
     };
 
+    const binaryOperationInstruction = (
+      operation: wasm.BinaryOperation
+    ): wasm.BinaryOperationInstruction => ({
+      instructionType: "binaryOperation",
+      operation
+    });
+
+    const unaryOperationInstruction = (
+      operation: wasm.UnaryOperation
+    ): wasm.UnaryOperationInstruction => ({
+      instructionType: "unaryOperation",
+      operation
+    });
+
+    const variableInstruction = (
+      target: rockstar.Identifier,
+      operation: wasm.VariableInstructionOperation
+    ): wasm.VariableInstruction => ({
+      instructionType: "variable",
+      operation,
+      index: indexFromLocals(target)
+    });
+
+    const constInstruction = (value: number): wasm.ConstInstruction => ({
+      instructionType: "const",
+      value,
+      valueType: "f32"
+    });
+
     const arithmeticOperatorMap = new Map<rockstar.ArithmeticOperator, wasm.BinaryOperation>()
       .set("add", "f32.add")
       .set("divide", "f32.div")
@@ -48,10 +77,28 @@ export const transform = (rockstarAst: rockstar.Program): wasm.Module => {
       if (!arithmeticOperatorMap.has(operator))
         throw new Error(`Unknown arithmetic operator: ${operator}`);
 
-      return {
-        instructionType: "binaryOperation",
-        operation: arithmeticOperatorMap.get(operator) as wasm.BinaryOperation
-      };
+      return binaryOperationInstruction(
+        arithmeticOperatorMap.get(operator) as wasm.BinaryOperation
+      );
+    };
+
+    const arithmeticRoundingDirectionMap = new Map<
+      rockstar.ArithmeticRoundingDirection,
+      wasm.UnaryOperation
+    >()
+      .set("up", "f32.ceil")
+      .set("down", "f32.floor")
+      .set("upOrDown", "f32.nearest");
+
+    const transformArithmeticRounding = (
+      direction: rockstar.ArithmeticRoundingDirection
+    ): wasm.Instruction => {
+      if (!arithmeticRoundingDirectionMap.has(direction))
+        throw new Error(`Unknown arithmetic rounding direction: ${direction}`);
+
+      return unaryOperationInstruction(
+        arithmeticRoundingDirectionMap.get(direction) as wasm.UnaryOperation
+      );
     };
 
     const transformSimpleExpression = (
@@ -59,27 +106,15 @@ export const transform = (rockstarAst: rockstar.Program): wasm.Module => {
     ): wasm.Instruction => {
       switch (rockstarExpression.type) {
         case "number":
-          return {
-            instructionType: "const",
-            value: (rockstarExpression as rockstar.NumberLiteral).value,
-            valueType: "f32"
-          };
+          return constInstruction((rockstarExpression as rockstar.NumberLiteral).value);
 
         case "mysterious":
         case "null":
-          return {
-            instructionType: "const",
-            value: 0,
-            valueType: "f32"
-          };
+          return constInstruction(0);
 
         case "variable":
         case "pronoun":
-          return {
-            instructionType: "variable",
-            operation: "get",
-            index: indexFromLocals(rockstarExpression as rockstar.Identifier)
-          };
+          return variableInstruction(rockstarExpression as rockstar.Identifier, "get");
       }
 
       throw new Error(`Cannot transform Rockstar simple expression: ${rockstarExpression}`);
@@ -133,11 +168,39 @@ export const transform = (rockstarAst: rockstar.Program): wasm.Module => {
             transformSimpleExpression(target),
             transformSimpleExpression(right),
             transformArithmeticExpression(operator),
-            {
-              instructionType: "variable",
-              operation: "set",
-              index: indexFromLocals(target)
-            }
+            variableInstruction(target, "set")
+          );
+          break;
+        }
+
+        case "increment": {
+          const { target } = statement as rockstar.IncrementOperation;
+          wasmFn.instructions.push(
+            transformSimpleExpression(target),
+            constInstruction(1),
+            binaryOperationInstruction("f32.add"),
+            variableInstruction(target, "set")
+          );
+          break;
+        }
+
+        case "decrement": {
+          const { target } = statement as rockstar.DecrementOperation;
+          wasmFn.instructions.push(
+            transformSimpleExpression(target),
+            constInstruction(1),
+            binaryOperationInstruction("f32.sub"),
+            variableInstruction(target, "set")
+          );
+          break;
+        }
+
+        case "round": {
+          const { target, direction } = statement as rockstar.ArithmeticRoundingOperation;
+          wasmFn.instructions.push(
+            transformSimpleExpression(target),
+            transformArithmeticRounding(direction),
+            variableInstruction(target, "set")
           );
           break;
         }
