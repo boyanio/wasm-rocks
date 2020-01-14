@@ -13,11 +13,23 @@ export const transform = (rockstarAst: rockstar.Program): wasm.Module => {
 
   const toIdentifier = (input: string): wasm.Identifier => `$${input}`;
 
-  const transformFunctionBody = (wasmFn: wasm.Function, statements: rockstar.Statement[]): void => {
-    // TODO: prepopulate locals with functions args from wasnFm.functionType
-    const locals = new Map<string, number>();
-
+  const transformFunctionInternal = (
+    name: string,
+    args: rockstar.Variable[],
+    result: rockstar.SimpleExpression | null,
+    statements: rockstar.Statement[]
+  ): wasm.Function => {
+    const locals = new Map<string, number>(args.map((arg, index) => [arg.name, index]));
     const declaredRockstarVariables: rockstar.Variable[] = [];
+    const wasmFn: wasm.Function = {
+      id: `$${name}`,
+      functionType: {
+        params: args.map(() => "f32"),
+        result: result ? "f32" : null
+      },
+      instructions: [],
+      locals: []
+    };
 
     const indexFromLocals = (identifier: rockstar.Identifier): number => {
       let variable: rockstar.Variable;
@@ -222,6 +234,22 @@ export const transform = (rockstarAst: rockstar.Program): wasm.Module => {
           );
           break;
         }
+
+        case "comment": {
+          const { comment } = statement as rockstar.Comment;
+          wasmFn.instructions.push({
+            instructionType: "comment",
+            value: comment
+          });
+          break;
+        }
+
+        case "function": {
+          const { name } = statement as rockstar.FunctionDeclaration;
+          throw new Error(
+            `Nestign functions within functions is nto allowed. Function ${name} encountered.`
+          );
+        }
       }
     }
 
@@ -233,21 +261,12 @@ export const transform = (rockstarAst: rockstar.Program): wasm.Module => {
         localType: "f32"
       }))
     );
+
+    return wasmFn;
   };
 
   const transformFunction = (func: rockstar.FunctionDeclaration): void => {
-    const wasmFn: wasm.Function = {
-      id: `$${func.name}`,
-      functionType: {
-        params: func.args.map(() => "f32"),
-        result: "f32"
-      },
-      instructions: [],
-      locals: []
-    };
-    transformFunctionBody(wasmFn, func.statements);
-
-    // register the function
+    const wasmFn = transformFunctionInternal(func.name, func.args, func.result, func.statements);
     module.functions.push(wasmFn);
   };
 
@@ -255,18 +274,11 @@ export const transform = (rockstarAst: rockstar.Program): wasm.Module => {
     funcs.forEach(transformFunction);
 
   const transformMainFunction = (statements: rockstar.Statement[]): void => {
-    const mainFn: wasm.Function = {
-      id: "$main",
-      functionType: {
-        params: [],
-        result: "i32"
-      },
-      instructions: [],
-      locals: []
-    };
-    transformFunctionBody(mainFn, statements);
+    const mainFn = transformFunctionInternal("main", [], null, statements);
 
     // Add result, as we intend to end the main procedure with 0
+    mainFn.functionType.result = "i32";
+
     const endInstr: wasm.ConstInstruction = {
       instructionType: "const",
       value: 0,

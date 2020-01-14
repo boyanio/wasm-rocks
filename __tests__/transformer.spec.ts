@@ -244,5 +244,40 @@ describe("transformer", () => {
         { instructionType: "const", value: 0, valueType: "i32" } // main fn ends with this
       ]);
     });
+
+    it("transforms comments", () => {
+      const wasmAst = transform([
+        {
+          type: "comment",
+          comment: "hello"
+        }
+      ]);
+
+      const mainFn = wasmAst.functions.find(f => f.id === "$main") as wasm.Function;
+      expect(mainFn).toBeTruthy();
+      expect(mainFn.instructions).toEqual([
+        { instructionType: "comment", value: "hello" },
+        { instructionType: "const", value: 0, valueType: "i32" } // main fn ends with this
+      ]);
+    });
   }
+
+  it("transforms function with one argument and result", () => {
+    const wasmAst = transform([
+      {
+        type: "function",
+        name: "hello",
+        args: [{ type: "variable", name: "x" }],
+        result: { type: "variable", name: "x" },
+        statements: []
+      }
+    ]);
+
+    const fn = wasmAst.functions.find(f => f.id === "$hello") as wasm.Function;
+    expect(fn).toBeTruthy();
+    expect(fn.functionType.params.length).toEqual(1);
+    expect(fn.functionType.result).toEqual("f32");
+    expect(fn.locals.length).toEqual(1);
+    expect(fn.instructions.length).toEqual(0);
+  });
 });
