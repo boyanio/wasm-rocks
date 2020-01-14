@@ -1,12 +1,12 @@
 import {
   SimpleExpression,
-  Mysterious,
+  MysteriousLiteral,
   NullLiteral,
   BooleanLiteral,
   StringLiteral,
   NumberLiteral,
   ArithmeticExpression,
-  Variable,
+  NamedVariable,
   ArithmeticOperator,
   Pronoun,
   Expression,
@@ -34,37 +34,32 @@ const pronouns = [
 
 export const isPronoun = (what: string): boolean => pronouns.includes(what.toLowerCase());
 
-export const parseVariable = (input: string): Variable | null => {
+export const parseNamedVariable = (input: string): NamedVariable | null => {
   // proper variable
   if (/^([A-Z][a-zA-Z]+\s){2,}$/.test(`${input} `)) {
     const properVariableName = input // transform to Xxxx Yyyy
       .split(/\s+/)
       .map(x => capitalize(x))
       .join(" ");
-    const properVariable: Variable = {
+    return {
       type: "variable",
       name: properVariableName
     };
-    return properVariable;
   }
 
   // common variable
-  if (/^(a|an|my|your|the)\s/i.test(input)) {
-    const commonVariable: Variable = {
+  if (/^(a|an|my|your|the)\s/i.test(input))
+    return {
       type: "variable",
       name: input.toLowerCase()
     };
-    return commonVariable;
-  }
 
   // simple variable
-  if (/^[a-zA-Z]+$/.test(input)) {
-    const simpleVariable: Variable = {
+  if (/^[a-zA-Z]+$/.test(input))
+    return {
       type: "variable",
       name: input.toLowerCase()
     };
-    return simpleVariable;
-  }
 
   return null;
 };
@@ -72,20 +67,18 @@ export const parseVariable = (input: string): Variable | null => {
 export const parsePronoun = (input: string): Pronoun | null => {
   if (!isPronoun(input)) return null;
 
-  const pronoun: Pronoun = {
+  return {
     type: "pronoun"
   };
-  return pronoun;
 };
 
-export const parseMysterious = (input: string): Mysterious | null => {
+export const parseMysteriousLiteral = (input: string): MysteriousLiteral | null => {
   const isMysterious = input.toLowerCase() === "mysterious";
   if (!isMysterious) return null;
 
-  const mysterious: Mysterious = {
+  return {
     type: "mysterious"
   };
-  return mysterious;
 };
 
 const nullWords = ["null", "nowhere", "nothing", "nobody", "gone", "empty"];
@@ -94,10 +87,9 @@ export const parseNullLiteral = (input: string): NullLiteral | null => {
   const isNull = nullWords.indexOf(input.toLowerCase()) >= 0;
   if (!isNull) return null;
 
-  const nullLiteral: NullLiteral = {
+  return {
     type: "null"
   };
-  return nullLiteral;
 };
 
 type BooleanWords = { [key: string]: boolean };
@@ -116,30 +108,25 @@ export const parseBooleanLiteral = (input: string): BooleanLiteral | null => {
   const isBoolean = input.toLowerCase() in booleanWords;
   if (!isBoolean) return null;
 
-  const boolean: BooleanLiteral = {
+  return {
     type: "boolean",
     value: booleanWords[input.toLowerCase()]
   };
-  return boolean;
 };
 
-export const parsePoeticStringLiteral = (input: string): StringLiteral | null => {
-  const stringLiteral: StringLiteral = {
-    type: "string",
-    value: input
-  };
-  return stringLiteral;
-};
+export const parsePoeticStringLiteral = (input: string): StringLiteral | null => ({
+  type: "string",
+  value: input
+});
 
 export const parseStringLiteral = (input: string): StringLiteral | null => {
   const isStringLiteral = input.length > 1 && input[0] === '"' && input[input.length - 1] === '"';
   if (!isStringLiteral) return null;
 
-  const stringLiteral: StringLiteral = {
+  return {
     type: "string",
     value: input.substring(1, input.length - 1)
   };
-  return stringLiteral;
 };
 
 export const parsePoeticNumberLiteral = (input: string): NumberLiteral | null => {
@@ -153,11 +140,10 @@ export const parsePoeticNumberLiteral = (input: string): NumberLiteral | null =>
   const value = parseFloat(
     input.split(/\s+/).reduce((result, word) => `${result}${word === "." ? "." : module(word)}`, "")
   );
-  const numberLiteral: NumberLiteral = {
+  return {
     type: "number",
     value
   };
-  return numberLiteral;
 };
 
 export const parseNumberLiteral = (input: string): NumberLiteral | null => {
@@ -165,26 +151,24 @@ export const parseNumberLiteral = (input: string): NumberLiteral | null => {
   const isNumberLiteral = !isNaN(value);
   if (!isNumberLiteral) return null;
 
-  const numberLiteral: NumberLiteral = {
+  return {
     type: "number",
     value
   };
-  return numberLiteral;
 };
 
 const literalParsers = [
-  parseMysterious,
+  parseMysteriousLiteral,
   parseNullLiteral,
   parseStringLiteral,
   parseBooleanLiteral,
   parseNumberLiteral
 ];
 
-export const parseLiteral = (input: string): Literal | null => {
-  return literalParsers.reduce<Literal | null>((node, parser) => node || parser(input), null);
-};
+export const parseLiteral = (input: string): Literal | null =>
+  literalParsers.reduce<Literal | null>((node, parser) => node || parser(input), null);
 
-const simpleExpressionParsers = [parseLiteral, parsePronoun, parseVariable];
+const simpleExpressionParsers = [parseLiteral, parsePronoun, parseNamedVariable];
 
 export const parseSimpleExpression = (input: string): SimpleExpression | null =>
   simpleExpressionParsers.reduce<SimpleExpression | null>(
@@ -198,17 +182,16 @@ const arithmeticExpressionParser = (pattern: RegExp, operator: ArithmeticOperato
   const match = input.match(pattern);
   if (!match) return null;
 
-  const left = parseVariable(match[1]);
+  const left = parseNamedVariable(match[1]);
   const right = parseSimpleExpression(match[3]);
   if (!left || !right) return null;
 
-  const binaryOperation: ArithmeticExpression = {
+  return {
     type: "arithmeticExpression",
     operator,
     left,
     right
   };
-  return binaryOperation;
 };
 
 const arithmeticExpressionParsers = [

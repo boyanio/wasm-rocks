@@ -1,11 +1,11 @@
-import { Program, ArithmeticRoundingOperation, Identifier, Pronoun } from "../ast";
-import { parseVariable, isPronoun } from "./parseExpression";
+import { Program, ArithmeticRoundingOperation, Pronoun, Variable } from "../ast";
+import { parseNamedVariable, isPronoun } from "./parseExpression";
 import { combineParsers } from "./combineParsers";
 import { Parser } from "./types";
 
 const createArithmeticRoundingOperation = (
   rounding: string,
-  target: Identifier
+  target: Variable
 ): ArithmeticRoundingOperation => {
   switch (rounding.toLowerCase()) {
     case "around":
@@ -44,7 +44,7 @@ const parseVariableRounding: Parser = (
   const match = line.match(/^turn (around|round|up|down) (.+)/i);
   if (!match) return lineIndex;
 
-  const variable = parseVariable(match[2]);
+  const variable = parseNamedVariable(match[2]);
   if (!variable) return lineIndex;
 
   program.push(createArithmeticRoundingOperation(match[1], variable));

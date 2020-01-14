@@ -1,5 +1,5 @@
 import { parse } from "../../../src/rockstar/parser";
-import { SayCall, Variable, NumberLiteral, StringLiteral } from "src/rockstar/ast";
+import { SayCall, NamedVariable, NumberLiteral, StringLiteral } from "src/rockstar/ast";
 
 describe("rockstar", () => {
   describe("parser", () => {
@@ -45,7 +45,7 @@ describe("rockstar", () => {
 
             const node = ast[0] as SayCall;
             expect(node.what.type).toEqual("variable");
-            expect((node.what as Variable).name).toEqual(variable);
+            expect((node.what as NamedVariable).name).toEqual(variable);
           });
         }
       });

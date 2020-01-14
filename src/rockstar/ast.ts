@@ -1,8 +1,3 @@
-export type Comment = {
-  type: "comment";
-  comment: string;
-};
-
 export type NumberLiteral = {
   type: "number";
   value: number;
@@ -18,7 +13,7 @@ export type BooleanLiteral = {
   value: boolean;
 };
 
-export type Mysterious = {
+export type MysteriousLiteral = {
   type: "mysterious";
 };
 
@@ -26,24 +21,31 @@ export type NullLiteral = {
   type: "null";
 };
 
-export type Literal = NumberLiteral | StringLiteral | BooleanLiteral | Mysterious | NullLiteral;
+export type Literal =
+  | NumberLiteral
+  | StringLiteral
+  | BooleanLiteral
+  | MysteriousLiteral
+  | NullLiteral;
 
-export type Variable = {
+export type NamedVariable = {
   type: "variable";
-  name: string;
+  name: Identifier;
 };
 
 export type Pronoun = {
   type: "pronoun";
 };
 
-export type Identifier = Variable | Pronoun;
+export type Variable = NamedVariable | Pronoun;
 
-export type SimpleExpression = Literal | Identifier;
+export type Identifier = string;
+
+export type SimpleExpression = Literal | Variable;
 
 export type VariableDeclaration = {
   type: "variableDeclaration";
-  variable: Variable;
+  variable: NamedVariable;
   value: Literal;
 };
 
@@ -58,14 +60,14 @@ export type ArithmeticExpression = {
 
 export type FunctionCall = {
   type: "call";
-  name: string;
+  name: Identifier;
   args: SimpleExpression[];
 };
 
 export type FunctionDeclaration = {
   type: "function";
-  name: string;
-  args: Variable[];
+  name: Identifier;
+  args: NamedVariable[];
   result: SimpleExpression;
   statements: Statement[];
 };
@@ -74,18 +76,18 @@ export type ArithmeticRoundingDirection = "up" | "down" | "upOrDown";
 
 export type ArithmeticRoundingOperation = {
   type: "round";
-  target: Identifier;
+  target: Variable;
   direction: ArithmeticRoundingDirection;
 };
 
 export type IncrementOperation = {
   type: "increment";
-  target: Identifier;
+  target: Variable;
 };
 
 export type DecrementOperation = {
   type: "decrement";
-  target: Identifier;
+  target: Variable;
 };
 
 export type SayCall = {
@@ -95,15 +97,20 @@ export type SayCall = {
 
 export type SimpleAssignment = {
   type: "simpleAssignment";
-  target: Identifier;
+  target: Variable;
   expression: SimpleExpression | ArithmeticExpression;
 };
 
 export type CompoundAssignment = {
   type: "compoundAssignment";
-  target: Identifier;
+  target: Variable;
   operator: ArithmeticOperator;
   right: SimpleExpression;
+};
+
+export type Comment = {
+  type: "comment";
+  comment: string;
 };
 
 export type Assignment = SimpleAssignment | CompoundAssignment;

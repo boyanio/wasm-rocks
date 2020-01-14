@@ -1,17 +1,21 @@
 import { Parser } from "./types";
-import { parseVariable, parseSimpleExpression, parseArithmeticExpression } from "./parseExpression";
+import {
+  parseNamedVariable,
+  parseSimpleExpression,
+  parseArithmeticExpression
+} from "./parseExpression";
 import {
   SimpleAssignment,
   Program,
   CompoundAssignment,
   ArithmeticOperator,
-  Identifier,
-  Assignment
+  Assignment,
+  Variable
 } from "../ast";
 
 const compoundAssignmentParser = (pattern: RegExp, operator: ArithmeticOperator) => (
   input: string,
-  target: Identifier
+  target: Variable
 ): CompoundAssignment | null => {
   const match = input.match(pattern);
   if (!match) return null;
@@ -19,13 +23,12 @@ const compoundAssignmentParser = (pattern: RegExp, operator: ArithmeticOperator)
   const right = parseSimpleExpression(match[2]);
   if (!right) return null;
 
-  const compoundAssignment: CompoundAssignment = {
+  return {
     type: "compoundAssignment",
     target,
     operator,
     right
   };
-  return compoundAssignment;
 };
 
 const compoundAssignmentParsers = [
@@ -34,13 +37,13 @@ const compoundAssignmentParsers = [
   compoundAssignmentParser(/^(over) (.+)$/i, "divide"),
   compoundAssignmentParser(/^(plus|with) (.+)$/i, "add")
 ];
-const parseCompoundAssignment = (input: string, target: Identifier): CompoundAssignment | null =>
+const parseCompoundAssignment = (input: string, target: Variable): CompoundAssignment | null =>
   compoundAssignmentParsers.reduce<CompoundAssignment | null>(
     (node, parser) => node || parser(input, target),
     null
   );
 
-const parseSimpleAssignment = (input: string, target: Identifier): SimpleAssignment | null => {
+const parseSimpleAssignment = (input: string, target: Variable): SimpleAssignment | null => {
   const expression = parseArithmeticExpression(input) || parseSimpleExpression(input);
   if (!expression) return null;
 
@@ -56,7 +59,7 @@ const parsePutAssignment = (line: string): Assignment | null => {
   const match = line.match(/^put (.+?) into (.+)$/i);
   if (!match) return null;
 
-  const target = parseVariable(match[2]);
+  const target = parseNamedVariable(match[2]);
   if (!target) return null;
 
   return parseSimpleAssignment(match[1], target);
@@ -66,7 +69,7 @@ const parseLetAssignment = (line: string): Assignment | null => {
   const match = line.match(/^let (.+?) be (.+)$/i);
   if (!match) return null;
 
-  const target = parseVariable(match[1]);
+  const target = parseNamedVariable(match[1]);
   if (!target) return null;
 
   return parseCompoundAssignment(match[2], target) || parseSimpleAssignment(match[2], target);

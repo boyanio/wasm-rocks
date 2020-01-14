@@ -1,6 +1,6 @@
 import { Parser } from "./types";
 import { Program, IncrementOperation, DecrementOperation } from "../ast";
-import { parseVariable, parsePronoun } from "./parseExpression";
+import { parseNamedVariable, parsePronoun } from "./parseExpression";
 import { combineParsers } from "./combineParsers";
 import { countOccurrences } from "../../utils/string-utils";
 
@@ -10,7 +10,7 @@ const parseIncrement: Parser = (program: Program, lines: string[], lineIndex: nu
   const match = line.match(/^build (.+?) ((up)($|,|,?\s+))+/i);
   if (!match) return lineIndex;
 
-  const target = parsePronoun(match[1]) || parseVariable(match[1]);
+  const target = parsePronoun(match[1]) || parseNamedVariable(match[1]);
   if (!target) return lineIndex;
 
   const change = countOccurrences(line, " up");
@@ -27,7 +27,7 @@ const parseDecrement: Parser = (program: Program, lines: string[], lineIndex: nu
   const match = line.match(/^knock (.+?) ((down)($|,|,?\s+))+/i);
   if (!match) return lineIndex;
 
-  const target = parsePronoun(match[1]) || parseVariable(match[1]);
+  const target = parsePronoun(match[1]) || parseNamedVariable(match[1]);
   if (!target) return lineIndex;
 
   const change = countOccurrences(line, " down");

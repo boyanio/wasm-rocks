@@ -1,5 +1,5 @@
 import { parse } from "../../../src/rockstar/parser";
-import { IncrementOperation, DecrementOperation, Variable } from "../../../src/rockstar/ast";
+import { IncrementOperation, DecrementOperation, NamedVariable } from "../../../src/rockstar/ast";
 
 type Case = [string, string, number];
 type Cases = Case[];
@@ -23,7 +23,7 @@ describe("rockstar", () => {
 
             const node = ast[i] as IncrementOperation;
             expect(node.target.type).toEqual("variable");
-            expect((node.target as Variable).name).toEqual(variable);
+            expect((node.target as NamedVariable).name).toEqual(variable);
           }
         });
       }
@@ -44,9 +44,9 @@ describe("rockstar", () => {
           for (let i = 0; i < times; i++) {
             expect(ast[i].type).toEqual("decrement");
 
-            const node = ast[i] as IncrementOperation;
+            const node = ast[i] as DecrementOperation;
             expect(node.target.type).toEqual("variable");
-            expect((node.target as Variable).name).toEqual(variable);
+            expect((node.target as NamedVariable).name).toEqual(variable);
           }
         });
       }

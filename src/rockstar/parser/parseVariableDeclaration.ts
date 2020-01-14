@@ -3,7 +3,7 @@ import { Program, VariableDeclaration } from "../ast";
 import {
   parsePoeticNumberLiteral,
   parsePoeticStringLiteral,
-  parseVariable,
+  parseNamedVariable,
   parseLiteral
 } from "./parseExpression";
 
@@ -11,7 +11,7 @@ const parseWithPoeticString = (line: string): VariableDeclaration | null => {
   const match = line.match(/^(.+?)\s+says\s+(.+)/i);
   if (!match) return null;
 
-  const variable = parseVariable(match[1]);
+  const variable = parseNamedVariable(match[1]);
   if (!variable) return null;
 
   const value = parsePoeticStringLiteral(match[2]);
@@ -29,7 +29,7 @@ const parseWithNonStringPoeticLiteral = (line: string): VariableDeclaration | nu
   const match = line.match(/^(.+?)\s+(is|are|was|were)\s+(.+)/i);
   if (!match) return null;
 
-  const variable = parseVariable(match[1]);
+  const variable = parseNamedVariable(match[1]);
   if (!variable) return null;
 
   const value = parseLiteral(match[3]) || parsePoeticNumberLiteral(match[3]);

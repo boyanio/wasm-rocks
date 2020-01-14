@@ -15,12 +15,12 @@ export const transform = (rockstarAst: rockstar.Program): wasm.Module => {
 
   const transformFunctionInternal = (
     name: string,
-    args: rockstar.Variable[],
+    args: rockstar.NamedVariable[],
     result: rockstar.SimpleExpression | null,
     statements: rockstar.Statement[]
   ): wasm.Function => {
     const locals = new Map<string, number>(args.map((arg, index) => [arg.name, index]));
-    const declaredRockstarVariables: rockstar.Variable[] = [];
+    const declaredRockstarVariables: rockstar.NamedVariable[] = [];
     const wasmFn: wasm.Function = {
       id: `$${name}`,
       functionType: {
@@ -31,21 +31,21 @@ export const transform = (rockstarAst: rockstar.Program): wasm.Module => {
       locals: []
     };
 
-    const indexFromLocals = (identifier: rockstar.Identifier): number => {
-      let variable: rockstar.Variable;
-      if (identifier.type === "pronoun") {
+    const indexFromLocals = (variable: rockstar.Variable): number => {
+      let namedVariable: rockstar.NamedVariable;
+      if (variable.type === "pronoun") {
         if (!declaredRockstarVariables.length)
           throw new Error("Cannot resolve pronoun - no variables declared");
 
-        variable = declaredRockstarVariables[declaredRockstarVariables.length - 1];
+        namedVariable = declaredRockstarVariables[declaredRockstarVariables.length - 1];
       } else {
-        variable = identifier as rockstar.Variable;
+        namedVariable = variable as rockstar.NamedVariable;
       }
 
-      if (!locals.has(variable.name)) {
-        locals.set(variable.name, locals.size);
+      if (!locals.has(namedVariable.name)) {
+        locals.set(namedVariable.name, locals.size);
       }
-      return locals.get(variable.name) as number;
+      return locals.get(namedVariable.name) as number;
     };
 
     const binaryOperationInstruction = (
@@ -63,7 +63,7 @@ export const transform = (rockstarAst: rockstar.Program): wasm.Module => {
     });
 
     const variableInstruction = (
-      target: rockstar.Identifier,
+      target: rockstar.Variable,
       operation: wasm.VariableInstructionOperation
     ): wasm.VariableInstruction => ({
       instructionType: "variable",
@@ -126,7 +126,7 @@ export const transform = (rockstarAst: rockstar.Program): wasm.Module => {
 
         case "variable":
         case "pronoun":
-          return variableInstruction(rockstarExpression as rockstar.Identifier, "get");
+          return variableInstruction(rockstarExpression as rockstar.Variable, "get");
       }
 
       throw new Error(`Cannot transform Rockstar simple expression: ${rockstarExpression}`);

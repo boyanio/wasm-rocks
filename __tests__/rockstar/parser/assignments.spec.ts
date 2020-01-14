@@ -1,7 +1,7 @@
 import { parse } from "../../../src/rockstar/parser";
 import {
   SimpleAssignment,
-  Variable,
+  NamedVariable,
   NumberLiteral,
   StringLiteral,
   ArithmeticOperator,
@@ -28,7 +28,7 @@ describe("rockstar", () => {
 
             const node = ast[0] as SimpleAssignment;
             expect(node.target.type).toEqual("variable");
-            expect((node.target as Variable).name).toEqual(target);
+            expect((node.target as NamedVariable).name).toEqual(target);
             expect(node.expression.type).toEqual("number");
             expect((node.expression as NumberLiteral).value).toEqual(literal);
           });
@@ -51,7 +51,7 @@ describe("rockstar", () => {
 
             const node = ast[0] as SimpleAssignment;
             expect(node.target.type).toEqual("variable");
-            expect((node.target as Variable).name).toEqual(target);
+            expect((node.target as NamedVariable).name).toEqual(target);
             expect(node.expression.type).toEqual("string");
             expect((node.expression as StringLiteral).value).toEqual(literal);
           });
@@ -91,16 +91,16 @@ describe("rockstar", () => {
 
             const node = ast[0] as SimpleAssignment;
             expect(node.target.type).toEqual("variable");
-            expect((node.target as Variable).name).toEqual(target);
+            expect((node.target as NamedVariable).name).toEqual(target);
 
             expect(node.expression.type).toEqual("arithmeticExpression");
 
             const arithmeticExpression = node.expression as ArithmeticExpression;
             expect(arithmeticExpression.operator).toEqual(operator);
             expect(arithmeticExpression.left.type).toEqual("variable");
-            expect((arithmeticExpression.left as Variable).name).toEqual(left);
+            expect((arithmeticExpression.left as NamedVariable).name).toEqual(left);
             expect(arithmeticExpression.right.type).toEqual("variable");
-            expect((arithmeticExpression.right as Variable).name).toEqual(right);
+            expect((arithmeticExpression.right as NamedVariable).name).toEqual(right);
           });
         }
       });
@@ -127,7 +127,7 @@ describe("rockstar", () => {
 
               const node = ast[0] as CompoundAssignment;
               expect(node.target.type).toEqual("variable");
-              expect((node.target as Variable).name).toEqual(target);
+              expect((node.target as NamedVariable).name).toEqual(target);
               expect(node.operator).toEqual(operator);
               expect(node.right.type).toEqual("number");
               expect((node.right as NumberLiteral).value).toEqual(number);
@@ -156,10 +156,10 @@ describe("rockstar", () => {
 
               const node = ast[0] as CompoundAssignment;
               expect(node.target.type).toEqual("variable");
-              expect((node.target as Variable).name).toEqual(target);
+              expect((node.target as NamedVariable).name).toEqual(target);
               expect(node.operator).toEqual(operator);
               expect(node.right.type).toEqual("variable");
-              expect((node.right as Variable).name).toEqual(variable);
+              expect((node.right as NamedVariable).name).toEqual(variable);
             });
           }
         });
