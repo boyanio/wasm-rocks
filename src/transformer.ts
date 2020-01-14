@@ -162,6 +162,24 @@ export const transform = (rockstarAst: rockstar.Program): wasm.Module => {
           break;
         }
 
+        case "simpleAssignment": {
+          const { target, expression } = statement as rockstar.SimpleAssignment;
+          if (expression.type === "arithmeticExpression") {
+            wasmFn.instructions.push(
+              transformSimpleExpression(expression.left),
+              transformSimpleExpression(expression.right),
+              transformArithmeticExpression(expression.operator),
+              variableInstruction(target, "set")
+            );
+          } else {
+            wasmFn.instructions.push(
+              transformSimpleExpression(expression),
+              variableInstruction(target, "set")
+            );
+          }
+          break;
+        }
+
         case "compoundAssignment": {
           const { target, operator, right } = statement as rockstar.CompoundAssignment;
           wasmFn.instructions.push(
