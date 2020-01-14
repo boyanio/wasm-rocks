@@ -308,7 +308,7 @@ export const transform = (rockstarAst: rockstar.Program): wasm.Module => {
         }
       }));
 
-  const { fnNodes, nonFnNodes } = rockstarAst.reduce(
+  const { fnNodes, nonFnNodes } = rockstarAst.statements.reduce(
     (split, node) =>
       Object.assign(
         split,

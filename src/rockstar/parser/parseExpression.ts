@@ -32,65 +32,9 @@ const pronouns = [
   "ver"
 ];
 
-export const isPronoun = (what: string): boolean => pronouns.includes(what.toLowerCase());
-
-export const parseNamedVariable = (input: string): NamedVariable | null => {
-  // proper variable
-  if (/^([A-Z][a-zA-Z]+\s){2,}$/.test(`${input} `)) {
-    const properVariableName = input // transform to Xxxx Yyyy
-      .split(/\s+/)
-      .map(x => capitalize(x))
-      .join(" ");
-    return {
-      type: "variable",
-      name: properVariableName
-    };
-  }
-
-  // common variable
-  if (/^(a|an|my|your|the)\s/i.test(input))
-    return {
-      type: "variable",
-      name: input.toLowerCase()
-    };
-
-  // simple variable
-  if (/^[a-zA-Z]+$/.test(input))
-    return {
-      type: "variable",
-      name: input.toLowerCase()
-    };
-
-  return null;
-};
-
-export const parsePronoun = (input: string): Pronoun | null => {
-  if (!isPronoun(input)) return null;
-
-  return {
-    type: "pronoun"
-  };
-};
-
-export const parseMysteriousLiteral = (input: string): MysteriousLiteral | null => {
-  const isMysterious = input.toLowerCase() === "mysterious";
-  if (!isMysterious) return null;
-
-  return {
-    type: "mysterious"
-  };
-};
-
 const nullWords = ["null", "nowhere", "nothing", "nobody", "gone", "empty"];
 
-export const parseNullLiteral = (input: string): NullLiteral | null => {
-  const isNull = nullWords.indexOf(input.toLowerCase()) >= 0;
-  if (!isNull) return null;
-
-  return {
-    type: "null"
-  };
-};
+const mysteriousWords = ["mysterious"];
 
 type BooleanWords = { [key: string]: boolean };
 const booleanWords: BooleanWords = {
@@ -102,6 +46,71 @@ const booleanWords: BooleanWords = {
   no: false,
   lies: false,
   wrong: false
+};
+
+const keywords = [
+  "maybe",
+  "definitely maybe",
+  ...pronouns,
+  ...nullWords,
+  ...mysteriousWords,
+  ...Object.keys(booleanWords)
+];
+
+export const isPronoun = (input: string): boolean => pronouns.includes(input.toLowerCase());
+
+export const parseNamedVariable = (input: string): NamedVariable | null => {
+  const parseProperVariableName = (): string | null => {
+    if (!/^([A-Z][a-zA-Z]+\s){2,}$/.test(`${input} `)) return null;
+    return input // transform to Xxxx Yyyy
+      .split(/\s+/)
+      .map(capitalize)
+      .join(" ");
+  };
+
+  const parseCommonVariableName = (): string | null => {
+    if (!/^(a|an|my|your|the)\s+[a-zA-Z]+$/i.test(input)) return null;
+    return input.toLowerCase();
+  };
+
+  const parseSimpleVariableName = (): string | null => {
+    if (!/^[a-zA-Z]+$/.test(input)) return null;
+    return input.toLowerCase();
+  };
+
+  const name = parseProperVariableName() || parseCommonVariableName() || parseSimpleVariableName();
+  if (!name || keywords.includes(name)) return null;
+
+  return {
+    type: "variable",
+    name
+  };
+};
+
+export const parsePronoun = (input: string): Pronoun | null => {
+  if (!isPronoun(input.toLowerCase())) return null;
+
+  return {
+    type: "pronoun"
+  };
+};
+
+export const parseMysteriousLiteral = (input: string): MysteriousLiteral | null => {
+  const isMysterious = mysteriousWords.includes(input.toLowerCase());
+  if (!isMysterious) return null;
+
+  return {
+    type: "mysterious"
+  };
+};
+
+export const parseNullLiteral = (input: string): NullLiteral | null => {
+  const isNull = nullWords.indexOf(input.toLowerCase()) >= 0;
+  if (!isNull) return null;
+
+  return {
+    type: "null"
+  };
 };
 
 export const parseBooleanLiteral = (input: string): BooleanLiteral | null => {

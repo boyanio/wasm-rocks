@@ -1,4 +1,4 @@
-import { Program, ArithmeticRoundingOperation, Pronoun, Variable } from "../ast";
+import { ArithmeticRoundingOperation, Pronoun, Variable, Scope } from "../ast";
 import { parseNamedVariable, isPronoun } from "./parseExpression";
 import { combineParsers } from "./combineParsers";
 import { Parser } from "./types";
@@ -35,7 +35,7 @@ const createArithmeticRoundingOperation = (
 };
 
 const parseVariableRounding: Parser = (
-  program: Program,
+  scope: Scope,
   lines: string[],
   lineIndex: number
 ): number => {
@@ -47,15 +47,11 @@ const parseVariableRounding: Parser = (
   const variable = parseNamedVariable(match[2]);
   if (!variable) return lineIndex;
 
-  program.push(createArithmeticRoundingOperation(match[1], variable));
+  scope.statements.push(createArithmeticRoundingOperation(match[1], variable));
   return lineIndex + 1;
 };
 
-const parsePronounRounding: Parser = (
-  program: Program,
-  lines: string[],
-  lineIndex: number
-): number => {
+const parsePronounRounding: Parser = (scope: Scope, lines: string[], lineIndex: number): number => {
   const line = lines[lineIndex];
 
   const match = line.match(/^turn (.+?) (around|round|up|down)\W*/i);
@@ -66,7 +62,7 @@ const parsePronounRounding: Parser = (
   const pronoun: Pronoun = {
     type: "pronoun"
   };
-  program.push(createArithmeticRoundingOperation(match[2], pronoun));
+  scope.statements.push(createArithmeticRoundingOperation(match[2], pronoun));
   return lineIndex + 1;
 };
 

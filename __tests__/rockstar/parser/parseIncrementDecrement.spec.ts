@@ -14,14 +14,14 @@ describe("rockstar", () => {
       ];
       for (const [expression, variable, times] of cases) {
         it(expression, () => {
-          const ast = parse(expression);
+          const { statements } = parse(expression);
 
-          expect(ast.length).toEqual(times);
+          expect(statements.length).toEqual(times);
 
           for (let i = 0; i < times; i++) {
-            expect(ast[i].type).toEqual("increment");
+            expect(statements[i].type).toEqual("increment");
 
-            const node = ast[i] as IncrementOperation;
+            const node = statements[i] as IncrementOperation;
             expect(node.target.type).toEqual("variable");
             expect((node.target as NamedVariable).name).toEqual(variable);
           }
@@ -37,14 +37,14 @@ describe("rockstar", () => {
       ];
       for (const [expression, variable, times] of cases) {
         it(expression, () => {
-          const ast = parse(expression);
+          const { statements } = parse(expression);
 
-          expect(ast.length).toEqual(times);
+          expect(statements.length).toEqual(times);
 
           for (let i = 0; i < times; i++) {
-            expect(ast[i].type).toEqual("decrement");
+            expect(statements[i].type).toEqual("decrement");
 
-            const node = ast[i] as DecrementOperation;
+            const node = statements[i] as DecrementOperation;
             expect(node.target.type).toEqual("variable");
             expect((node.target as NamedVariable).name).toEqual(variable);
           }

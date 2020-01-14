@@ -1,28 +1,16 @@
 import { Program } from "../ast";
-import { parseComment } from "./parseComment";
-import { parseAssignment } from "./parseAssignment";
 import { combineParsers } from "./combineParsers";
-import { parseIO } from "./parseIO";
-import { parseIncrementDecrement } from "./parseIncrementDecrement";
-import { parseVariableDeclaration } from "./parseVariableDeclaration";
-import { parseArithmeticRounding } from "./parseArithmeticRounding";
 import { Parser } from "./types";
+import { parseStatements, parseFunctionDeclaration } from "./parseFunctionDeclarations";
 
-const parser: Parser = combineParsers([
-  parseComment,
-  parseAssignment,
-  parseVariableDeclaration,
-  parseIncrementDecrement,
-  parseArithmeticRounding,
-  parseIO
-]);
+const parser: Parser = combineParsers([parseFunctionDeclaration, parseStatements]);
 
 const parseLines = (program: Program, lines: string[]): void => {
   let lineIndex = 0;
 
   do {
     const nextLineIndex = parser(program, lines, lineIndex);
-    if (nextLineIndex !== lineIndex + 1) throw new Error(`Parse error at line ${lineIndex}`);
+    if (nextLineIndex <= lineIndex) throw new Error(`Parse error at line ${lineIndex}`);
 
     lineIndex = nextLineIndex;
   } while (lineIndex < lines.length);
@@ -32,7 +20,10 @@ const formatSingleQuotes = (input: string): string =>
   input.replace(/'s\W+/g, " is ").replace("'", "");
 
 export function parse(input: string): Program {
-  const program: Program = [];
+  const program: Program = {
+    type: "program",
+    statements: []
+  };
   const lines = formatSingleQuotes(input.trim())
     .split(/\r?\n/)
     .map(x => x.trim());

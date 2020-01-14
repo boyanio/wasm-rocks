@@ -4,18 +4,21 @@ import * as wasm from "src/wasm/ast";
 
 describe("transformer", () => {
   it("creates an exported main function with global statements, if none exists", () => {
-    const wasmAst = transform([
-      {
-        type: "variableDeclaration",
-        variable: { type: "variable", name: "x" },
-        value: { type: "number", value: 5 }
-      },
-      {
-        type: "call",
-        name: "say",
-        args: [{ type: "pronoun" }]
-      }
-    ]);
+    const wasmAst = transform({
+      type: "program",
+      statements: [
+        {
+          type: "variableDeclaration",
+          variable: { type: "variable", name: "x" },
+          value: { type: "number", value: 5 }
+        },
+        {
+          type: "call",
+          name: "say",
+          args: [{ type: "pronoun" }]
+        }
+      ]
+    });
 
     const mainFnDeclaration = wasmAst.functions.find(f => f.id === "$main");
     expect(mainFnDeclaration).toBeTruthy();
@@ -27,33 +30,37 @@ describe("transformer", () => {
   });
 
   it("throws if there are global statements and a main function", () => {
-    const rockstarAst: rockstar.Program = [
-      {
-        type: "simpleAssignment",
-        target: { type: "variable", name: "x" },
-        expression: { type: "number", value: 5 }
-      },
-      {
-        type: "function",
-        name: "main",
-        args: [],
-        result: { type: "pronoun" },
-        statements: [
-          {
-            type: "simpleAssignment",
-            target: { type: "variable", name: "y" },
-            expression: { type: "number", value: 5 }
-          }
-        ]
-      }
-    ];
+    const rockstarAst: rockstar.Program = {
+      type: "program",
+      statements: [
+        {
+          type: "simpleAssignment",
+          target: { type: "variable", name: "x" },
+          expression: { type: "number", value: 5 }
+        },
+        {
+          type: "function",
+          name: "main",
+          args: [],
+          result: { type: "pronoun" },
+          statements: [
+            {
+              type: "simpleAssignment",
+              target: { type: "variable", name: "y" },
+              expression: { type: "number", value: 5 }
+            }
+          ]
+        }
+      ]
+    };
     expect(() => transform(rockstarAst)).toThrow();
   });
 
   it("adds an import when calling a non-defined function", () => {
-    const rockstarAst: rockstar.Program = [
-      { type: "call", name: "alert", args: [{ type: "number", value: 5 }] }
-    ];
+    const rockstarAst: rockstar.Program = {
+      type: "program",
+      statements: [{ type: "call", name: "alert", args: [{ type: "number", value: 5 }] }]
+    };
     const wasmAst = transform(rockstarAst);
 
     const imports = wasmAst.imports.filter(
@@ -68,18 +75,21 @@ describe("transformer", () => {
 
   describe("simple assignments", () => {
     it("transforms simple assignment to a number", () => {
-      const wasmAst = transform([
-        {
-          type: "variableDeclaration",
-          variable: { type: "variable", name: "x" },
-          value: { type: "number", value: 5 }
-        },
-        {
-          type: "simpleAssignment",
-          target: { type: "variable", name: "x" },
-          expression: { type: "number", value: 10 }
-        }
-      ]);
+      const wasmAst = transform({
+        type: "program",
+        statements: [
+          {
+            type: "variableDeclaration",
+            variable: { type: "variable", name: "x" },
+            value: { type: "number", value: 5 }
+          },
+          {
+            type: "simpleAssignment",
+            target: { type: "variable", name: "x" },
+            expression: { type: "number", value: 10 }
+          }
+        ]
+      });
 
       const mainFn = wasmAst.functions.find(f => f.id === "$main") as wasm.Function;
       expect(mainFn).toBeTruthy();
@@ -101,28 +111,31 @@ describe("transformer", () => {
       ["subtract", "f32.sub"]
     ] as Case[]) {
       it(`transforms simple assignment to an arithmetic expression: ${arithmeticOperator}`, () => {
-        const wasmAst = transform([
-          {
-            type: "variableDeclaration",
-            variable: { type: "variable", name: "x" },
-            value: { type: "number", value: 5 }
-          },
-          {
-            type: "variableDeclaration",
-            variable: { type: "variable", name: "y" },
-            value: { type: "number", value: 6 }
-          },
-          {
-            type: "simpleAssignment",
-            target: { type: "variable", name: "x" },
-            expression: {
-              type: "arithmeticExpression",
-              left: { type: "variable", name: "y" },
-              right: { type: "number", value: 10 },
-              operator: arithmeticOperator
+        const wasmAst = transform({
+          type: "program",
+          statements: [
+            {
+              type: "variableDeclaration",
+              variable: { type: "variable", name: "x" },
+              value: { type: "number", value: 5 }
+            },
+            {
+              type: "variableDeclaration",
+              variable: { type: "variable", name: "y" },
+              value: { type: "number", value: 6 }
+            },
+            {
+              type: "simpleAssignment",
+              target: { type: "variable", name: "x" },
+              expression: {
+                type: "arithmeticExpression",
+                left: { type: "variable", name: "y" },
+                right: { type: "number", value: 10 },
+                operator: arithmeticOperator
+              }
             }
-          }
-        ]);
+          ]
+        });
 
         const mainFn = wasmAst.functions.find(f => f.id === "$main") as wasm.Function;
         expect(mainFn).toBeTruthy();
@@ -150,19 +163,22 @@ describe("transformer", () => {
     ["subtract", "f32.sub"]
   ] as CompoundAssignmentCase[]) {
     it(`transforms compound assignment: ${arithmeticOperator}`, () => {
-      const wasmAst = transform([
-        {
-          type: "variableDeclaration",
-          variable: { type: "variable", name: "x" },
-          value: { type: "number", value: 5 }
-        },
-        {
-          type: "compoundAssignment",
-          operator: arithmeticOperator,
-          target: { type: "variable", name: "x" },
-          right: { type: "number", value: 5 }
-        }
-      ]);
+      const wasmAst = transform({
+        type: "program",
+        statements: [
+          {
+            type: "variableDeclaration",
+            variable: { type: "variable", name: "x" },
+            value: { type: "number", value: 5 }
+          },
+          {
+            type: "compoundAssignment",
+            operator: arithmeticOperator,
+            target: { type: "variable", name: "x" },
+            right: { type: "number", value: 5 }
+          }
+        ]
+      });
 
       const mainFn = wasmAst.functions.find(f => f.id === "$main") as wasm.Function;
       expect(mainFn).toBeTruthy();
@@ -185,17 +201,20 @@ describe("transformer", () => {
     ["decrement", "f32.sub"]
   ] as IncrementDecrementCase[]) {
     it(`transforms ${incOrDec}`, () => {
-      const wasmAst = transform([
-        {
-          type: "variableDeclaration",
-          variable: { type: "variable", name: "x" },
-          value: { type: "number", value: 5 }
-        },
-        {
-          type: incOrDec,
-          target: { type: "variable", name: "x" }
-        }
-      ]);
+      const wasmAst = transform({
+        type: "program",
+        statements: [
+          {
+            type: "variableDeclaration",
+            variable: { type: "variable", name: "x" },
+            value: { type: "number", value: 5 }
+          },
+          {
+            type: incOrDec,
+            target: { type: "variable", name: "x" }
+          }
+        ]
+      });
 
       const mainFn = wasmAst.functions.find(f => f.id === "$main") as wasm.Function;
       expect(mainFn).toBeTruthy();
@@ -219,18 +238,21 @@ describe("transformer", () => {
     ["down", "f32.floor"]
   ] as RockstarRoundingCase[]) {
     it(`transforms arithmetic rounding ${roundingDirection}`, () => {
-      const wasmAst = transform([
-        {
-          type: "variableDeclaration",
-          variable: { type: "variable", name: "x" },
-          value: { type: "number", value: 5.4 }
-        },
-        {
-          type: "round",
-          target: { type: "variable", name: "x" },
-          direction: roundingDirection
-        }
-      ]);
+      const wasmAst = transform({
+        type: "program",
+        statements: [
+          {
+            type: "variableDeclaration",
+            variable: { type: "variable", name: "x" },
+            value: { type: "number", value: 5.4 }
+          },
+          {
+            type: "round",
+            target: { type: "variable", name: "x" },
+            direction: roundingDirection
+          }
+        ]
+      });
 
       const mainFn = wasmAst.functions.find(f => f.id === "$main") as wasm.Function;
       expect(mainFn).toBeTruthy();
@@ -246,12 +268,15 @@ describe("transformer", () => {
     });
 
     it("transforms comments", () => {
-      const wasmAst = transform([
-        {
-          type: "comment",
-          comment: "hello"
-        }
-      ]);
+      const wasmAst = transform({
+        type: "program",
+        statements: [
+          {
+            type: "comment",
+            comment: "hello"
+          }
+        ]
+      });
 
       const mainFn = wasmAst.functions.find(f => f.id === "$main") as wasm.Function;
       expect(mainFn).toBeTruthy();
@@ -263,15 +288,18 @@ describe("transformer", () => {
   }
 
   it("transforms function with one argument and result", () => {
-    const wasmAst = transform([
-      {
-        type: "function",
-        name: "hello",
-        args: [{ type: "variable", name: "x" }],
-        result: { type: "variable", name: "x" },
-        statements: []
-      }
-    ]);
+    const wasmAst = transform({
+      type: "program",
+      statements: [
+        {
+          type: "function",
+          name: "hello",
+          args: [{ type: "variable", name: "x" }],
+          result: { type: "variable", name: "x" },
+          statements: []
+        }
+      ]
+    });
 
     const fn = wasmAst.functions.find(f => f.id === "$hello") as wasm.Function;
     expect(fn).toBeTruthy();

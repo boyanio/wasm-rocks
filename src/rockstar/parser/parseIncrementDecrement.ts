@@ -1,10 +1,10 @@
 import { Parser } from "./types";
-import { Program, IncrementOperation, DecrementOperation } from "../ast";
+import { IncrementOperation, DecrementOperation, Scope } from "../ast";
 import { parseNamedVariable, parsePronoun } from "./parseExpression";
 import { combineParsers } from "./combineParsers";
 import { countOccurrences } from "../../utils/string-utils";
 
-const parseIncrement: Parser = (program: Program, lines: string[], lineIndex: number): number => {
+const parseIncrement: Parser = (scope: Scope, lines: string[], lineIndex: number): number => {
   const line = lines[lineIndex];
 
   const match = line.match(/^build (.+?) ((up)($|,|,?\s+))+/i);
@@ -15,13 +15,13 @@ const parseIncrement: Parser = (program: Program, lines: string[], lineIndex: nu
 
   const change = countOccurrences(line, " up");
   Array.prototype.push.apply(
-    program,
+    scope.statements,
     Array.from(Array(change)).map<IncrementOperation>(() => ({ type: "increment", target }))
   );
   return lineIndex + 1;
 };
 
-const parseDecrement: Parser = (program: Program, lines: string[], lineIndex: number): number => {
+const parseDecrement: Parser = (scope: Scope, lines: string[], lineIndex: number): number => {
   const line = lines[lineIndex];
 
   const match = line.match(/^knock (.+?) ((down)($|,|,?\s+))+/i);
@@ -32,7 +32,7 @@ const parseDecrement: Parser = (program: Program, lines: string[], lineIndex: nu
 
   const change = countOccurrences(line, " down");
   Array.prototype.push.apply(
-    program,
+    scope.statements,
     Array.from(Array(change)).map<DecrementOperation>(() => ({ type: "decrement", target }))
   );
   return lineIndex + 1;

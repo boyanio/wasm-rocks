@@ -26,12 +26,12 @@ describe("rockstar", () => {
         describe(`round ${direction} variable`, () => {
           for (const [expression, variable] of cases[direction].variable) {
             it(expression, () => {
-              const ast = parse(expression);
+              const { statements } = parse(expression);
 
-              expect(ast.length).toEqual(1);
-              expect(ast[0].type).toEqual("round");
+              expect(statements.length).toEqual(1);
+              expect(statements[0].type).toEqual("round");
 
-              const firstNode = ast[0] as ArithmeticRoundingOperation;
+              const firstNode = statements[0] as ArithmeticRoundingOperation;
               expect(firstNode.direction).toEqual(direction);
               expect(firstNode.target.type).toEqual("variable");
               expect((firstNode.target as NamedVariable).name).toEqual(variable);
@@ -42,12 +42,12 @@ describe("rockstar", () => {
         describe(`round ${direction} pronoun`, () => {
           for (const expression of cases[direction].pronoun) {
             it(expression, () => {
-              const ast = parse(expression);
+              const { statements } = parse(expression);
 
-              expect(ast.length).toEqual(1);
-              expect(ast[0].type).toEqual("round");
+              expect(statements.length).toEqual(1);
+              expect(statements[0].type).toEqual("round");
 
-              const firstNode = ast[0] as ArithmeticRoundingOperation;
+              const firstNode = statements[0] as ArithmeticRoundingOperation;
               expect(firstNode.direction).toEqual(direction);
               expect(firstNode.target.type).toEqual("pronoun");
             });

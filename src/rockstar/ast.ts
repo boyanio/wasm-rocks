@@ -128,4 +128,9 @@ export type Statement =
   | IncrementOperation
   | DecrementOperation;
 
-export type Program = Statement[];
+export type Program = {
+  type: "program";
+  statements: Statement[];
+};
+
+export type Scope = Program | FunctionDeclaration;

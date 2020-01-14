@@ -21,12 +21,12 @@ describe("rockstar", () => {
         ];
         for (const [expression, target, literal] of cases) {
           it(expression, () => {
-            const ast = parse(expression);
+            const { statements } = parse(expression);
 
-            expect(ast.length).toEqual(1);
-            expect(ast[0].type).toEqual("simpleAssignment");
+            expect(statements.length).toEqual(1);
+            expect(statements[0].type).toEqual("simpleAssignment");
 
-            const node = ast[0] as SimpleAssignment;
+            const node = statements[0] as SimpleAssignment;
             expect(node.target.type).toEqual("variable");
             expect((node.target as NamedVariable).name).toEqual(target);
             expect(node.expression.type).toEqual("number");
@@ -44,12 +44,12 @@ describe("rockstar", () => {
         ];
         for (const [expression, target, literal] of cases) {
           it(expression, () => {
-            const ast = parse(expression);
+            const { statements } = parse(expression);
 
-            expect(ast.length).toEqual(1);
-            expect(ast[0].type).toEqual("simpleAssignment");
+            expect(statements.length).toEqual(1);
+            expect(statements[0].type).toEqual("simpleAssignment");
 
-            const node = ast[0] as SimpleAssignment;
+            const node = statements[0] as SimpleAssignment;
             expect(node.target.type).toEqual("variable");
             expect((node.target as NamedVariable).name).toEqual(target);
             expect(node.expression.type).toEqual("string");
@@ -84,12 +84,12 @@ describe("rockstar", () => {
         ];
         for (const [expression, target, left, right, operator] of cases) {
           it(expression, () => {
-            const ast = parse(expression);
+            const { statements } = parse(expression);
 
-            expect(ast.length).toEqual(1);
-            expect(ast[0].type).toEqual("simpleAssignment");
+            expect(statements.length).toEqual(1);
+            expect(statements[0].type).toEqual("simpleAssignment");
 
-            const node = ast[0] as SimpleAssignment;
+            const node = statements[0] as SimpleAssignment;
             expect(node.target.type).toEqual("variable");
             expect((node.target as NamedVariable).name).toEqual(target);
 
@@ -120,12 +120,12 @@ describe("rockstar", () => {
           ];
           for (const [expression, target, operator, number] of cases) {
             it(expression, () => {
-              const ast = parse(expression);
+              const { statements } = parse(expression);
 
-              expect(ast.length).toEqual(1);
-              expect(ast[0].type).toEqual("compoundAssignment");
+              expect(statements.length).toEqual(1);
+              expect(statements[0].type).toEqual("compoundAssignment");
 
-              const node = ast[0] as CompoundAssignment;
+              const node = statements[0] as CompoundAssignment;
               expect(node.target.type).toEqual("variable");
               expect((node.target as NamedVariable).name).toEqual(target);
               expect(node.operator).toEqual(operator);
@@ -149,12 +149,12 @@ describe("rockstar", () => {
           ];
           for (const [expression, target, operator, variable] of cases) {
             it(expression, () => {
-              const ast = parse(expression);
+              const { statements } = parse(expression);
 
-              expect(ast.length).toEqual(1);
-              expect(ast[0].type).toEqual("compoundAssignment");
+              expect(statements.length).toEqual(1);
+              expect(statements[0].type).toEqual("compoundAssignment");
 
-              const node = ast[0] as CompoundAssignment;
+              const node = statements[0] as CompoundAssignment;
               expect(node.target.type).toEqual("variable");
               expect((node.target as NamedVariable).name).toEqual(target);
               expect(node.operator).toEqual(operator);

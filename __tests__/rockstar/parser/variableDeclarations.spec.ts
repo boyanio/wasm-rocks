@@ -44,12 +44,12 @@ describe("rockstar", () => {
         describe(caseName, () => {
           for (const [input, variable, literal] of cases[caseName]) {
             it(`${input} => ${variable} = ${literal}`, () => {
-              const ast = parse(input);
+              const { statements } = parse(input);
 
-              expect(ast.length).toEqual(1);
-              expect(ast[0].type).toEqual("variableDeclaration");
+              expect(statements.length).toEqual(1);
+              expect(statements[0].type).toEqual("variableDeclaration");
 
-              const node = ast[0] as VariableDeclaration;
+              const node = statements[0] as VariableDeclaration;
               expect(node.variable.name).toEqual(variable);
 
               if (typeof literal === "string") {
@@ -64,24 +64,24 @@ describe("rockstar", () => {
 
       describe("constant literals", () => {
         it("Peter is mysterious", () => {
-          const ast = parse("Peter is mysterious");
+          const { statements } = parse("Peter is mysterious");
 
-          expect(ast.length).toEqual(1);
-          expect(ast[0].type).toEqual("variableDeclaration");
+          expect(statements.length).toEqual(1);
+          expect(statements[0].type).toEqual("variableDeclaration");
 
-          const node = ast[0] as VariableDeclaration;
+          const node = statements[0] as VariableDeclaration;
           expect(node.variable.name).toEqual("peter");
           expect(node.value.type).toEqual("mysterious");
         });
 
         for (const nullValue of ["null", "nowhere", "empty", "nobody", "gone", "nothing"]) {
           it(`Peter is ${nullValue}`, () => {
-            const ast = parse(`Peter is ${nullValue}`);
+            const { statements } = parse(`Peter is ${nullValue}`);
 
-            expect(ast.length).toEqual(1);
-            expect(ast[0].type).toEqual("variableDeclaration");
+            expect(statements.length).toEqual(1);
+            expect(statements[0].type).toEqual("variableDeclaration");
 
-            const node = ast[0] as VariableDeclaration;
+            const node = statements[0] as VariableDeclaration;
             expect(node.variable.name).toEqual("peter");
             expect(node.value.type).toEqual("null");
           });
@@ -89,12 +89,12 @@ describe("rockstar", () => {
 
         for (const trueValue of ["true", "right", "yes"]) {
           it(`Peter is ${trueValue}`, () => {
-            const ast = parse(`Peter is ${trueValue}`);
+            const { statements } = parse(`Peter is ${trueValue}`);
 
-            expect(ast.length).toEqual(1);
-            expect(ast[0].type).toEqual("variableDeclaration");
+            expect(statements.length).toEqual(1);
+            expect(statements[0].type).toEqual("variableDeclaration");
 
-            const node = ast[0] as VariableDeclaration;
+            const node = statements[0] as VariableDeclaration;
             expect(node.variable.name).toEqual("peter");
             expect(node.value.type).toEqual("boolean");
             expect((node.value as BooleanLiteral).value === true).toBeTruthy();
@@ -103,12 +103,12 @@ describe("rockstar", () => {
 
         for (const falseValue of ["false", "wrong", "no", "lies"]) {
           it(`Peter is ${falseValue}`, () => {
-            const ast = parse(`Peter is ${falseValue}`);
+            const { statements } = parse(`Peter is ${falseValue}`);
 
-            expect(ast.length).toEqual(1);
-            expect(ast[0].type).toEqual("variableDeclaration");
+            expect(statements.length).toEqual(1);
+            expect(statements[0].type).toEqual("variableDeclaration");
 
-            const node = ast[0] as VariableDeclaration;
+            const node = statements[0] as VariableDeclaration;
             expect(node.variable.name).toEqual("peter");
             expect(node.value.type).toEqual("boolean");
             expect((node.value as BooleanLiteral).value === false).toBeTruthy();

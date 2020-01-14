@@ -1,5 +1,5 @@
 import { Parser } from "./types";
-import { Program, VariableDeclaration } from "../ast";
+import { VariableDeclaration, Scope } from "../ast";
 import {
   parsePoeticNumberLiteral,
   parsePoeticStringLiteral,
@@ -44,7 +44,7 @@ const parseWithNonStringPoeticLiteral = (line: string): VariableDeclaration | nu
 };
 
 export const parseVariableDeclaration: Parser = (
-  program: Program,
+  scope: Scope,
   lines: string[],
   lineIndex: number
 ): number => {
@@ -53,6 +53,6 @@ export const parseVariableDeclaration: Parser = (
   const node = parseWithPoeticString(line) || parseWithNonStringPoeticLiteral(line);
   if (!node) return lineIndex;
 
-  program.push(node);
+  scope.statements.push(node);
   return lineIndex + 1;
 };

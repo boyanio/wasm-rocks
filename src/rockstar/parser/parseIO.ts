@@ -1,5 +1,5 @@
 import { Parser } from "./types";
-import { Program, SayCall } from "../ast";
+import { SayCall, Scope } from "../ast";
 import { parseSimpleExpression } from "./parseExpression";
 
 const parseSay = (line: string): SayCall | null => {
@@ -9,21 +9,18 @@ const parseSay = (line: string): SayCall | null => {
   const what = parseSimpleExpression(match[2]);
   if (!what) return null;
 
-  const say: SayCall = {
+  return {
     type: "say",
     what
   };
-  return say;
 };
 
-export const parseIO: Parser = (program: Program, lines: string[], lineIndex: number): number => {
+export const parseIO: Parser = (scope: Scope, lines: string[], lineIndex: number): number => {
   const line = lines[lineIndex];
 
   const node = parseSay(line);
-  if (node) {
-    program.push(node);
-    return lineIndex + 1;
-  }
+  if (!node) return lineIndex;
 
-  return lineIndex;
+  scope.statements.push(node);
+  return lineIndex + 1;
 };

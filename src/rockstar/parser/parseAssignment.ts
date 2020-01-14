@@ -6,11 +6,11 @@ import {
 } from "./parseExpression";
 import {
   SimpleAssignment,
-  Program,
   CompoundAssignment,
   ArithmeticOperator,
   Assignment,
-  Variable
+  Variable,
+  Scope
 } from "../ast";
 
 const compoundAssignmentParser = (pattern: RegExp, operator: ArithmeticOperator) => (
@@ -82,7 +82,7 @@ const parseLetAssignment = (line: string): Assignment | null => {
  *    Put <expression> into <variable>
  */
 export const parseAssignment: Parser = (
-  program: Program,
+  scope: Scope,
   lines: string[],
   lineIndex: number
 ): number => {
@@ -91,6 +91,6 @@ export const parseAssignment: Parser = (
   const node = parsePutAssignment(line) || parseLetAssignment(line);
   if (!node) return lineIndex;
 
-  program.push(node);
+  scope.statements.push(node);
   return lineIndex + 1;
 };

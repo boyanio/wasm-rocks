@@ -1,13 +1,13 @@
 import { Parser } from "./types";
-import { Program } from "../ast";
+import { Scope } from "../ast";
 
 export const combineParsers = (parsers: Parser[]): Parser => (
-  program: Program,
+  scope: Scope,
   lines: string[],
   lineIndex: number
 ): number => {
   for (const parser of parsers) {
-    const nextLineIndex = parser(program, lines, lineIndex);
+    const nextLineIndex = parser(scope, lines, lineIndex);
     if (nextLineIndex > lineIndex) {
       return nextLineIndex;
     }
