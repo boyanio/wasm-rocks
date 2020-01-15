@@ -10,7 +10,9 @@ import {
   ArithmeticOperator,
   Pronoun,
   Expression,
-  Literal
+  Literal,
+  Identifier,
+  FunctionCall
 } from "../ast";
 import { capitalize } from "../../utils/string-utils";
 
@@ -59,7 +61,7 @@ const keywords = [
 
 export const isPronoun = (input: string): boolean => pronouns.includes(input.toLowerCase());
 
-export const parseNamedVariable = (input: string): NamedVariable | null => {
+export const parseIdentifier = (input: string): Identifier | null => {
   const parseProperVariableName = (): string | null => {
     if (!/^([A-Z][a-zA-Z]+\s){2,}$/.test(`${input} `)) return null;
     return input // transform to Xxxx Yyyy
@@ -80,6 +82,13 @@ export const parseNamedVariable = (input: string): NamedVariable | null => {
 
   const name = parseProperVariableName() || parseCommonVariableName() || parseSimpleVariableName();
   if (!name || keywords.includes(name)) return null;
+
+  return name;
+};
+
+export const parseNamedVariable = (input: string): NamedVariable | null => {
+  const name = parseIdentifier(input);
+  if (!name) return null;
 
   return {
     type: "variable",
@@ -216,5 +225,37 @@ export const parseArithmeticExpression = (input: string): ArithmeticExpression |
     null
   );
 
+export const parseFunctionCall = (input: string): FunctionCall | null => {
+  const match = input.match(
+    /^([a-zA-Z\s]+?) taking (["a-zA-Z0-9\s]+?)(((,|and|'n') ([a-zA-Z0-9\s]+?))*)$/i
+  );
+  if (!match) return null;
+
+  const name = parseIdentifier(match[1]);
+  if (!name) return null;
+
+  const firstArg = parseSimpleExpression(match[2]);
+  if (!firstArg) return null;
+
+  const args = [firstArg];
+
+  // other args
+  if (match[3]) {
+    const otherArgs = match[3]
+      .split(/,|and|'n'/g)
+      .filter(x => x !== "")
+      .map(x => parseSimpleExpression(x.trim()));
+    if (otherArgs.some(x => !x)) return null;
+
+    args.push(...(otherArgs as SimpleExpression[]));
+  }
+
+  return {
+    type: "call",
+    name,
+    args
+  };
+};
+
 export const parseExpression = (input: string): Expression | null =>
-  parseArithmeticExpression(input) || parseSimpleExpression(input);
+  parseFunctionCall(input) || parseArithmeticExpression(input) || parseSimpleExpression(input);

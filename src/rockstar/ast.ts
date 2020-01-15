@@ -98,7 +98,7 @@ export type SayCall = {
 export type SimpleAssignment = {
   type: "simpleAssignment";
   target: Variable;
-  expression: SimpleExpression | ArithmeticExpression;
+  expression: SimpleExpression | ArithmeticExpression | FunctionCall;
 };
 
 export type CompoundAssignment = {

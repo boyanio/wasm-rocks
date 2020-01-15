@@ -1,6 +1,6 @@
 import { Parser } from "./types";
 import { Scope, FunctionDeclaration, NamedVariable } from "../ast";
-import { parseNamedVariable, parseSimpleExpression } from "./parseExpression";
+import { parseNamedVariable, parseSimpleExpression, parseIdentifier } from "./parseExpression";
 import { combineParsers } from "./combineParsers";
 import { parseComment } from "./parseComment";
 import { parseAssignment } from "./parseAssignment";
@@ -39,8 +39,8 @@ export const parseFunctionDeclaration: Parser = (
   );
   if (!startLineMatch) return lineIndex;
 
-  const nameVariable = parseNamedVariable(startLineMatch[1]);
-  if (!nameVariable) return lineIndex;
+  const name = parseIdentifier(startLineMatch[1]);
+  if (!name) return lineIndex;
 
   const parsedArgs = [startLineMatch[2], startLineMatch[5]]
     .filter(x => !!x)
@@ -50,7 +50,7 @@ export const parseFunctionDeclaration: Parser = (
 
   const func: FunctionDeclaration = {
     type: "function",
-    name: nameVariable.name,
+    name,
     args: parsedArgs as NamedVariable[],
     result: { type: "pronoun" }, // this will be overriden at the end
     statements: []

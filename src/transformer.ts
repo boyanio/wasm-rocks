@@ -176,18 +176,28 @@ export const transform = (rockstarAst: rockstar.Program): wasm.Module => {
 
         case "simpleAssignment": {
           const { target, expression } = statement as rockstar.SimpleAssignment;
-          if (expression.type === "arithmeticExpression") {
-            wasmFn.instructions.push(
-              transformSimpleExpression(expression.left),
-              transformSimpleExpression(expression.right),
-              transformArithmeticExpression(expression.operator),
-              variableInstruction(target, "set")
-            );
-          } else {
-            wasmFn.instructions.push(
-              transformSimpleExpression(expression),
-              variableInstruction(target, "set")
-            );
+          switch (expression.type) {
+            case "arithmeticExpression": {
+              wasmFn.instructions.push(
+                transformSimpleExpression(expression.left),
+                transformSimpleExpression(expression.right),
+                transformArithmeticExpression(expression.operator),
+                variableInstruction(target, "set")
+              );
+              break;
+            }
+
+            case "call": {
+              // TODO
+              break;
+            }
+
+            default: {
+              wasmFn.instructions.push(
+                transformSimpleExpression(expression),
+                variableInstruction(target, "set")
+              );
+            }
           }
           break;
         }

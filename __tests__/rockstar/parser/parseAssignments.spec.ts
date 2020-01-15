@@ -6,7 +6,9 @@ import {
   StringLiteral,
   ArithmeticOperator,
   ArithmeticExpression,
-  CompoundAssignment
+  CompoundAssignment,
+  FunctionCall,
+  Variable
 } from "../../../src/rockstar/ast";
 
 describe("rockstar", () => {
@@ -162,6 +164,91 @@ describe("rockstar", () => {
               expect((node.right as NamedVariable).name).toEqual(variable);
             });
           }
+        });
+      });
+
+      describe("function calls", () => {
+        it("Put Multiply taking the cat into Large", () => {
+          const program = "Put Multiply taking the cat into Large";
+          const { statements } = parse(program);
+
+          expect(statements).toEqual([
+            {
+              type: "simpleAssignment",
+              target: {
+                type: "variable",
+                name: "large"
+              },
+              expression: {
+                type: "call",
+                name: "multiply",
+                args: [{ type: "variable", name: "the cat" }]
+              }
+            }
+          ]);
+        });
+
+        it('Put Multiply taking "yo yo" into Large', () => {
+          const program = 'Put Multiply taking "yo yo" into Large';
+          const { statements } = parse(program);
+
+          expect(statements).toEqual([
+            {
+              type: "simpleAssignment",
+              target: {
+                type: "variable",
+                name: "large"
+              },
+              expression: {
+                type: "call",
+                name: "multiply",
+                args: [{ type: "string", value: "yo yo" }]
+              }
+            }
+          ]);
+        });
+
+        it("Put Multiply taking 3 into Large", () => {
+          const program = "Put Multiply taking 3 into Large";
+          const { statements } = parse(program);
+
+          expect(statements).toEqual([
+            {
+              type: "simpleAssignment",
+              target: {
+                type: "variable",
+                name: "large"
+              },
+              expression: {
+                type: "call",
+                name: "multiply",
+                args: [{ type: "number", value: 3 }]
+              }
+            }
+          ]);
+        });
+
+        it("Put Multiply taking 3, 5 into Large", () => {
+          const program = "Put Multiply taking 3, 5 into Large";
+          const { statements } = parse(program);
+
+          expect(statements).toEqual([
+            {
+              type: "simpleAssignment",
+              target: {
+                type: "variable",
+                name: "large"
+              },
+              expression: {
+                type: "call",
+                name: "multiply",
+                args: [
+                  { type: "number", value: 3 },
+                  { type: "number", value: 5 }
+                ]
+              }
+            }
+          ]);
         });
       });
     });

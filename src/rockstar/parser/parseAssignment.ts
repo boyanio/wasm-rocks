@@ -2,7 +2,8 @@ import { Parser } from "./types";
 import {
   parseNamedVariable,
   parseSimpleExpression,
-  parseArithmeticExpression
+  parseArithmeticExpression,
+  parseFunctionCall
 } from "./parseExpression";
 import {
   SimpleAssignment,
@@ -44,7 +45,8 @@ const parseCompoundAssignment = (input: string, target: Variable): CompoundAssig
   );
 
 const parseSimpleAssignment = (input: string, target: Variable): SimpleAssignment | null => {
-  const expression = parseArithmeticExpression(input) || parseSimpleExpression(input);
+  const expression =
+    parseFunctionCall(input) || parseArithmeticExpression(input) || parseSimpleExpression(input);
   if (!expression) return null;
 
   const simpleAssignment: SimpleAssignment = {
