@@ -5,19 +5,12 @@ import {
   parseArithmeticExpression,
   parseFunctionCall
 } from "./parseExpression";
-import {
-  SimpleAssignment,
-  CompoundAssignment,
-  ArithmeticOperator,
-  Assignment,
-  Variable,
-  Scope
-} from "../ast";
+import { Assignment, ArithmeticOperator, Variable, Scope } from "../ast";
 
-const compoundAssignmentParser = (pattern: RegExp, operator: ArithmeticOperator) => (
+const compoundAssignmentParser = (pattern: RegExp) => (
   input: string,
   target: Variable
-): CompoundAssignment | null => {
+): Assignment | null => {
   const match = input.match(pattern);
   if (!match) return null;
 
@@ -25,10 +18,9 @@ const compoundAssignmentParser = (pattern: RegExp, operator: ArithmeticOperator)
   if (!right) return null;
 
   return {
-    type: "compoundAssignment",
+    type: "assignment",
     target,
-    operator,
-    right
+    expression: right
   };
 };
 
@@ -38,19 +30,19 @@ const compoundAssignmentParsers = [
   compoundAssignmentParser(/^(over) (.+)$/i, "divide"),
   compoundAssignmentParser(/^(plus|with) (.+)$/i, "add")
 ];
-const parseCompoundAssignment = (input: string, target: Variable): CompoundAssignment | null =>
-  compoundAssignmentParsers.reduce<CompoundAssignment | null>(
+const parseCompoundAssignment = (input: string, target: Variable): Assignment | null =>
+  compoundAssignmentParsers.reduce<Assignment | null>(
     (node, parser) => node || parser(input, target),
     null
   );
 
-const parseSimpleAssignment = (input: string, target: Variable): SimpleAssignment | null => {
+const parseSimpleAssignment = (input: string, target: Variable): Assignment | null => {
   const expression =
     parseFunctionCall(input) || parseArithmeticExpression(input) || parseSimpleExpression(input);
   if (!expression) return null;
 
-  const simpleAssignment: SimpleAssignment = {
-    type: "simpleAssignment",
+  const simpleAssignment: Assignment = {
+    type: "assignment",
     target,
     expression
   };

@@ -23,13 +23,11 @@ describe("rockstar", () => {
         "common variable declaration": [
           ["My boys were 5", "my boys", 5],
           ["A boy was 5", "a boy", 5],
-          ["YoUr boy is 5", "your boy", 5],
-          ["aN applE is 5", "an apple", 5],
           ['The lady is "very nice"', "the lady", "very nice"]
         ],
 
         "proper variable declaration": [
-          ['COOL LadY is "very nice"', "Cool Lady", "very nice"],
+          ['Cool Lady is "very nice"', "Cool Lady", "very nice"],
           ["Doctor Feelgood is 10", "Doctor Feelgood", 10]
         ],
 

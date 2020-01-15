@@ -1,6 +1,6 @@
 import { parse } from "../../../src/rockstar/parser";
 import {
-  SimpleAssignment,
+  Assignment,
   NamedVariable,
   NumberLiteral,
   StringLiteral,
@@ -28,7 +28,7 @@ describe("rockstar", () => {
             expect(statements.length).toEqual(1);
             expect(statements[0].type).toEqual("simpleAssignment");
 
-            const node = statements[0] as SimpleAssignment;
+            const node = statements[0] as Assignment;
             expect(node.target.type).toEqual("variable");
             expect((node.target as NamedVariable).name).toEqual(target);
             expect(node.expression.type).toEqual("number");
@@ -51,7 +51,7 @@ describe("rockstar", () => {
             expect(statements.length).toEqual(1);
             expect(statements[0].type).toEqual("simpleAssignment");
 
-            const node = statements[0] as SimpleAssignment;
+            const node = statements[0] as Assignment;
             expect(node.target.type).toEqual("variable");
             expect((node.target as NamedVariable).name).toEqual(target);
             expect(node.expression.type).toEqual("string");
@@ -91,7 +91,7 @@ describe("rockstar", () => {
             expect(statements.length).toEqual(1);
             expect(statements[0].type).toEqual("simpleAssignment");
 
-            const node = statements[0] as SimpleAssignment;
+            const node = statements[0] as Assignment;
             expect(node.target.type).toEqual("variable");
             expect((node.target as NamedVariable).name).toEqual(target);
 

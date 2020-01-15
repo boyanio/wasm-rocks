@@ -1,5 +1,5 @@
 import { Parser } from "./types";
-import { Program, Comment, Scope } from "../ast";
+import { Comment, Scope } from "../ast";
 
 /**
  * Parses a comment

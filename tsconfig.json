@@ -5,10 +5,10 @@
     "moduleResolution": "node",
     "experimentalDecorators": true,
     "strict": true,
-    "target": "es2015",
+    "target": "ES2015",
     "module": "esnext",
     "typeRoots": ["node_modules/@types"],
-    "lib": ["es2017", "dom"],
+    "lib": ["es2019", "dom"],
     "strictNullChecks": true,
     "baseUrl": ".",
     "esModuleInterop": true

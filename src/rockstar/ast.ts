@@ -1,13 +1,3 @@
-export type NumberLiteral = {
-  type: "number";
-  value: number;
-};
-
-export type StringLiteral = {
-  type: "string";
-  value: string;
-};
-
 export type BooleanLiteral = {
   type: "boolean";
   value: boolean;
@@ -21,12 +11,19 @@ export type NullLiteral = {
   type: "null";
 };
 
-export type Literal =
-  | NumberLiteral
-  | StringLiteral
-  | BooleanLiteral
-  | MysteriousLiteral
-  | NullLiteral;
+export type ConstantLiteral = MysteriousLiteral | NullLiteral | BooleanLiteral;
+
+export type NumberLiteral = {
+  type: "number";
+  value: number;
+};
+
+export type StringLiteral = {
+  type: "string";
+  value: string;
+};
+
+export type Literal = NumberLiteral | StringLiteral | ConstantLiteral;
 
 export type NamedVariable = {
   type: "variable";
@@ -49,19 +46,10 @@ export type VariableDeclaration = {
   value: Literal;
 };
 
-export type ArithmeticOperator = "add" | "subtract" | "divide" | "multiply";
-
-export type ArithmeticExpression = {
-  type: "arithmeticExpression";
-  operator: ArithmeticOperator;
-  left: SimpleExpression;
-  right: SimpleExpression;
-};
-
 export type FunctionCall = {
   type: "call";
   name: Identifier;
-  args: SimpleExpression[];
+  args: Expression[];
 };
 
 export type FunctionDeclaration = {
@@ -92,20 +80,13 @@ export type DecrementOperation = {
 
 export type SayCall = {
   type: "say";
-  what: SimpleExpression;
+  what: Expression;
 };
 
-export type SimpleAssignment = {
-  type: "simpleAssignment";
+export type Assignment = {
+  type: "assignment";
   target: Variable;
-  expression: SimpleExpression | ArithmeticExpression | FunctionCall;
-};
-
-export type CompoundAssignment = {
-  type: "compoundAssignment";
-  target: Variable;
-  operator: ArithmeticOperator;
-  right: SimpleExpression;
+  expression: Expression;
 };
 
 export type Comment = {
@@ -113,9 +94,50 @@ export type Comment = {
   comment: string;
 };
 
-export type Assignment = SimpleAssignment | CompoundAssignment;
+export type BlockStatement = {
+  type: "block";
+  statements: Statement[];
+};
 
-export type Expression = SimpleExpression | ArithmeticExpression | FunctionCall;
+export type LogicalOperator = "and" | "or" | "nor" | "not";
+
+export type Comparator =
+  | "equals"
+  | "notEquals"
+  | "greaterThan"
+  | "greaterThanOrEquals"
+  | "lowerThan"
+  | "lowerThanOrEquals";
+
+export type ArithmeticOperator = "add" | "subtract" | "multiply" | "divide";
+
+export type UnaryOperator = "not";
+
+export type UnaryExpression = {
+  type: "unaryExpression";
+  rhs: Expression;
+  operator: BinaryOperator;
+};
+
+export type BinaryOperator = Comparator | LogicalOperator | ArithmeticOperator;
+
+export type BinaryExpression = {
+  type: "binaryExpression";
+  lhs: Expression;
+  rhs: Expression;
+  operator: BinaryOperator;
+};
+
+export type Operator = BinaryOperator | UnaryOperator;
+
+export type Expression = SimpleExpression | FunctionCall | BinaryExpression | UnaryExpression;
+
+export type IfStatement = {
+  type: "if";
+  condition: Expression;
+  then: BlockStatement;
+  else?: BlockStatement;
+};
 
 export type Statement =
   | Comment
@@ -126,7 +148,8 @@ export type Statement =
   | VariableDeclaration
   | ArithmeticRoundingOperation
   | IncrementOperation
-  | DecrementOperation;
+  | DecrementOperation
+  | IfStatement;
 
 export type Program = {
   type: "program";

@@ -77,21 +77,16 @@ export const transform = (rockstarAst: rockstar.Program): wasm.Module => {
       valueType: "f32"
     });
 
-    const arithmeticOperatorMap = new Map<rockstar.ArithmeticOperator, wasm.BinaryOperation>()
+    const binaryOperatorMap = new Map<rockstar.BinaryOperator, wasm.BinaryOperation>()
       .set("add", "f32.add")
       .set("divide", "f32.div")
       .set("multiply", "f32.mul")
       .set("subtract", "f32.sub");
 
-    const transformArithmeticExpression = (
-      operator: rockstar.ArithmeticOperator
-    ): wasm.Instruction => {
-      if (!arithmeticOperatorMap.has(operator))
-        throw new Error(`Unknown arithmetic operator: ${operator}`);
+    const transformBinaryOperator = (operator: rockstar.BinaryOperator): wasm.Instruction => {
+      if (!binaryOperatorMap.has(operator)) throw new Error(`Unknown binary operator: ${operator}`);
 
-      return binaryOperationInstruction(
-        arithmeticOperatorMap.get(operator) as wasm.BinaryOperation
-      );
+      return binaryOperationInstruction(binaryOperatorMap.get(operator) as wasm.BinaryOperation);
     };
 
     const arithmeticRoundingDirectionMap = new Map<
@@ -102,20 +97,20 @@ export const transform = (rockstarAst: rockstar.Program): wasm.Module => {
       .set("down", "f32.floor")
       .set("upOrDown", "f32.nearest");
 
-    const transformArithmeticRounding = (
+    function transformArithmeticRounding(
       direction: rockstar.ArithmeticRoundingDirection
-    ): wasm.Instruction => {
+    ): wasm.Instruction {
       if (!arithmeticRoundingDirectionMap.has(direction))
         throw new Error(`Unknown arithmetic rounding direction: ${direction}`);
 
       return unaryOperationInstruction(
         arithmeticRoundingDirectionMap.get(direction) as wasm.UnaryOperation
       );
-    };
+    }
 
-    const transformSimpleExpression = (
+    function transformSimpleExpression(
       rockstarExpression: rockstar.SimpleExpression
-    ): wasm.Instruction => {
+    ): wasm.Instruction {
       switch (rockstarExpression.type) {
         case "number":
           return constInstruction((rockstarExpression as rockstar.NumberLiteral).value);
@@ -130,9 +125,9 @@ export const transform = (rockstarAst: rockstar.Program): wasm.Module => {
       }
 
       throw new Error(`Cannot transform Rockstar simple expression: ${rockstarExpression}`);
-    };
+    }
 
-    const transformFunctionCall = (rockstarCall: rockstar.FunctionCall): void => {
+    function transformFunctionCall(rockstarCall: rockstar.FunctionCall): wasm.Instruction[] {
       const { name, args } = rockstarCall;
       const callId = toIdentifier(name);
 
@@ -144,11 +139,36 @@ export const transform = (rockstarAst: rockstar.Program): wasm.Module => {
         });
       }
 
-      wasmFn.instructions.push(...args.map(transformSimpleExpression), {
-        instructionType: "call",
-        id: callId
-      });
-    };
+      return [
+        // eslint-disable-next-line @typescript-eslint/no-use-before-define
+        ...args.flatMap(transformExpression),
+        {
+          instructionType: "call",
+          id: callId
+        }
+      ];
+    }
+
+    function transformExpression(rockstarExpression: rockstar.Expression): wasm.Instruction[] {
+      switch (rockstarExpression.type) {
+        case "binaryExpression": {
+          // TODO
+          return [];
+        }
+
+        case "unaryExpression": {
+          // TODO
+          return [];
+        }
+
+        case "call": {
+          return transformFunctionCall(rockstarExpression);
+        }
+
+        default:
+          return [transformSimpleExpression(rockstarExpression)];
+      }
+    }
 
     for (const statement of statements) {
       switch (statement.type) {
@@ -165,25 +185,32 @@ export const transform = (rockstarAst: rockstar.Program): wasm.Module => {
 
         case "say": {
           const { what } = statement as rockstar.SayCall;
-          transformFunctionCall({ type: "call", name: "print", args: [what] });
+          wasmFn.instructions.push(
+            ...transformFunctionCall({ type: "call", name: "print", args: [what] })
+          );
           break;
         }
 
         case "call": {
-          transformFunctionCall(statement as rockstar.FunctionCall);
+          wasmFn.instructions.push(...transformFunctionCall(statement as rockstar.FunctionCall));
           break;
         }
 
-        case "simpleAssignment": {
-          const { target, expression } = statement as rockstar.SimpleAssignment;
+        case "assignment": {
+          const { target, expression } = statement as rockstar.Assignment;
           switch (expression.type) {
-            case "arithmeticExpression": {
+            case "binaryExpression": {
               wasmFn.instructions.push(
-                transformSimpleExpression(expression.left),
-                transformSimpleExpression(expression.right),
-                transformArithmeticExpression(expression.operator),
+                ...transformExpression(expression.lhs),
+                ...transformExpression(expression.rhs),
+                transformBinaryOperator(expression.operator),
                 variableInstruction(target, "set")
               );
+              break;
+            }
+
+            case "unaryExpression": {
+              // TODO
               break;
             }
 
@@ -199,17 +226,6 @@ export const transform = (rockstarAst: rockstar.Program): wasm.Module => {
               );
             }
           }
-          break;
-        }
-
-        case "compoundAssignment": {
-          const { target, operator, right } = statement as rockstar.CompoundAssignment;
-          wasmFn.instructions.push(
-            transformSimpleExpression(target),
-            transformSimpleExpression(right),
-            transformArithmeticExpression(operator),
-            variableInstruction(target, "set")
-          );
           break;
         }
 
