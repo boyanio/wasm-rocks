@@ -71,17 +71,21 @@ export type ArithmeticRoundingOperation = {
 export type IncrementOperation = {
   type: "increment";
   target: Variable;
+  times: number;
 };
 
 export type DecrementOperation = {
   type: "decrement";
   target: Variable;
+  times: number;
 };
 
 export type SayCall = {
   type: "say";
   what: Expression;
 };
+
+export type IOOperation = SayCall;
 
 export type Assignment = {
   type: "assignment";
@@ -144,7 +148,7 @@ export type Statement =
   | Assignment
   | FunctionCall
   | FunctionDeclaration
-  | SayCall
+  | IOOperation
   | VariableDeclaration
   | ArithmeticRoundingOperation
   | IncrementOperation

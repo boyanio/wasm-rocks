@@ -1,5 +1,5 @@
-import { parse } from "../../../src/rockstar/parser";
-import { FunctionDeclaration } from "../../../src/rockstar/ast";
+import { parse } from "../../../../src/rockstar/parser";
+import { FunctionDeclaration } from "../../../../src/rockstar/ast";
 
 describe("rockstar", () => {
   describe("parser", () => {
@@ -17,8 +17,8 @@ describe("rockstar", () => {
         const node = statements[0] as FunctionDeclaration;
         expect(node.name).toEqual("hello");
         expect(node.args.length).toEqual(1);
-        expect(node.args[0].name).toEqual("x");
-        expect(node.result.type).toEqual("variable");
+        expect(node.args[0]).toEqual({ type: "variable", name: "x" });
+        expect(node.result).toEqual({ type: "variable", name: "x" });
         expect(node.statements.length).toEqual(0);
       });
 
@@ -35,9 +35,9 @@ describe("rockstar", () => {
         const node = statements[0] as FunctionDeclaration;
         expect(node.name).toEqual("hello");
         expect(node.args.length).toEqual(2);
-        expect(node.args[0].name).toEqual("x");
-        expect(node.args[1].name).toEqual("y");
-        expect(node.result.type).toEqual("variable");
+        expect(node.args[0]).toEqual({ type: "variable", name: "x" });
+        expect(node.args[1]).toEqual({ type: "variable", name: "y" });
+        expect(node.result).toEqual({ type: "variable", name: "x" });
         expect(node.statements.length).toEqual(0);
       });
 

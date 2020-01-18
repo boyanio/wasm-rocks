@@ -1,5 +1,5 @@
-import { parse } from "../../../src/rockstar/parser";
-import { Comment } from "../../../src/rockstar/ast";
+import { parse } from "../../../../src/rockstar/parser";
+import { Comment } from "../../../../src/rockstar/ast";
 
 describe("rockstar", () => {
   describe("parser", () => {

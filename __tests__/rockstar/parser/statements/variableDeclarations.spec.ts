@@ -1,10 +1,5 @@
-import { parse } from "../../../src/rockstar/parser";
-import {
-  VariableDeclaration,
-  StringLiteral,
-  NumberLiteral,
-  BooleanLiteral
-} from "../../../src/rockstar/ast";
+import { parse } from "../../../../src/rockstar/parser";
+import { VariableDeclaration } from "../../../../src/rockstar/ast";
 
 type Case = [string, string, string | number];
 type Cases = { [caseName: string]: Case[] };
@@ -40,9 +35,9 @@ describe("rockstar", () => {
       };
       for (const caseName of Object.keys(cases)) {
         describe(caseName, () => {
-          for (const [input, variable, literal] of cases[caseName]) {
-            it(`${input} => ${variable} = ${literal}`, () => {
-              const { statements } = parse(input);
+          for (const [source, variable, value] of cases[caseName]) {
+            it(`${source} => ${variable} = ${value}`, () => {
+              const { statements } = parse(source);
 
               expect(statements.length).toEqual(1);
               expect(statements[0].type).toEqual("variableDeclaration");
@@ -50,11 +45,8 @@ describe("rockstar", () => {
               const node = statements[0] as VariableDeclaration;
               expect(node.variable.name).toEqual(variable);
 
-              if (typeof literal === "string") {
-                expect((node.value as StringLiteral).value).toEqual(literal);
-              } else {
-                expect((node.value as NumberLiteral).value).toEqual(literal);
-              }
+              const type = typeof value === "string" ? "string" : "number";
+              expect(node.value).toEqual({ type, value });
             });
           }
         });
@@ -69,7 +61,7 @@ describe("rockstar", () => {
 
           const node = statements[0] as VariableDeclaration;
           expect(node.variable.name).toEqual("peter");
-          expect(node.value.type).toEqual("mysterious");
+          expect(node.value).toEqual({ type: "mysterious" });
         });
 
         for (const nullValue of ["null", "nowhere", "empty", "nobody", "gone", "nothing"]) {
@@ -81,7 +73,7 @@ describe("rockstar", () => {
 
             const node = statements[0] as VariableDeclaration;
             expect(node.variable.name).toEqual("peter");
-            expect(node.value.type).toEqual("null");
+            expect(node.value).toEqual({ type: "null" });
           });
         }
 
@@ -94,8 +86,7 @@ describe("rockstar", () => {
 
             const node = statements[0] as VariableDeclaration;
             expect(node.variable.name).toEqual("peter");
-            expect(node.value.type).toEqual("boolean");
-            expect((node.value as BooleanLiteral).value === true).toBeTruthy();
+            expect(node.value).toEqual({ type: "boolean", value: true });
           });
         }
 
@@ -108,8 +99,7 @@ describe("rockstar", () => {
 
             const node = statements[0] as VariableDeclaration;
             expect(node.variable.name).toEqual("peter");
-            expect(node.value.type).toEqual("boolean");
-            expect((node.value as BooleanLiteral).value === false).toBeTruthy();
+            expect(node.value).toEqual({ type: "boolean", value: false });
           });
         }
       });

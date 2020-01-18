@@ -1,3 +1,15 @@
-import { Scope } from "../ast";
+export type Parsed<T> = T | ParseError;
 
-export type Parser = (scope: Scope, lines: string[], lineIndex: number) => number;
+export type ParseError = {
+  type: "parseError";
+  lineIndex: number;
+  offset: number;
+  message: string;
+};
+
+export type Context = {
+  lineIndex: number;
+  offset: number;
+};
+
+export type Parser<T> = (lines: string[], context: Context) => Parsed<T>;

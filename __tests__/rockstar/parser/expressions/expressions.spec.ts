@@ -1,70 +1,81 @@
-import {
-  identifier,
-  pronoun,
-  mysteriousLiteral,
-  nullLiteral,
-  booleanLiteral,
-  stringLiteral,
-  numberLiteral,
-  arithmeticExpression,
-  functionCall
-} from "../../../src/rockstar/parser2/parseExpression";
-import { Parser, Context, isParseError } from "../../../src/rockstar/parser2/types";
+import { expression } from "../../../../src/rockstar/parser/expressions/expression";
+import { Context } from "../../../../src/rockstar/parser/types";
+import { isParseError } from "../../../../src/rockstar/parser/parsers";
 
 type Case = [string, string, boolean, unknown, number];
 type CaseGroup = {
   title: string;
-  parser: Parser<unknown>;
   cases: Case[];
 };
 
 const caseGroups: CaseGroup[] = [
   {
     title: "identifiers",
-    parser: identifier,
     cases: [
-      ["parses simple variable name starting with a lowercase letter", "dog", false, "dog", 3],
-      ["parses simple variable name starting with an uppercase letter", "Dog", false, "dog", 3],
       [
-        "does not parse simple variable name containing an uppercase letter after the first letter",
+        "parses simple variable starting with a lowercase letter",
+        "dog",
+        false,
+        { type: "variable", name: "dog" },
+        3
+      ],
+      [
+        "parses simple variable starting with an uppercase letter",
+        "Dog",
+        false,
+        { type: "variable", name: "dog" },
+        3
+      ],
+      [
+        "does not parse simple variable containing an uppercase letter after the first letter",
         "dOg",
         true,
         null,
         0
       ],
       [
-        "parses simple variable name starting followed by a non-alphanumeric char",
+        "parses simple variable starting followed by punctuation",
         "dog,",
         false,
-        "dog",
-        3
+        { type: "variable", name: "dog" },
+        4
       ],
-      ["parses simple variable name from a single letter", "D", false, "d", 1],
-      ["does not parse simple variable name of a keyword", "Your", true, null, 0],
-      ["parses simple variable name partially", "dog is very cool", false, "dog", 4],
       [
-        "parses common variable name starting with a lowercase letter",
+        "parses simple variable from a single letter",
+        "D",
+        false,
+        { type: "variable", name: "d" },
+        1
+      ],
+      ["does not parse simple variable of a keyword", "Your", true, null, 0],
+      [
+        "parses common variable starting with a lowercase letter",
         "my dog",
         false,
-        "my dog",
+        { type: "variable", name: "my dog" },
         6
       ],
       [
-        "parses common variable name starting with an uppercase letter",
+        "parses common variable starting with an uppercase letter",
         "My dog",
         false,
-        "my dog",
+        { type: "variable", name: "my dog" },
         6
       ],
       [
-        "does not parse common variable name containing an uppercase letter after the first letter",
+        "does not parse common variable containing an uppercase letter after the first letter",
         "my dOg",
         true,
         null,
         0
       ],
-      ["parses common variable name partially", "my dog cat", false, "my dog", 7],
-      ["parses common variable followed by a non-alphanumeric char", "my dog.", false, "my dog", 6],
+      [
+        "parses common variable followed by punctuation",
+        "my dog.",
+        false,
+        { type: "variable", name: "my dog" },
+        7
+      ],
       [
         "does not parse common variable name when the second word is a keyword",
         "my nobody",
@@ -79,17 +90,16 @@ const caseGroups: CaseGroup[] = [
         null,
         0
       ],
-      ["parses proper variable name", "Myy Dog", false, "Myy Dog", 7],
-      ["parses proper variable name partially", "Myy Dog is cool", false, "Myy Dog", 8],
+      ["parses proper variable", "Myy Dog", false, { type: "variable", name: "Myy Dog" }, 7],
       [
-        "parses proper variable followed by a non-alphanumeric char",
+        "parses proper variable followed by punctuation",
         "Myy Dog!",
         false,
-        "Myy Dog",
-        7
+        { type: "variable", name: "Myy Dog" },
+        8
       ],
       [
-        "does not proper variable name containing an uppercase letter after the first letter in one of the words",
+        "does not proper variable containing an uppercase letter after the first letter in one of the words",
         "MYy DoG",
         true,
         null,
@@ -99,26 +109,21 @@ const caseGroups: CaseGroup[] = [
   },
   {
     title: "pronouns",
-    parser: pronoun,
     cases: [
       ["parses pronoun", "her", false, { type: "pronoun" }, 3],
-      ["parses pronoun partially", "them bla", false, { type: "pronoun" }, 5],
       ["pronouns are case-sensitive", "Them", true, null, 0],
       ["does not parse pronoun", "bla bla", true, null, 0]
     ]
   },
   {
     title: "mysterious literals",
-    parser: mysteriousLiteral,
     cases: [
       ["parses mysterious", "mysterious", false, { type: "mysterious" }, 10],
-      ["mysterious is case-sensitive", "mYsterious", true, null, 0],
-      ["parses mysterious partially", "mysterious is cool", false, { type: "mysterious" }, 11]
+      ["mysterious is case-sensitive", "mYsterious", true, null, 0]
     ]
   },
   {
     title: "null literals",
-    parser: nullLiteral,
     cases: [
       ["parses null as null", "null", false, { type: "null" }, 4],
       ["parses null as nobody", "nobody", false, { type: "null" }, 6],
@@ -126,13 +131,11 @@ const caseGroups: CaseGroup[] = [
       ["parses null as empty", "empty", false, { type: "null" }, 5],
       ["parses null as nothing", "nothing", false, { type: "null" }, 7],
       ["parses null as nowhere", "nowhere", false, { type: "null" }, 7],
-      ["null is case-sensitive", "nUll", true, null, 0],
-      ["parses null partially", "nobody is cool", false, { type: "null" }, 7]
+      ["null is case-sensitive", "nUll", true, null, 0]
     ]
   },
   {
     title: "boolean literals",
-    parser: booleanLiteral,
     cases: [
       ["parses true as true", "true", false, { type: "boolean", value: true }, 4],
       ["parses true as right", "right", false, { type: "boolean", value: true }, 5],
@@ -141,22 +144,13 @@ const caseGroups: CaseGroup[] = [
       ["parses false as wrong", "wrong", false, { type: "boolean", value: false }, 5],
       ["parses false as no", "no", false, { type: "boolean", value: false }, 2],
       ["parses false as lies", "lies", false, { type: "boolean", value: false }, 4],
-      ["boolean is case-sensitive", "tRue", true, null, 0],
-      ["parses boolean partially", "yes it is cool", false, { type: "boolean", value: true }, 4]
+      ["boolean is case-sensitive", "tRue", true, null, 0]
     ]
   },
   {
     title: "string literals",
-    parser: stringLiteral,
     cases: [
       ["parses string", '"Hello there"', false, { type: "string", value: "Hello there" }, 13],
-      [
-        "parses string partially",
-        '"Hello there" or come back',
-        false,
-        { type: "string", value: "Hello there" },
-        14
-      ],
       ["parses empty string", '""', false, { type: "string", value: "" }, 2],
       ["does not parse string without a starting double quote", 'Hello" there', true, null, 0],
       [
@@ -171,11 +165,9 @@ const caseGroups: CaseGroup[] = [
   },
   {
     title: "number literals",
-    parser: numberLiteral,
     cases: [
       ["parses integer", "123", false, { type: "number", value: 123 }, 3],
       ["parses floating-point number", "123.456", false, { type: "number", value: 123.456 }, 7],
-      ["parses number partially", "123.456 987", false, { type: "number", value: 123.456 }, 8],
       [
         "does not parse number if the input starts with a non-numerical character",
         "x123 s",
@@ -188,16 +180,15 @@ const caseGroups: CaseGroup[] = [
   },
   {
     title: "arithmetic expressions",
-    parser: arithmeticExpression,
     cases: [
       [
         "the brave without the fallen",
         "the brave without the fallen",
         false,
         {
-          type: "arithmeticExpression",
-          left: { type: "variable", name: "the brave" },
-          right: { type: "variable", name: "the fallen" },
+          type: "binaryExpression",
+          lhs: { type: "variable", name: "the brave" },
+          rhs: { type: "variable", name: "the fallen" },
           operator: "subtract"
         },
         28
@@ -207,33 +198,21 @@ const caseGroups: CaseGroup[] = [
         "here minus there",
         false,
         {
-          type: "arithmeticExpression",
-          left: { type: "variable", name: "here" },
-          right: { type: "variable", name: "there" },
+          type: "binaryExpression",
+          lhs: { type: "variable", name: "here" },
+          rhs: { type: "variable", name: "there" },
           operator: "subtract"
         },
         16
       ],
       [
-        "here minus there and some other stuff",
-        "here minus there and some other stuff",
-        false,
-        {
-          type: "arithmeticExpression",
-          left: { type: "variable", name: "here" },
-          right: { type: "variable", name: "there" },
-          operator: "subtract"
-        },
-        17
-      ],
-      [
         "here plus there",
         "here plus there",
         false,
         {
-          type: "arithmeticExpression",
-          left: { type: "variable", name: "here" },
-          right: { type: "variable", name: "there" },
+          type: "binaryExpression",
+          lhs: { type: "variable", name: "here" },
+          rhs: { type: "variable", name: "there" },
           operator: "add"
         },
         15
@@ -243,9 +222,9 @@ const caseGroups: CaseGroup[] = [
         "here with there",
         false,
         {
-          type: "arithmeticExpression",
-          left: { type: "variable", name: "here" },
-          right: { type: "variable", name: "there" },
+          type: "binaryExpression",
+          lhs: { type: "variable", name: "here" },
+          rhs: { type: "variable", name: "there" },
           operator: "add"
         },
         15
@@ -255,9 +234,9 @@ const caseGroups: CaseGroup[] = [
         "here of there",
         false,
         {
-          type: "arithmeticExpression",
-          left: { type: "variable", name: "here" },
-          right: { type: "variable", name: "there" },
+          type: "binaryExpression",
+          lhs: { type: "variable", name: "here" },
+          rhs: { type: "variable", name: "there" },
           operator: "multiply"
         },
         13
@@ -267,9 +246,9 @@ const caseGroups: CaseGroup[] = [
         "here times there",
         false,
         {
-          type: "arithmeticExpression",
-          left: { type: "variable", name: "here" },
-          right: { type: "variable", name: "there" },
+          type: "binaryExpression",
+          lhs: { type: "variable", name: "here" },
+          rhs: { type: "variable", name: "there" },
           operator: "multiply"
         },
         16
@@ -279,9 +258,9 @@ const caseGroups: CaseGroup[] = [
         "here over there",
         false,
         {
-          type: "arithmeticExpression",
-          left: { type: "variable", name: "here" },
-          right: { type: "variable", name: "there" },
+          type: "binaryExpression",
+          lhs: { type: "variable", name: "here" },
+          rhs: { type: "variable", name: "there" },
           operator: "divide"
         },
         15
@@ -291,21 +270,21 @@ const caseGroups: CaseGroup[] = [
         "here over 5",
         false,
         {
-          type: "arithmeticExpression",
-          left: { type: "variable", name: "here" },
-          right: { type: "number", value: 5 },
+          type: "binaryExpression",
+          lhs: { type: "variable", name: "here" },
+          rhs: { type: "number", value: 5 },
           operator: "divide"
         },
         11
       ],
       [
-        '"hello" over 5',
-        '"hello" over 5',
+        '"hello" over 6',
+        '"hello" over 6',
         false,
         {
-          type: "arithmeticExpression",
-          left: { type: "string", value: "hello" },
-          right: { type: "number", value: 5 },
+          type: "binaryExpression",
+          lhs: { type: "string", value: "hello" },
+          rhs: { type: "number", value: 6 },
           operator: "divide"
         },
         14
@@ -314,7 +293,6 @@ const caseGroups: CaseGroup[] = [
   },
   {
     title: "function calls",
-    parser: functionCall,
     cases: [
       [
         "Multiply taking the cat",
@@ -378,8 +356,8 @@ const caseGroups: CaseGroup[] = [
         29
       ],
       [
-        'Multiply taking cool, "ya"',
-        'Multiply taking cool, "ya"',
+        'Multiply taking cool & "ya"',
+        'Multiply taking cool & "ya"',
         false,
         {
           type: "call",
@@ -389,103 +367,108 @@ const caseGroups: CaseGroup[] = [
             { type: "string", value: "ya" }
           ]
         },
-        26
+        27
+      ]
+    ]
+  },
+  {
+    title: "conditions",
+    cases: [
+      [
+        "Tommy is nobody",
+        "Tommy is nobody",
+        false,
+        {
+          type: "binaryExpression",
+          operator: "equals",
+          lhs: { type: "variable", name: "tommy" },
+          rhs: { type: "null" }
+        },
+        15
+      ],
+      [
+        "not Tommy",
+        "not Tommy",
+        false,
+        {
+          type: "unaryExpression",
+          operator: "not",
+          rhs: { type: "variable", name: "tommy" }
+        },
+        9
+      ],
+      [
+        "Tommy aint nothing",
+        "Tommy aint nothing",
+        false,
+        {
+          type: "binaryExpression",
+          operator: "notEquals",
+          lhs: { type: "variable", name: "tommy" },
+          rhs: { type: "null" }
+        },
+        18
+      ],
+      [
+        "Aaa taking Bbb is not Ccc",
+        "Aaa taking Bbb is not Ccc",
+        false,
+        {
+          type: "binaryExpression",
+          operator: "notEquals",
+          lhs: { type: "call", name: "aaa", args: [{ type: "variable", name: "bbb" }] },
+          rhs: { type: "variable", name: "ccc" }
+        },
+        25
+      ]
+    ]
+  },
+  {
+    title: "precedence",
+    cases: [
+      [
+        "Aaa taking Bbb times Ccc plus not Ddd times Eee and Fff",
+        "Aaa taking Bbb times Ccc plus not Ddd times Eee and Fff",
+        false,
+        {
+          type: "binaryExpression",
+          operator: "and",
+          lhs: {
+            type: "binaryExpression",
+            operator: "add",
+            lhs: {
+              type: "binaryExpression",
+              operator: "multiply",
+              lhs: {
+                type: "call",
+                name: "aaa",
+                args: [{ type: "variable", name: "bbb" }]
+              },
+              rhs: { type: "variable", name: "ccc" }
+            },
+            rhs: {
+              type: "binaryExpression",
+              operator: "multiply",
+              lhs: {
+                type: "unaryExpression",
+                operator: "not",
+                rhs: { type: "variable", name: "ddd" }
+              },
+              rhs: { type: "variable", name: "eee" }
+            }
+          },
+          rhs: { type: "variable", name: "fff" }
+        },
+        55
       ]
     ]
   }
-  // {
-  //   title: "conditions",
-  //   parser: parseCondition2,
-  //   cases: [
-  //     [
-  //       "Tommy is nobody",
-  //       "Tommy is nobody",
-  //       {
-  //         type: "comparisonCondition",
-  //         operator: "equals",
-  //         left: { type: "variable", name: "tommy" },
-  //         right: { type: "null" }
-  //       },
-  //       ""
-  //     ],
-  //     [
-  //       "not Tommy",
-  //       "not Tommy",
-  //       {
-  //         type: "logicalNotCondition",
-  //         right: { type: "variable", name: "tommy" }
-  //       },
-  //       ""
-  //     ],
-  //     [
-  //       "Tommy aint nothing",
-  //       "Tommy aint nothing",
-  //       {
-  //         type: "comparisonCondition",
-  //         operator: "notEquals",
-  //         left: { type: "variable", name: "tommy" },
-  //         right: { type: "null" }
-  //       },
-  //       ""
-  //     ],
-  //     [
-  //       "Aaa taking Bbb is not Ccc",
-  //       "Aaa taking Bbb is not Ccc",
-  //       {
-  //         type: "comparisonCondition",
-  //         operator: "notEquals",
-  //         left: { type: "call", name: "aaa", args: [{ type: "variable", name: "bbb" }] },
-  //         right: { type: "variable", name: "ccc" }
-  //       },
-  //       ""
-  //     ]
-  //   ]
-  // },
-  // {
-  //   title: "precedence",
-  //   parser: parseExpression2,
-  //   cases: [
-  //     [
-  //       "operator precence",
-  //       "Aaa taking Bbb times Ccc plus not Ddd times Eee and Fff",
-  //       {
-  //         type: "logicalBinaryCondition",
-  //         operator: "and",
-  //         left: {
-  //           type: "arithmeticExpression",
-  //           operator: "add",
-  //           left: {
-  //             type: "arithmeticExpression",
-  //             operator: "multiply",
-  //             left: {
-  //               type: "call",
-  //               name: "aaa",
-  //               args: [{ type: "variable", name: "bbb" }]
-  //             },
-  //             right: { type: "variable", name: "ccc" }
-  //           },
-  //           right: {
-  //             type: "arithmeticExpression",
-  //             operator: "multiply",
-  //             left: {
-  //               type: "logicalNotCondition",
-  //               right: { type: "variable", name: "ddd" }
-  //             },
-  //             right: { type: "variable", name: "eee" }
-  //           }
-  //         },
-  //         right: { type: "variable", name: "fff" }
-  //       },
-  //       ""
-  //     ]
-  //   ]
-  // }
 ];
 
 describe("rockstar", () => {
-  describe("parsing2", () => {
+  describe("parser", () => {
     describe("expressions", () => {
-      for (const { title, parser, cases } of caseGroups) {
+      for (const { title, cases } of caseGroups) {
         describe(title, () => {
           for (const [
             test,
@@ -496,7 +479,7 @@ describe("rockstar", () => {
           ] of cases) {
             it(test, () => {
               const context: Context = { lineIndex: 0, offset: 0 };
-              const parsed = parser(source, context);
+              const parsed = expression([source], context);
 
               const isError = isParseError(parsed);
               if (isError !== expectedIsParseError) {

@@ -1,4 +1,6 @@
-import { Expression, Operator, UnaryOperator, BinaryOperator } from "../ast";
+import { Expression, Operator, UnaryOperator, BinaryOperator } from "../../ast";
+import { ParseError, Parsed } from "../types";
+import { isParseError } from "../parsers";
 
 const operatorPrecedence = new Map<Operator, number>([
   ["or", 1],
@@ -21,8 +23,12 @@ const isRightToLeft = (operator: Operator): boolean => operator === "not";
 
 const isOperator = (input: Operator | Expression): boolean => typeof input === "string";
 
-const findLowestPrecedenceOperator = (arr: (Operator | Expression)[]): [Operator, number] => {
+const findLowestPrecedenceOperator = (
+  arr: (Operator | Expression)[]
+): [Operator, number] | null => {
   let opIdx = arr.findIndex(isOperator);
+  if (opIdx < 0) return null;
+
   let op = arr[opIdx] as Operator;
   let opRank = operatorPrecedence.get(op) as number;
 
@@ -44,23 +50,40 @@ const findLowestPrecedenceOperator = (arr: (Operator | Expression)[]): [Operator
 /**
  * Creates an operator precedence tree
  */
-export const createOperatorPrecedenceTree = (arr: (Operator | Expression)[]): Expression => {
-  if (arr.length === 1) return arr[0] as Expression;
+export const createOperatorPrecedenceTree = (
+  arr: (Operator | Expression)[],
+  toParseError: (message: string) => ParseError
+): Parsed<Expression> => {
+  if (!arr.length) return toParseError("Cannot parse expression");
 
-  const [operator, opIdx] = findLowestPrecedenceOperator(arr);
+  if (arr.length === 1)
+    return isOperator(arr[0])
+      ? toParseError(`Input array single value must be a node, operator encountered: ${arr[0]}`)
+      : (arr[0] as Expression);
+
+  const result = findLowestPrecedenceOperator(arr);
+  if (!result) return toParseError("No operator found in sequence");
+
+  const [operator, opIdx] = result;
   const rtl = isRightToLeft(operator);
+  const rhs = createOperatorPrecedenceTree(arr.slice(opIdx + 1), toParseError);
+  if (isParseError(rhs)) return rhs;
+
   if (rtl) {
     return {
       type: "unaryExpression",
       operator: operator as UnaryOperator,
-      rhs: createOperatorPrecedenceTree(arr.slice(opIdx + 1))
+      rhs: rhs as Expression
     };
   } else {
+    const lhs = createOperatorPrecedenceTree(arr.slice(0, opIdx), toParseError);
+    if (isParseError(lhs)) return lhs;
+
     return {
       type: "binaryExpression",
       operator: operator as BinaryOperator,
-      lhs: createOperatorPrecedenceTree(arr.slice(0, opIdx)),
-      rhs: createOperatorPrecedenceTree(arr.slice(opIdx + 1))
+      lhs: lhs as Expression,
+      rhs: rhs as Expression
     };
   }
 };

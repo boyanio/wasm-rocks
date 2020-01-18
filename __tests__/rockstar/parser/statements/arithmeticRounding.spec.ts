@@ -1,5 +1,5 @@
-import { parse } from "../../../src/rockstar/parser";
-import { NamedVariable, ArithmeticRoundingOperation } from "../../../src/rockstar/ast";
+import { parse } from "../../../../src/rockstar/parser";
+import { NamedVariable, ArithmeticRoundingOperation } from "../../../../src/rockstar/ast";
 
 describe("rockstar", () => {
   describe("parser", () => {
@@ -24,9 +24,9 @@ describe("rockstar", () => {
       };
       for (const direction of Object.keys(cases)) {
         describe(`round ${direction} variable`, () => {
-          for (const [expression, variable] of cases[direction].variable) {
-            it(expression, () => {
-              const { statements } = parse(expression);
+          for (const [source, variable] of cases[direction].variable) {
+            it(source, () => {
+              const { statements } = parse(source);
 
               expect(statements.length).toEqual(1);
               expect(statements[0].type).toEqual("round");
@@ -40,9 +40,9 @@ describe("rockstar", () => {
         });
 
         describe(`round ${direction} pronoun`, () => {
-          for (const expression of cases[direction].pronoun) {
-            it(expression, () => {
-              const { statements } = parse(expression);
+          for (const source of cases[direction].pronoun) {
+            it(source, () => {
+              const { statements } = parse(source);
 
               expect(statements.length).toEqual(1);
               expect(statements[0].type).toEqual("round");

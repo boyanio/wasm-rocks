@@ -1,32 +1,29 @@
-import { Program } from "../ast";
-import { combineParsers } from "./combineParsers";
-import { Parser } from "./types";
-import { parseStatements, parseFunctionDeclaration } from "./parseFunctionDeclarations";
+import { Program, Statement } from "../ast";
+import { Context, ParseError } from "./types";
+import { statement, functionDeclaration } from "./statements/functionDeclarations";
+import { anyOf, map, isParseError, oneOrMany } from "./parsers";
 
-const parser: Parser = combineParsers([parseFunctionDeclaration, parseStatements]);
+const program = map(
+  (statements: Statement[]) => ({ type: "program", statements }),
+  oneOrMany(anyOf<Statement>(functionDeclaration, statement))
+);
 
-const parseLines = (program: Program, lines: string[]): void => {
-  let lineIndex = 0;
+const createParseError = (error: ParseError): Error =>
+  new Error(`Parse error at line ${error.lineIndex}, offset ${error.offset}: ${error.message}`);
 
-  do {
-    const nextLineIndex = parser(program, lines, lineIndex);
-    if (nextLineIndex <= lineIndex) throw new Error(`Parse error at line ${lineIndex}`);
-
-    lineIndex = nextLineIndex;
-  } while (lineIndex < lines.length);
-};
-
-const formatSingleQuotes = (input: string): string =>
-  input.replace(/'s\W+/g, " is ").replace("'", "");
-
-export function parse(input: string): Program {
-  const program: Program = {
-    type: "program",
-    statements: []
-  };
-  const lines = formatSingleQuotes(input.trim())
+export const parse = (source: string): Program => {
+  const lines = source
+    .trim()
+    .replace(/'s\W+/g, " is ")
+    .replace("'", "")
     .split(/\r?\n/)
     .map(x => x.trim());
-  parseLines(program, lines);
-  return program;
-}
+  const context: Context = {
+    lineIndex: 0,
+    offset: 0
+  };
+  const result = program(lines, context);
+  if (isParseError(result)) throw createParseError(result as ParseError);
+
+  return result as Program;
+};

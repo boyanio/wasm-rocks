@@ -11,27 +11,25 @@ import {
   Literal,
   Identifier,
   FunctionCall,
-  BinaryOperator,
-  UnaryOperator,
   Operator
-} from "../ast";
-import { Context, Parser, Parsed } from "./types";
+} from "../../ast";
+import { Parser } from "../types";
 import {
   anyWord,
-  drop,
   pattern,
   map,
   sequence,
   anyOf,
   batch,
-  end,
   keysOf,
   between,
-  whitespace,
   zeroOrMany,
   $1,
-  $2
-} from "./parsers";
+  $2,
+  word,
+  punctuation,
+  optional
+} from "../parsers";
 import { createOperatorPrecedenceTree } from "./operatorPrecedence";
 
 const pronounKeywords = [
@@ -68,8 +66,8 @@ const booleanKeywords: BooleanKeywords = {
   wrong: false
 };
 
-type BinaryOperators = { [key: string]: BinaryOperator };
-const binaryOperators: BinaryOperators = {
+type Operators = { [key: string]: Operator };
+const operators: Operators = {
   "is higher than": "greaterThan",
   "is greater than": "greaterThan",
   "is bigger than": "greaterThan",
@@ -101,11 +99,7 @@ const binaryOperators: BinaryOperators = {
   times: "multiply",
   plus: "add",
   with: "add",
-  over: "divide"
-};
-
-type UnaryOperators = { [key: string]: UnaryOperator };
-const unaryOperators: UnaryOperators = {
+  over: "divide",
   not: "not"
 };
 
@@ -128,23 +122,32 @@ const keywords = new Set<string>([
   "into",
   "takes",
   "taking",
+  "build",
+  "up",
+  "knock",
+  "down",
+  "shout",
+  "say",
+  "whisper",
+  "scream",
+  "turn",
+  "round",
+  "around",
   ...commonVariableNamePrefixes,
   ...pronounKeywords,
   ...nullKeywords,
   ...mysteriousKeywords,
   ...Object.keys(booleanKeywords),
-  ...Object.keys(binaryOperators)
+  ...Object.keys(operators)
 ]);
-
-const nonAlphaSymbolOrEnd = drop(anyOf(whitespace(), pattern("[,.!?]+", false), end));
 
 const properVariableName: Parser<Identifier> = map((result: string, toParseError) => {
   const containsKeyword = result
     .split(/\s/)
     .map(x => x.toLowerCase())
     .some(x => keywords.has(x));
-  return containsKeyword ? toParseError("Variable proper name cannot contain keywords") : result;
-}, batch($1, pattern("[A-Z][a-z]+(\\s[A-Z][a-z]+)+"), nonAlphaSymbolOrEnd));
+  return containsKeyword ? toParseError("Proper variables cannot contain keywords") : result;
+}, batch($1, pattern("[A-Z][a-z]+(\\s[A-Z][a-z]+)+"), punctuation));
 
 const commonVariableName: Parser<Identifier> = map(
   ([first, second]: string[], toParseError) =>
@@ -155,7 +158,7 @@ const commonVariableName: Parser<Identifier> = map(
     (first, second) => [first, second],
     anyWord(...commonVariableNamePrefixes),
     pattern("[a-z]+"),
-    nonAlphaSymbolOrEnd
+    punctuation
   )
 );
 
@@ -164,7 +167,7 @@ const simpleVariableName: Parser<Identifier> = map(
     keywords.has(result.toLowerCase())
       ? toParseError("Simple variables cannot be keywords")
       : result.toLowerCase(),
-  batch($1, pattern("[A-Za-z][a-z]*"), nonAlphaSymbolOrEnd)
+  batch($1, pattern("[A-Za-z][a-z]*"), punctuation)
 );
 
 export const identifier = anyOf(properVariableName, commonVariableName, simpleVariableName);
@@ -176,62 +179,33 @@ export const namedVariable: Parser<NamedVariable> = map(
 
 export const pronoun: Parser<Pronoun> = map(
   () => ({ type: "pronoun" }),
-  batch($1, anyWord(...pronounKeywords), nonAlphaSymbolOrEnd)
+  anyWord(...pronounKeywords)
 );
 
 export const mysteriousLiteral: Parser<MysteriousLiteral> = map(
   () => ({ type: "mysterious" }),
-  batch($1, anyWord(...mysteriousKeywords), nonAlphaSymbolOrEnd)
+  anyWord(...mysteriousKeywords)
 );
 
 export const nullLiteral: Parser<NullLiteral> = map(
   () => ({ type: "null" }),
-  batch($1, anyWord(...nullKeywords), nonAlphaSymbolOrEnd)
+  anyWord(...nullKeywords)
 );
 
 export const booleanLiteral: Parser<BooleanLiteral> = map(
   (value: boolean) => ({ type: "boolean", value }),
-  batch($1, keysOf(booleanKeywords), nonAlphaSymbolOrEnd)
+  keysOf(booleanKeywords)
 );
-
-// TODO?
-// export const parsePoeticStringLiteral = (input: string): StringLiteral | null => ({
-//   type: "string",
-//   value: input
-// });
 
 export const stringLiteral: Parser<StringLiteral> = map(
   (value: string) => ({ type: "string", value }),
-  batch($1, between('"', '"'), nonAlphaSymbolOrEnd)
+  batch($1, between('"', '"'), punctuation)
 );
-
-export const poeticNumberLiteral: Parser<NumberLiteral> = (
-  source: string,
-  context: Context
-): Parsed<NumberLiteral> => {
-  // replace all dot occurrences, but the first one
-  source = source.replace(/\./g, (match, offset, all) =>
-    all.indexOf(".") === offset ? " . " : ""
-  );
-
-  // ignore all non-alphabetical characters
-  source = source.replace(/[^A-Za-z0-9\s.-]/g, "");
-
-  const module = (w: string): number => w.length % 10;
-  const value = parseFloat(
-    source
-      .split(/\s+/)
-      .reduce((result, word) => `${result}${word === "." ? "." : module(word)}`, "")
-  );
-
-  context.offset = source.length;
-  return { type: "number", value };
-};
 
 export const numberLiteral: Parser<NumberLiteral> = map((value: string, toParserError) => {
   const num = parseFloat(value);
   return isNaN(num) ? toParserError("Invalid number parsed") : { type: "number", value: num };
-}, batch($1, pattern("\\d+(.\\d+)?"), nonAlphaSymbolOrEnd));
+}, batch($1, pattern("\\d+(.\\d+)?"), punctuation));
 
 export const literal = anyOf<Literal>(
   mysteriousLiteral,
@@ -244,32 +218,17 @@ export const literal = anyOf<Literal>(
 export const simpleExpression = anyOf<SimpleExpression>(namedVariable, literal, pronoun);
 
 export const functionCall: Parser<FunctionCall> = sequence(
-  (name, _, firstArg, otherArgs) => ({
+  (name, firstArg, otherArgs) => ({
     type: "call",
     name,
     args: [firstArg, ...otherArgs]
   }),
-  identifier,
-  anyWord("taking"),
+  batch($1, identifier, word("taking")),
   simpleExpression,
-  zeroOrMany(sequence($2, anyWord(", and", "and", ",", "&", "'n'"), simpleExpression))
+  zeroOrMany(sequence($2, optional(anyWord("and", "&", "'n'")), simpleExpression))
 );
 
-export const expression = ((): Parser<Expression> => {
-  const operand = anyOf<Expression>(functionCall, simpleExpression);
-
-  const binaryOperator: Parser<BinaryOperator> = map(
-    x => x as BinaryOperator,
-    anyWord(...Object.keys(binaryOperators))
-  );
-
-  const unaryOperator: Parser<UnaryOperator> = map(
-    x => x as UnaryOperator,
-    anyWord(...Object.keys(unaryOperators))
-  );
-
-  return map(
-    (arr: (Operator | Expression)[]) => createOperatorPrecedenceTree(arr),
-    zeroOrMany(anyOf<Operator | Expression>(binaryOperator, unaryOperator, operand))
-  );
-})();
+export const expression = map(
+  (arr: (Operator | Expression)[], toParseError) => createOperatorPrecedenceTree(arr, toParseError),
+  zeroOrMany(anyOf<Operator | Expression>(keysOf(operators), functionCall, simpleExpression))
+);

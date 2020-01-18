@@ -1,5 +1,5 @@
-import { parse } from "../../../src/rockstar/parser";
-import { SayCall, NamedVariable, NumberLiteral, StringLiteral } from "src/rockstar/ast";
+import { parse } from "../../../../src/rockstar/parser";
+import { SayCall } from "src/rockstar/ast";
 
 describe("rockstar", () => {
   describe("parser", () => {
@@ -12,8 +12,7 @@ describe("rockstar", () => {
           expect(statements[0].type).toEqual("say");
 
           const node = statements[0] as SayCall;
-          expect(node.what.type).toEqual("number");
-          expect((node.what as NumberLiteral).value).toEqual(5);
+          expect(node.what).toEqual({ type: "number", value: 5 });
         });
 
         it('Say "5"', () => {
@@ -23,8 +22,7 @@ describe("rockstar", () => {
           expect(statements[0].type).toEqual("say");
 
           const node = statements[0] as SayCall;
-          expect(node.what.type).toEqual("string");
-          expect((node.what as StringLiteral).value).toEqual("5");
+          expect(node.what).toEqual({ type: "string", value: "5" });
         });
       });
 
@@ -44,8 +42,7 @@ describe("rockstar", () => {
             expect(statements[0].type).toEqual("say");
 
             const node = statements[0] as SayCall;
-            expect(node.what.type).toEqual("variable");
-            expect((node.what as NamedVariable).name).toEqual(variable);
+            expect(node.what).toEqual({ type: "variable", name: variable });
           });
         }
       });
@@ -60,7 +57,7 @@ describe("rockstar", () => {
             expect(statements[0].type).toEqual("say");
 
             const node = statements[0] as SayCall;
-            expect(node.what.type).toEqual("pronoun");
+            expect(node.what).toEqual({ type: "pronoun" });
           });
         }
       });

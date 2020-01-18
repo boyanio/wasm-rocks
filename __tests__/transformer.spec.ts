@@ -34,7 +34,7 @@ describe("transformer", () => {
       type: "program",
       statements: [
         {
-          type: "simpleAssignment",
+          type: "assignment",
           target: { type: "variable", name: "x" },
           expression: { type: "number", value: 5 }
         },
@@ -45,7 +45,7 @@ describe("transformer", () => {
           result: { type: "pronoun" },
           statements: [
             {
-              type: "simpleAssignment",
+              type: "assignment",
               target: { type: "variable", name: "y" },
               expression: { type: "number", value: 5 }
             }
@@ -84,7 +84,7 @@ describe("transformer", () => {
             value: { type: "number", value: 5 }
           },
           {
-            type: "simpleAssignment",
+            type: "assignment",
             target: { type: "variable", name: "x" },
             expression: { type: "number", value: 10 }
           }
@@ -125,12 +125,12 @@ describe("transformer", () => {
               value: { type: "number", value: 6 }
             },
             {
-              type: "simpleAssignment",
+              type: "assignment",
               target: { type: "variable", name: "x" },
               expression: {
-                type: "arithmeticExpression",
-                left: { type: "variable", name: "y" },
-                right: { type: "number", value: 10 },
+                type: "binaryExpression",
+                lhs: { type: "variable", name: "y" },
+                rhs: { type: "number", value: 10 },
                 operator: arithmeticOperator
               }
             }
@@ -172,10 +172,14 @@ describe("transformer", () => {
             value: { type: "number", value: 5 }
           },
           {
-            type: "compoundAssignment",
-            operator: arithmeticOperator,
+            type: "assignment",
             target: { type: "variable", name: "x" },
-            right: { type: "number", value: 5 }
+            expression: {
+              type: "binaryExpression",
+              lhs: { type: "variable", name: "x" },
+              rhs: { type: "number", value: 5 },
+              operator: arithmeticOperator
+            }
           }
         ]
       });
@@ -211,7 +215,8 @@ describe("transformer", () => {
           },
           {
             type: incOrDec,
-            target: { type: "variable", name: "x" }
+            target: { type: "variable", name: "x" },
+            times: 1
           }
         ]
       });

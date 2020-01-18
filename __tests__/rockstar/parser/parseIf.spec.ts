@@ -1,6 +1,3 @@
-import { parse } from "../../../src/rockstar/parser";
-import { IfStatement, ConditionalExpression } from "../../../src/rockstar/ast";
-
 describe("rockstar", () => {
   describe("parser", () => {
     describe("if", () => {
