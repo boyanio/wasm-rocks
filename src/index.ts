@@ -2,6 +2,9 @@ import { withIdentation } from "./wasm/emitter";
 import { toWat } from "./transpiler";
 import CodeMirror from "codemirror";
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+declare const WabtModule: any;
+
 (function init(): void {
   const initialRockstar = `
 My desire is a lovestruck ladykiller
@@ -41,4 +44,51 @@ Whisper my desire
   });
 
   inputEditor.setValue(initialRockstar.trim());
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  WabtModule().then((wabt: any) => {
+    const wasmOutput = document.getElementById("wasm-output") as HTMLElement;
+
+    const compileToWasm = (wat: string): void => {
+      wasmOutput.innerHTML = "";
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      let module: any;
+      try {
+        const features = {};
+        module = wabt.parseWat("test.wast", wat, features);
+        module.resolveNames();
+        module.validate(features);
+
+        // eslint-disable-next-line @typescript-eslint/camelcase
+        const binaryOutput = module.toBinary({});
+        wasmOutput.textContent = binaryOutput.log;
+
+        const buffer = binaryOutput.buffer as BufferSource;
+        WebAssembly.instantiate(buffer, {
+          env: {
+            print: (what: number): void => {
+              wasmOutput.innerHTML = (wasmOutput.innerHTML || "") + what + "<br/>";
+            }
+          }
+        }).then(({ instance }) => {
+          const main = instance.exports.main as Function;
+          main();
+        });
+      } catch (e) {
+        wasmOutput.textContent = e.toString();
+      } finally {
+        if (module) module.destroy();
+      }
+    };
+
+    const wasmOutputSection = document.getElementById("wasm-output-section") as HTMLElement;
+    wasmOutputSection.classList.remove("hidden");
+
+    const compileToWasmButton = wasmOutputSection
+      .getElementsByTagName("button")
+      .item(0) as HTMLButtonElement;
+
+    compileToWasmButton.addEventListener("click", () => compileToWasm(outputEditor.getValue()));
+  });
 })();

@@ -148,7 +148,6 @@ export type IfStatement = {
 export type Statement =
   | Comment
   | Assignment
-  | FunctionCall
   | FunctionDeclaration
   | IOOperation
   | VariableDeclaration

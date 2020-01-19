@@ -3,7 +3,7 @@ import * as rockstar from "../src/rockstar/ast";
 import * as wasm from "src/wasm/ast";
 
 describe("transformer", () => {
-  it("creates an exported main function with global statements, if none exists", () => {
+  it("creates an exported main function with global statements", () => {
     const wasmAst = transform({
       type: "program",
       statements: [
@@ -11,11 +11,6 @@ describe("transformer", () => {
           type: "variableDeclaration",
           variable: { type: "variable", name: "x" },
           value: { type: "number", value: 5 }
-        },
-        {
-          type: "call",
-          name: "say",
-          args: [{ type: "pronoun" }]
         }
       ]
     });
@@ -56,19 +51,19 @@ describe("transformer", () => {
     expect(() => transform(rockstarAst)).toThrow();
   });
 
-  it("adds an import when calling a non-defined function", () => {
+  it("adds an import for I/O", () => {
     const rockstarAst: rockstar.Program = {
       type: "program",
-      statements: [{ type: "call", name: "alert", args: [{ type: "number", value: 5 }] }]
+      statements: [{ type: "say", what: { type: "number", value: 5 } }]
     };
     const wasmAst = transform(rockstarAst);
 
     const imports = wasmAst.imports.filter(
       im =>
         im.module === "env" &&
-        im.name === "alert" &&
+        im.name === "print" &&
         im.importType.name === "func" &&
-        im.importType.id === "$alert"
+        im.importType.id === "$print"
     );
     expect(imports.length).toEqual(1);
   });

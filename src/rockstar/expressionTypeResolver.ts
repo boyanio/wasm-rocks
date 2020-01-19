@@ -40,7 +40,7 @@ export const resolveExpressionType = (
     if (!statement)
       throw new Error(
         `Cannot find variable declaration or assignment for ${
-          name ? "variable " + name : "pronoun"
+          name ? 'variable "' + name + '"' : "pronoun"
         }`
       );
 

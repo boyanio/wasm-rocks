@@ -155,7 +155,10 @@ export const transform = (rockstarAst: rockstar.Program): wasm.Module => {
       ];
     }
 
-    function transformFunctionCall(rockstarCall: rockstar.FunctionCall): wasm.Instruction[] {
+    function transformFunctionCall(
+      rockstarCall: rockstar.FunctionCall,
+      result: wasm.ValueType | null
+    ): wasm.Instruction[] {
       const { name, args } = rockstarCall;
       const callId = toIdentifier(name);
 
@@ -163,7 +166,7 @@ export const transform = (rockstarAst: rockstar.Program): wasm.Module => {
       if (!registeredCalls.has(callId)) {
         registeredCalls.set(callId, {
           params: args.map(() => "i32"),
-          result: "i32"
+          result
         });
       }
 
@@ -193,7 +196,7 @@ export const transform = (rockstarAst: rockstar.Program): wasm.Module => {
         }
 
         case "call": {
-          return transformFunctionCall(expression);
+          return transformFunctionCall(expression, "i32");
         }
 
         default:
@@ -235,13 +238,8 @@ export const transform = (rockstarAst: rockstar.Program): wasm.Module => {
         case "say": {
           const { what } = statement as rockstar.SayCall;
           wasmFn.instructions.push(
-            ...transformFunctionCall({ type: "call", name: "print", args: [what] })
+            ...transformFunctionCall({ type: "call", name: "print", args: [what] }, null)
           );
-          break;
-        }
-
-        case "call": {
-          wasmFn.instructions.push(...transformFunctionCall(statement as rockstar.FunctionCall));
           break;
         }
 
