@@ -9,6 +9,9 @@ module.exports = {
     path: path.resolve(__dirname, "build")
   },
   devtool: "eval-cheap-module-source-map",
+  externals: {
+    codemirror: "CodeMirror"
+  },
   module: {
     rules: [
       {

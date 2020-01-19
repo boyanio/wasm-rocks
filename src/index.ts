@@ -1,17 +1,44 @@
 import { withIdentation } from "./wasm/emitter";
 import { toWat } from "./transpiler";
+import CodeMirror from "codemirror";
 
 (function init(): void {
-  const sourceEditor = document.getElementById("rockstar-source") as HTMLTextAreaElement;
-  const emittedWatEditor = document.getElementById("emitted-wat") as HTMLTextAreaElement;
+  const initialRockstar = `
+My desire is a lovestruck ladykiller
+Whisper my desire
+`;
 
-  sourceEditor.addEventListener("keyup", () => {
-    let what: string;
-    try {
-      what = toWat(sourceEditor.value, withIdentation(2));
-    } catch (err) {
-      what = err.toString();
-    }
-    emittedWatEditor.value = what;
+  const watFormatter = withIdentation(2);
+
+  const editorOptions: CodeMirror.EditorConfiguration = {
+    theme: "eclipse",
+    lineNumbers: true,
+    tabSize: 2,
+    lineWrapping: true
+  };
+
+  const outputArea = document.getElementById("emitted-wat") as HTMLTextAreaElement;
+  const outputEditor = CodeMirror.fromTextArea(outputArea, {
+    ...editorOptions,
+    readOnly: true
   });
+
+  const inputArea = document.getElementById("rockstar-source") as HTMLTextAreaElement;
+  const inputEditor = CodeMirror.fromTextArea(inputArea, {
+    ...editorOptions,
+    autofocus: true
+  });
+
+  inputEditor.on("keyup", () => {
+    const source = inputEditor.getValue();
+    let output: string;
+    try {
+      output = toWat(source, watFormatter);
+    } catch (err) {
+      output = err.toString();
+    }
+    outputEditor.setValue(output);
+  });
+
+  inputEditor.setValue(initialRockstar.trim());
 })();
