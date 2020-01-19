@@ -1,6 +1,6 @@
 import { Parser } from "../types";
 import { IOOperation } from "../../ast";
-import { expression } from "../expressions/expression";
+import { simpleExpression } from "../expressions/expression";
 import { sequence, anyWord } from "../parsers";
 
 const say: Parser<IOOperation> = sequence(
@@ -9,7 +9,7 @@ const say: Parser<IOOperation> = sequence(
     what
   }),
   anyWord("Shout", "Whisper", "Scream", "Say"),
-  expression
+  simpleExpression
 );
 
 export const io: Parser<IOOperation> = say;

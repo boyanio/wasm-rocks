@@ -3,11 +3,12 @@ const CopyPlugin = require("copy-webpack-plugin");
 
 module.exports = {
   entry: "./src/index.ts",
-  mode: "production",
+  mode: "development",
   output: {
     filename: "index.js",
     path: path.resolve(__dirname, "build")
   },
+  devtool: "eval-cheap-module-source-map",
   module: {
     rules: [
       {

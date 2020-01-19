@@ -73,8 +73,8 @@ describe("transformer", () => {
     expect(imports.length).toEqual(1);
   });
 
-  describe("simple assignments", () => {
-    it("transforms simple assignment to a number", () => {
+  describe("assignments", () => {
+    it("transforms assignment to a number", () => {
       const wasmAst = transform({
         type: "program",
         statements: [
@@ -95,9 +95,9 @@ describe("transformer", () => {
       expect(mainFn).toBeTruthy();
       expect(mainFn.locals.length).toEqual(1);
       expect(mainFn.instructions).toEqual([
-        { instructionType: "const", value: 5, valueType: "f32" },
+        { instructionType: "const", value: 5, valueType: "i32" },
         { instructionType: "variable", index: 0, operation: "set" },
-        { instructionType: "const", value: 10, valueType: "f32" },
+        { instructionType: "const", value: 10, valueType: "i32" },
         { instructionType: "variable", index: 0, operation: "set" },
         { instructionType: "const", value: 0, valueType: "i32" } // main fn ends with this
       ]);
@@ -105,12 +105,12 @@ describe("transformer", () => {
 
     type Case = [rockstar.ArithmeticOperator, wasm.BinaryOperation];
     for (const [arithmeticOperator, binaryOperation] of [
-      ["add", "f32.add"],
-      ["divide", "f32.div"],
-      ["multiply", "f32.mul"],
-      ["subtract", "f32.sub"]
+      ["add", "i32.add"],
+      ["divide", "i32.div"],
+      ["multiply", "i32.mul"],
+      ["subtract", "i32.sub"]
     ] as Case[]) {
-      it(`transforms simple assignment to an arithmetic expression: ${arithmeticOperator}`, () => {
+      it(`transforms assignment to an arithmetic expression: ${arithmeticOperator}`, () => {
         const wasmAst = transform({
           type: "program",
           statements: [
@@ -141,12 +141,12 @@ describe("transformer", () => {
         expect(mainFn).toBeTruthy();
         expect(mainFn.locals.length).toEqual(2);
         expect(mainFn.instructions).toEqual([
-          { instructionType: "const", value: 5, valueType: "f32" },
+          { instructionType: "const", value: 5, valueType: "i32" },
           { instructionType: "variable", index: 0, operation: "set" },
-          { instructionType: "const", value: 6, valueType: "f32" },
+          { instructionType: "const", value: 6, valueType: "i32" },
           { instructionType: "variable", index: 1, operation: "set" },
           { instructionType: "variable", index: 1, operation: "get" },
-          { instructionType: "const", value: 10, valueType: "f32" },
+          { instructionType: "const", value: 10, valueType: "i32" },
           { instructionType: "binaryOperation", operation: binaryOperation },
           { instructionType: "variable", index: 0, operation: "set" },
           { instructionType: "const", value: 0, valueType: "i32" } // main fn ends with this
@@ -157,10 +157,10 @@ describe("transformer", () => {
 
   type CompoundAssignmentCase = [rockstar.ArithmeticOperator, wasm.BinaryOperation];
   for (const [arithmeticOperator, binaryOperation] of [
-    ["add", "f32.add"],
-    ["divide", "f32.div"],
-    ["multiply", "f32.mul"],
-    ["subtract", "f32.sub"]
+    ["add", "i32.add"],
+    ["divide", "i32.div"],
+    ["multiply", "i32.mul"],
+    ["subtract", "i32.sub"]
   ] as CompoundAssignmentCase[]) {
     it(`transforms compound assignment: ${arithmeticOperator}`, () => {
       const wasmAst = transform({
@@ -188,10 +188,10 @@ describe("transformer", () => {
       expect(mainFn).toBeTruthy();
       expect(mainFn.locals.length).toEqual(1);
       expect(mainFn.instructions).toEqual([
-        { instructionType: "const", value: 5, valueType: "f32" },
+        { instructionType: "const", value: 5, valueType: "i32" },
         { instructionType: "variable", index: 0, operation: "set" },
         { instructionType: "variable", index: 0, operation: "get" },
-        { instructionType: "const", value: 5, valueType: "f32" },
+        { instructionType: "const", value: 5, valueType: "i32" },
         { instructionType: "binaryOperation", operation: binaryOperation },
         { instructionType: "variable", index: 0, operation: "set" },
         { instructionType: "const", value: 0, valueType: "i32" } // main fn ends with this
@@ -201,8 +201,8 @@ describe("transformer", () => {
 
   type IncrementDecrementCase = ["increment" | "decrement", wasm.BinaryOperation];
   for (const [incOrDec, binaryOperation] of [
-    ["increment", "f32.add"],
-    ["decrement", "f32.sub"]
+    ["increment", "i32.add"],
+    ["decrement", "i32.sub"]
   ] as IncrementDecrementCase[]) {
     it(`transforms ${incOrDec}`, () => {
       const wasmAst = transform({
@@ -225,10 +225,10 @@ describe("transformer", () => {
       expect(mainFn).toBeTruthy();
       expect(mainFn.locals.length).toEqual(1);
       expect(mainFn.instructions).toEqual([
-        { instructionType: "const", value: 5, valueType: "f32" },
+        { instructionType: "const", value: 5, valueType: "i32" },
         { instructionType: "variable", index: 0, operation: "set" },
         { instructionType: "variable", index: 0, operation: "get" },
-        { instructionType: "const", value: 1, valueType: "f32" },
+        { instructionType: "const", value: 1, valueType: "i32" },
         { instructionType: "binaryOperation", operation: binaryOperation },
         { instructionType: "variable", index: 0, operation: "set" },
         { instructionType: "const", value: 0, valueType: "i32" } // main fn ends with this
@@ -249,7 +249,7 @@ describe("transformer", () => {
           {
             type: "variableDeclaration",
             variable: { type: "variable", name: "x" },
-            value: { type: "number", value: 5.4 }
+            value: { type: "number", value: 5 }
           },
           {
             type: "round",
@@ -263,10 +263,12 @@ describe("transformer", () => {
       expect(mainFn).toBeTruthy();
       expect(mainFn.locals.length).toEqual(1);
       expect(mainFn.instructions).toEqual([
-        { instructionType: "const", value: 5.4, valueType: "f32" },
+        { instructionType: "const", value: 5, valueType: "i32" },
         { instructionType: "variable", index: 0, operation: "set" },
         { instructionType: "variable", index: 0, operation: "get" },
+        { instructionType: "unaryOperation", operation: "f32.convert_i32_s" },
         { instructionType: "unaryOperation", operation: unaryOperation },
+        { instructionType: "unaryOperation", operation: "i32.trunc_f32_s" },
         { instructionType: "variable", index: 0, operation: "set" },
         { instructionType: "const", value: 0, valueType: "i32" } // main fn ends with this
       ]);
@@ -309,7 +311,7 @@ describe("transformer", () => {
     const fn = wasmAst.functions.find(f => f.id === "$hello") as wasm.Function;
     expect(fn).toBeTruthy();
     expect(fn.functionType.params.length).toEqual(1);
-    expect(fn.functionType.result).toEqual("f32");
+    expect(fn.functionType.result).toEqual("i32");
     expect(fn.locals.length).toEqual(1);
     expect(fn.instructions.length).toEqual(0);
   });

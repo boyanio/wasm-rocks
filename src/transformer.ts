@@ -1,5 +1,6 @@
 import * as rockstar from "./rockstar/ast";
 import * as wasm from "./wasm/ast";
+import { resolveExpressionType } from "./rockstar/expressionTypeResolver";
 
 export const transform = (rockstarAst: rockstar.Program): wasm.Module => {
   const module = {
@@ -10,6 +11,7 @@ export const transform = (rockstarAst: rockstar.Program): wasm.Module => {
   };
 
   const registeredCalls = new Map<wasm.Identifier, wasm.FunctionType>();
+  const processedStatements: rockstar.Statement[] = [];
 
   const toIdentifier = (input: string): wasm.Identifier => `$${input}`;
 
@@ -24,14 +26,24 @@ export const transform = (rockstarAst: rockstar.Program): wasm.Module => {
     const wasmFn: wasm.Function = {
       id: `$${name}`,
       functionType: {
-        params: args.map(() => "f32"),
-        result: result ? "f32" : null
+        params: args.map(() => "i32"),
+        result: result ? "i32" : null
       },
       instructions: [],
       locals: []
     };
 
-    const indexFromLocals = (variable: rockstar.Variable): number => {
+    const validateRockstarExpressionType = (expression: rockstar.Expression): void => {
+      const expressionType = resolveExpressionType(expression, processedStatements);
+      switch (expressionType) {
+        case "float":
+          throw new Error("Floats are not supported by the transformation yet");
+        case "string":
+          throw new Error("Strings are not supported by the transformation yet");
+      }
+    };
+
+    const localIndex = (variable: rockstar.Variable): number => {
       let namedVariable: rockstar.NamedVariable;
       if (variable.type === "pronoun") {
         if (!declaredRockstarVariables.length)
@@ -68,20 +80,49 @@ export const transform = (rockstarAst: rockstar.Program): wasm.Module => {
     ): wasm.VariableInstruction => ({
       instructionType: "variable",
       operation,
-      index: indexFromLocals(target)
+      index: localIndex(target)
     });
 
     const constInstruction = (value: number): wasm.ConstInstruction => ({
       instructionType: "const",
       value,
-      valueType: "f32"
+      valueType: "i32"
     });
 
+    function transformSimpleExpression(expression: rockstar.SimpleExpression): wasm.Instruction {
+      validateRockstarExpressionType(expression);
+
+      switch (expression.type) {
+        case "number":
+          return constInstruction((expression as rockstar.NumberLiteral).value);
+
+        case "boolean":
+          return constInstruction((expression as rockstar.BooleanLiteral).value ? 1 : 0);
+
+        case "string":
+          throw new Error("String expressions are not supperted by the transofmration yet");
+
+        case "mysterious":
+        case "null":
+          return constInstruction(0);
+
+        case "variable":
+        case "pronoun":
+          return variableInstruction(expression as rockstar.Variable, "get");
+      }
+    }
+
     const binaryOperatorMap = new Map<rockstar.BinaryOperator, wasm.BinaryOperation>()
-      .set("add", "f32.add")
-      .set("divide", "f32.div")
-      .set("multiply", "f32.mul")
-      .set("subtract", "f32.sub");
+      .set("add", "i32.add")
+      .set("divide", "i32.div")
+      .set("multiply", "i32.mul")
+      .set("subtract", "i32.sub")
+      .set("equals", "i32.eq")
+      .set("notEquals", "i32.ne")
+      .set("greaterThan", "i32.gt_s")
+      .set("greaterThanOrEquals", "i32.ge_s")
+      .set("lowerThan", "i32.lt_s")
+      .set("lowerThanOrEquals", "i32.le_s");
 
     const transformBinaryOperator = (operator: rockstar.BinaryOperator): wasm.Instruction => {
       if (!binaryOperatorMap.has(operator)) throw new Error(`Unknown binary operator: ${operator}`);
@@ -98,33 +139,20 @@ export const transform = (rockstarAst: rockstar.Program): wasm.Module => {
       .set("upOrDown", "f32.nearest");
 
     function transformArithmeticRounding(
-      direction: rockstar.ArithmeticRoundingDirection
-    ): wasm.Instruction {
-      if (!arithmeticRoundingDirectionMap.has(direction))
-        throw new Error(`Unknown arithmetic rounding direction: ${direction}`);
+      statement: rockstar.ArithmeticRoundingOperation
+    ): wasm.Instruction[] {
+      if (!arithmeticRoundingDirectionMap.has(statement.direction))
+        throw new Error(`Unknown arithmetic rounding direction: ${statement.direction}`);
 
-      return unaryOperationInstruction(
-        arithmeticRoundingDirectionMap.get(direction) as wasm.UnaryOperation
-      );
-    }
-
-    function transformSimpleExpression(
-      rockstarExpression: rockstar.SimpleExpression
-    ): wasm.Instruction {
-      switch (rockstarExpression.type) {
-        case "number":
-          return constInstruction((rockstarExpression as rockstar.NumberLiteral).value);
-
-        case "mysterious":
-        case "null":
-          return constInstruction(0);
-
-        case "variable":
-        case "pronoun":
-          return variableInstruction(rockstarExpression as rockstar.Variable, "get");
-      }
-
-      throw new Error(`Cannot transform Rockstar simple expression: ${rockstarExpression}`);
+      return [
+        transformSimpleExpression(statement.target),
+        unaryOperationInstruction("f32.convert_i32_s"),
+        unaryOperationInstruction(
+          arithmeticRoundingDirectionMap.get(statement.direction) as wasm.UnaryOperation
+        ),
+        unaryOperationInstruction("i32.trunc_f32_s"),
+        variableInstruction(statement.target, "set")
+      ];
     }
 
     function transformFunctionCall(rockstarCall: rockstar.FunctionCall): wasm.Instruction[] {
@@ -134,8 +162,8 @@ export const transform = (rockstarAst: rockstar.Program): wasm.Module => {
       // register the function call
       if (!registeredCalls.has(callId)) {
         registeredCalls.set(callId, {
-          params: args.map(() => "f32"),
-          result: null
+          params: args.map(() => "i32"),
+          result: "i32"
         });
       }
 
@@ -149,11 +177,14 @@ export const transform = (rockstarAst: rockstar.Program): wasm.Module => {
       ];
     }
 
-    function transformExpression(rockstarExpression: rockstar.Expression): wasm.Instruction[] {
-      switch (rockstarExpression.type) {
+    function transformExpression(expression: rockstar.Expression): wasm.Instruction[] {
+      switch (expression.type) {
         case "binaryExpression": {
-          // TODO
-          return [];
+          return [
+            ...transformExpression(expression.lhs),
+            ...transformExpression(expression.rhs),
+            transformBinaryOperator(expression.operator)
+          ];
         }
 
         case "unaryExpression": {
@@ -162,24 +193,42 @@ export const transform = (rockstarAst: rockstar.Program): wasm.Module => {
         }
 
         case "call": {
-          return transformFunctionCall(rockstarExpression);
+          return transformFunctionCall(expression);
         }
 
         default:
-          return [transformSimpleExpression(rockstarExpression)];
+          return [transformSimpleExpression(expression)];
       }
+    }
+
+    function transformAssignment(statement: rockstar.Assignment): wasm.Instruction[] {
+      return [
+        ...transformExpression(statement.expression),
+        variableInstruction(statement.target, "set")
+      ];
+    }
+
+    function transformVariableDeclaration(
+      statement: rockstar.VariableDeclaration
+    ): wasm.Instruction[] {
+      declaredRockstarVariables.push(statement.variable);
+
+      return [
+        transformSimpleExpression(statement.value),
+        {
+          instructionType: "variable",
+          operation: "set",
+          index: localIndex(statement.variable)
+        }
+      ];
     }
 
     for (const statement of statements) {
       switch (statement.type) {
         case "variableDeclaration": {
-          const { variable, value } = statement as rockstar.VariableDeclaration;
-          declaredRockstarVariables.push(variable);
-          wasmFn.instructions.push(transformSimpleExpression(value), {
-            instructionType: "variable",
-            operation: "set",
-            index: indexFromLocals(variable)
-          });
+          wasmFn.instructions.push(
+            ...transformVariableDeclaration(statement as rockstar.VariableDeclaration)
+          );
           break;
         }
 
@@ -197,35 +246,7 @@ export const transform = (rockstarAst: rockstar.Program): wasm.Module => {
         }
 
         case "assignment": {
-          const { target, expression } = statement as rockstar.Assignment;
-          switch (expression.type) {
-            case "binaryExpression": {
-              wasmFn.instructions.push(
-                ...transformExpression(expression.lhs),
-                ...transformExpression(expression.rhs),
-                transformBinaryOperator(expression.operator),
-                variableInstruction(target, "set")
-              );
-              break;
-            }
-
-            case "unaryExpression": {
-              // TODO
-              break;
-            }
-
-            case "call": {
-              // TODO
-              break;
-            }
-
-            default: {
-              wasmFn.instructions.push(
-                transformSimpleExpression(expression),
-                variableInstruction(target, "set")
-              );
-            }
-          }
+          wasmFn.instructions.push(...transformAssignment(statement as rockstar.Assignment));
           break;
         }
 
@@ -234,7 +255,7 @@ export const transform = (rockstarAst: rockstar.Program): wasm.Module => {
           wasmFn.instructions.push(
             transformSimpleExpression(target),
             constInstruction(1),
-            binaryOperationInstruction("f32.add"),
+            binaryOperationInstruction("i32.add"),
             variableInstruction(target, "set")
           );
           break;
@@ -245,18 +266,15 @@ export const transform = (rockstarAst: rockstar.Program): wasm.Module => {
           wasmFn.instructions.push(
             transformSimpleExpression(target),
             constInstruction(1),
-            binaryOperationInstruction("f32.sub"),
+            binaryOperationInstruction("i32.sub"),
             variableInstruction(target, "set")
           );
           break;
         }
 
         case "round": {
-          const { target, direction } = statement as rockstar.ArithmeticRoundingOperation;
           wasmFn.instructions.push(
-            transformSimpleExpression(target),
-            transformArithmeticRounding(direction),
-            variableInstruction(target, "set")
+            ...transformArithmeticRounding(statement as rockstar.ArithmeticRoundingOperation)
           );
           break;
         }
@@ -273,10 +291,12 @@ export const transform = (rockstarAst: rockstar.Program): wasm.Module => {
         case "function": {
           const { name } = statement as rockstar.FunctionDeclaration;
           throw new Error(
-            `Nestign functions within functions is nto allowed. Function ${name} encountered.`
+            `Nesting functions within functions is not allowed. Function declaration ${name} encountered.`
           );
         }
       }
+
+      processedStatements.push(statement);
     }
 
     // add locals
@@ -284,7 +304,7 @@ export const transform = (rockstarAst: rockstar.Program): wasm.Module => {
       ...Array.from(locals.values()).map<wasm.Local>(l => ({
         type: "local",
         index: l,
-        localType: "f32"
+        localType: "i32"
       }))
     );
 
@@ -293,7 +313,7 @@ export const transform = (rockstarAst: rockstar.Program): wasm.Module => {
 
   const transformFunction = (func: rockstar.FunctionDeclaration): void => {
     const wasmFn = transformFunctionInternal(func.name, func.args, func.result, func.statements);
-    module.functions.push(wasmFn);
+    module.functions.unshift(wasmFn);
   };
 
   const transformFunctions = (funcs: rockstar.FunctionDeclaration[]): void =>
@@ -349,8 +369,8 @@ export const transform = (rockstarAst: rockstar.Program): wasm.Module => {
   if (hasMainFn) throw new Error("The function name `main` is reserved.");
 
   // functions
-  transformFunctions(fnNodes);
   transformMainFunction(nonFnNodes);
+  transformFunctions(fnNodes);
 
   // imports
   module.imports.push(

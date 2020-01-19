@@ -40,14 +40,29 @@ export type ConstInstruction = {
   valueType: ValueType;
 };
 
-export type BinaryOperation = "f32.add" | "f32.mul" | "f32.sub" | "f32.div";
+export type BinaryOperation =
+  | "i32.add"
+  | "i32.mul"
+  | "i32.sub"
+  | "i32.div"
+  | "i32.eq"
+  | "i32.ne"
+  | "i32.lt_s"
+  | "i32.le_s"
+  | "i32.gt_s"
+  | "i32.ge_s";
 
 export type BinaryOperationInstruction = {
   instructionType: "binaryOperation";
   operation: BinaryOperation;
 };
 
-export type UnaryOperation = "f32.nearest" | "f32.ceil" | "f32.floor";
+export type UnaryOperation =
+  | "f32.nearest"
+  | "f32.ceil"
+  | "f32.floor"
+  | "f32.convert_i32_s"
+  | "i32.trunc_f32_s";
 
 export type UnaryOperationInstruction = {
   instructionType: "unaryOperation";

@@ -8,4 +8,4 @@ cache: yarn
 script:
   - yarn lint
   - yarn test
-  - yarn build
+  - yarn build --mode production --devtool ""

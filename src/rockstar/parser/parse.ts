@@ -9,7 +9,7 @@ const program = map(
 );
 
 const createParseError = (error: ParseError): Error =>
-  new Error(`Parse error at line ${error.lineIndex}, offset ${error.offset}: ${error.message}`);
+  new Error(`Parse error at line ${error.lineIndex + 1}, offset ${error.offset}: ${error.message}`);
 
 export const parse = (source: string): Program => {
   const lines = source

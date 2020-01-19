@@ -23,6 +23,8 @@ export type StringLiteral = {
   value: string;
 };
 
+export type ExpressionType = "string" | "boolean" | "integer" | "float" | "mysterious" | "null";
+
 export type Literal = NumberLiteral | StringLiteral | ConstantLiteral;
 
 export type NamedVariable = {
@@ -49,7 +51,7 @@ export type VariableDeclaration = {
 export type FunctionCall = {
   type: "call";
   name: Identifier;
-  args: Expression[];
+  args: SimpleExpression[];
 };
 
 export type FunctionDeclaration = {
@@ -82,14 +84,14 @@ export type DecrementOperation = {
 
 export type SayCall = {
   type: "say";
-  what: Expression;
+  what: SimpleExpression;
 };
 
 export type IOOperation = SayCall;
 
 export type Assignment = {
   type: "assignment";
-  target: Variable;
+  target: NamedVariable;
   expression: Expression;
 };
 
