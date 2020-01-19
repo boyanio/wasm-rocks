@@ -50,7 +50,7 @@ const poeticNumberLiteral: Parser<Literal> = lineIndexWithinBounds(
         .reduce((result, word) => `${result}${word === "." ? "." : module(word)}`, "")
     );
 
-    context.offset = source.length;
+    context.offset = lines[context.lineIndex].length;
     return { type: "number", value };
   }
 );
@@ -66,7 +66,4 @@ const withNonStringPoeticLiteral: Parser<VariableDeclaration> = sequence(
   anyOf(literal, poeticNumberLiteral)
 );
 
-export const variableDeclaration: Parser<VariableDeclaration> = anyOf(
-  withPoeticString,
-  withNonStringPoeticLiteral
-);
+export const variableDeclaration = anyOf(withPoeticString, withNonStringPoeticLiteral);

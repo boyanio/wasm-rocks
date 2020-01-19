@@ -13,7 +13,8 @@ import {
   word,
   batch,
   $1,
-  emptyLine
+  emptyLine,
+  punctuation
 } from "../parsers";
 import { assignment } from "./assignment";
 import { variableDeclaration } from "./variableDeclaration";
@@ -22,13 +23,17 @@ import { arithmeticRounding } from "./arithmeticRounding";
 import { io } from "./io";
 
 export const statement = toNextLine(
-  anyOf<Statement>(
-    comment,
-    assignment,
-    variableDeclaration,
-    incrementDecrement,
-    arithmeticRounding,
-    io
+  sequence(
+    $1,
+    anyOf<Statement>(
+      comment,
+      assignment,
+      variableDeclaration,
+      incrementDecrement,
+      arithmeticRounding,
+      io
+    ),
+    punctuation
   )
 );
 

@@ -120,7 +120,7 @@ export const map = <S, T>(
 };
 
 /**
- * Parses an end of th line.
+ * Parses an end of the line.
  */
 export const endOfLine: Parser<null> = lineIndexWithinBounds(
   (lines: string[], context: Context): Parsed<null> =>
@@ -260,8 +260,15 @@ export const oneOrMany = <T>(parser: Parser<T>): Parser<T[]> => (
   // eslint-disable-next-line no-constant-condition
   while (true) {
     const initialOffset = context.offset;
+    const initialLineIndex = context.lineIndex;
     const result = parser(lines, context);
-    if (initialOffset === context.offset && items.length > 0) break;
+
+    if (
+      initialOffset === context.offset &&
+      initialLineIndex === context.lineIndex &&
+      items.length > 0
+    )
+      break;
     if (isParseError(result)) return result as ParseError;
 
     items.push(result as T);

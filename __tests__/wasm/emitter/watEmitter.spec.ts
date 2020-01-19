@@ -183,7 +183,7 @@ describe("wasm", () => {
         expect(wat).toEqual("(module (func $hello (i32.const 10)))");
       });
 
-      for (const operation of ["f32.add", "f32.mul", "f32.sub", "f32.div"] as BinaryOperation[]) {
+      for (const operation of ["i32.add", "i32.mul", "i32.sub", "i32.div"] as BinaryOperation[]) {
         it(`emits binary operation: ${operation}`, () => {
           const binaryOperation: BinaryOperationInstruction = {
             instructionType: "binaryOperation",

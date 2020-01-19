@@ -1,7 +1,7 @@
 import { Parser } from "../types";
 import { namedVariable, expression } from "../expressions/expression";
 import { Assignment, BinaryOperator, Expression, NamedVariable } from "../../ast";
-import { toNextLine, anyOf, sequence, keysOf, word } from "../parsers";
+import { anyOf, sequence, keysOf, word } from "../parsers";
 
 type CompoundAssignment = {
   type: "compoundAssignment";
@@ -75,4 +75,4 @@ const letAssignment: Parser<Assignment> = sequence(
  *    Let <variable> be <expression>
  *    Put <expression> into <variable>
  */
-export const assignment: Parser<Assignment> = toNextLine(anyOf(putAssignment, letAssignment));
+export const assignment: Parser<Assignment> = anyOf(putAssignment, letAssignment);
