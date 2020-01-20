@@ -1,50 +1,16 @@
 import * as rockstar from "./rockstar/ast";
 import * as wasm from "./wasm/ast";
+import { astFactory as wasmFactory } from "./wasm/astFactory";
 import { resolveExpressionType } from "./rockstar/expressionTypeResolver";
 import { getOrThrow } from "./utils/map-utils";
 
-const wasmFactory = {
-  const: (value: number): wasm.ConstInstruction => ({
-    instructionType: "const",
-    value,
-    valueType: "i32"
-  }),
-
-  binaryOperation: (operation: wasm.BinaryOperation): wasm.BinaryOperationInstruction => ({
-    instructionType: "binaryOperation",
-    operation
-  }),
-
-  unaryOperation: (operation: wasm.UnaryOperation): wasm.UnaryOperationInstruction => ({
-    instructionType: "unaryOperation",
-    operation
-  }),
-
-  variable: (
-    index: number,
-    operation: wasm.VariableInstructionOperation
-  ): wasm.VariableInstruction => ({
-    instructionType: "variable",
-    operation,
-    index
-  }),
-
-  call: (id: wasm.Identifier): wasm.CallControlInstruction => ({
-    instructionType: "call",
-    id
-  }),
-
-  local: (index: number): wasm.Local => ({
-    index,
-    localType: "i32"
-  })
-};
-
 class FunctionLocals {
   private locals: Map<string, number>;
-  private lastAccessedLocalIndex: number | null = null;
+  private skipLocals: number;
+  private lastAccessedLocal: number | null = null;
 
   constructor(initialVariables: rockstar.Variable[]) {
+    this.skipLocals = initialVariables.length;
     this.locals = new Map<string, number>(
       initialVariables.map((variable, index) => [variable.name, index])
     );
@@ -52,10 +18,10 @@ class FunctionLocals {
 
   getOrAdd(target: rockstar.Variable | rockstar.Pronoun): number {
     if (target.type === "pronoun") {
-      if (!this.lastAccessedLocalIndex)
+      if (!this.lastAccessedLocal)
         throw new Error("Cannot resolve pronoun - no variables declared in the scope");
 
-      return this.lastAccessedLocalIndex;
+      return this.lastAccessedLocal;
     }
 
     const variable = target as rockstar.Variable;
@@ -63,12 +29,16 @@ class FunctionLocals {
       this.locals.set(variable.name, this.locals.size);
     }
 
-    this.lastAccessedLocalIndex = this.locals.get(variable.name) as number;
-    return this.lastAccessedLocalIndex;
+    this.lastAccessedLocal = this.locals.get(variable.name) as number;
+    return this.lastAccessedLocal;
   }
 
   build(): wasm.Local[] {
-    return Array.from(this.locals.values()).map<wasm.Local>(wasmFactory.local);
+    // Skip initial ones, as they are automatically added
+    return [...this.locals.values()].reduce(
+      (locals, index) => (index >= this.skipLocals ? [...locals, wasmFactory.local()] : locals),
+      [] as wasm.Local[]
+    );
   }
 }
 
@@ -81,6 +51,13 @@ export const transform = (rockstarAst: rockstar.Program): wasm.Module => {
   };
 
   const processedStatements: rockstar.Statement[] = [];
+  const imports = new Map<string, wasm.Import>();
+
+  const registerImport = ($import: wasm.Import): void => {
+    if (!imports.has($import.name)) {
+      imports.set($import.name, $import);
+    }
+  };
 
   const wasmIdentifier = (input: string): wasm.Identifier => `$${input}`;
 
@@ -227,19 +204,42 @@ export const transform = (rockstarAst: rockstar.Program): wasm.Module => {
 
         case "say": {
           const { what } = statement as rockstar.SayStatement;
-          wasmFn.instructions.push(
-            ...transformExpression(what),
-            wasmFactory.call(wasmIdentifier("print"))
-          );
+          const id = wasmIdentifier("print");
+          wasmFn.instructions.push(...transformExpression(what), wasmFactory.call(id));
+          registerImport({
+            module: "env",
+            name: "print",
+            importType: {
+              name: "func",
+              id,
+              functionType: {
+                params: ["i32"],
+                result: null
+              }
+            }
+          });
           break;
         }
 
         case "listen": {
           const { to } = statement as rockstar.ListenStatement;
+          const id = wasmIdentifier("prompt");
           wasmFn.instructions.push(
-            wasmFactory.call(wasmIdentifier("prompt")),
+            wasmFactory.call(id),
             wasmFactory.variable(locals.getOrAdd(to), "set")
           );
+          registerImport({
+            module: "env",
+            name: "prompt",
+            importType: {
+              name: "func",
+              id,
+              functionType: {
+                params: [],
+                result: "i32"
+              }
+            }
+          });
           break;
         }
 
@@ -340,6 +340,9 @@ export const transform = (rockstarAst: rockstar.Program): wasm.Module => {
   // functions
   transformFunctionDeclarations(fnNodes);
   transformMainFunctionDeclaration(nonFnNodes);
+
+  // imports
+  wasmModule.imports.push(...imports.values());
 
   // memory
   wasmModule.memories.push({ id: "$0", memoryType: { minSize: 1 } });

@@ -15,8 +15,7 @@ export type FunctionType = {
 };
 
 export type Local = {
-  index: number;
-  localType: ValueType;
+  valueType: ValueType;
 };
 
 export type Function = {

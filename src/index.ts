@@ -1,4 +1,4 @@
-import { withIdentation } from "./wasm/emitter";
+import { watIdentedVectorEncoder } from "./wasm/emitter";
 import { toWat } from "./transpiler";
 import CodeMirror from "codemirror";
 
@@ -11,7 +11,7 @@ My desire is a lovestruck ladykiller
 Whisper my desire
 `;
 
-  const watFormatter = withIdentation(2);
+  const vectorEncoder = watIdentedVectorEncoder(2);
 
   const editorOptions: CodeMirror.EditorConfiguration = {
     theme: "eclipse",
@@ -36,7 +36,7 @@ Whisper my desire
     const source = inputEditor.getValue();
     let output: string;
     try {
-      output = toWat(source, watFormatter);
+      output = toWat(source, vectorEncoder);
     } catch (err) {
       output = err.toString();
     }

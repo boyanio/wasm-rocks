@@ -66,6 +66,31 @@ describe("transformer", () => {
         im.importType.id === "$print"
     );
     expect(imports.length).toEqual(1);
+
+    const funcImportType = imports[0].importType as wasm.FunctionImportType;
+    expect(funcImportType.functionType.params).toEqual(["i32"]);
+    expect(funcImportType.functionType.result).toBeNull();
+  });
+
+  it("adds an import for I/O: listen", () => {
+    const rockstarAst: rockstar.Program = {
+      type: "program",
+      statements: [{ type: "listen", to: { type: "variable", name: "x" } }]
+    };
+    const wasmAst = transform(rockstarAst);
+
+    const imports = wasmAst.imports.filter(
+      im =>
+        im.module === "env" &&
+        im.name === "prompt" &&
+        im.importType.name === "func" &&
+        im.importType.id === "$prompt"
+    );
+    expect(imports.length).toEqual(1);
+
+    const funcImportType = imports[0].importType as wasm.FunctionImportType;
+    expect(funcImportType.functionType.params.length).toEqual(0);
+    expect(funcImportType.functionType.result).toEqual("i32");
   });
 
   describe("assignments", () => {
@@ -307,7 +332,47 @@ describe("transformer", () => {
     expect(fn).toBeTruthy();
     expect(fn.functionType.params.length).toEqual(1);
     expect(fn.functionType.result).toEqual("i32");
+  });
+
+  it("does not transform function params as locals", () => {
+    const wasmAst = transform({
+      type: "program",
+      statements: [
+        {
+          type: "function",
+          name: "hello",
+          args: [{ type: "variable", name: "x" }],
+          result: { type: "variable", name: "x" },
+          statements: []
+        }
+      ]
+    });
+
+    const fn = wasmAst.functions.find(f => f.id === "$hello") as wasm.Function;
+    expect(fn.locals.length).toEqual(0);
+  });
+
+  it("transforms variacle declaration as a function local", () => {
+    const wasmAst = transform({
+      type: "program",
+      statements: [
+        {
+          type: "function",
+          name: "hello",
+          args: [{ type: "variable", name: "x" }],
+          result: { type: "variable", name: "x" },
+          statements: [
+            {
+              type: "variableDeclaration",
+              variable: { type: "variable", name: "y" },
+              value: { type: "number", value: 5 }
+            }
+          ]
+        }
+      ]
+    });
+
+    const fn = wasmAst.functions.find(f => f.id === "$hello") as wasm.Function;
     expect(fn.locals.length).toEqual(1);
-    expect(fn.instructions.length).toEqual(0);
   });
 });

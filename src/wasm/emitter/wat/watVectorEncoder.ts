@@ -1,10 +1,14 @@
-export type WatFormatter = (...data: string[]) => string;
+import { VectorEncoder } from "../types";
 
 const enclose = (what: string): string => `(${what})`;
 
-export const noFormat = (): WatFormatter => (...data: string[]): string => enclose(data.join(" "));
+export const watSingleLineVectorEncoder = (): VectorEncoder<string, string> => (
+  ...data: string[]
+): string => enclose(data.join(" "));
 
-export const withIdentation = (identation: number): WatFormatter => (...data: string[]): string => {
+export const watIdentedVectorEncoder = (identation: number): VectorEncoder<string, string> => (
+  ...data: string[]
+): string => {
   if (data.length === 1) return data[0];
 
   let header = "";

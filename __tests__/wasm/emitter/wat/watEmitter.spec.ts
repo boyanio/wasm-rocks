@@ -1,4 +1,4 @@
-import { noFormat, emitWat } from "../../../src/wasm/emitter";
+import { watSingleLineVectorEncoder, emitWat } from "../../../../src/wasm/emitter";
 import {
   Module,
   Memory,
@@ -36,7 +36,7 @@ const createModule = (options: ModuleOptions): Module =>
   );
 
 const emitWithWithNoFormat = (options: ModuleOptions): string =>
-  emitWat(noFormat(), createModule(options));
+  emitWat(createModule(options), watSingleLineVectorEncoder());
 
 describe("wasm", () => {
   describe("watEmitter", () => {
@@ -225,12 +225,10 @@ describe("wasm", () => {
 
       it("emits locals declaration", () => {
         const local0: Local = {
-          index: 0,
-          localType: "f32"
+          valueType: "f32"
         };
         const local1: Local = {
-          index: 1,
-          localType: "i32"
+          valueType: "i32"
         };
         const wat = emitWithWithNoFormat({
           functions: [
@@ -242,7 +240,7 @@ describe("wasm", () => {
             }
           ]
         });
-        expect(wat).toEqual("(module (func $hello (local f32) (local i32)))");
+        expect(wat).toEqual("(module (func $hello (local f32 i32)))");
       });
     });
   });
