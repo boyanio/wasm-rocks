@@ -216,6 +216,12 @@ export const punctuation: Parser<null> = drop(
 export const word = (w: string): Parser<string> => batch($1, string(w), punctuation);
 
 /**
+ * Matches against a sequence of words, each followed by punctuation.
+ */
+export const wordSequence = (...words: string[]): Parser<string> =>
+  batch((...parsedWords) => parsedWords.join(" "), ...words.map(w => word(w)));
+
+/**
  * Matchs against a list of words.
  */
 export const anyWord = (...words: string[]): Parser<string> => anyOf(...words.map(w => word(w)));

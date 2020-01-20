@@ -130,6 +130,7 @@ const keywords = new Set<string>([
   "say",
   "whisper",
   "scream",
+  "listen",
   "turn",
   "round",
   "around",

@@ -236,9 +236,18 @@ export const transform = (rockstarAst: rockstar.Program): wasm.Module => {
         }
 
         case "say": {
-          const { what } = statement as rockstar.SayCall;
+          const { what } = statement as rockstar.SayStatement;
           wasmFn.instructions.push(
             ...transformFunctionCall({ type: "functionCall", name: "print", args: [what] }, null)
+          );
+          break;
+        }
+
+        case "listen": {
+          const { to } = statement as rockstar.ListenStatement;
+          wasmFn.instructions.push(
+            ...transformFunctionCall({ type: "functionCall", name: "prompt", args: [] }, "i32"),
+            variableInstruction(to, "set")
           );
           break;
         }

@@ -1,5 +1,5 @@
 import { parse } from "../../../../src/rockstar/parser";
-import { SayCall } from "src/rockstar/ast";
+import { SayStatement, ListenStatement } from "src/rockstar/ast";
 
 describe("rockstar", () => {
   describe("parser", () => {
@@ -11,7 +11,7 @@ describe("rockstar", () => {
           expect(statements.length).toEqual(1);
           expect(statements[0].type).toEqual("say");
 
-          const node = statements[0] as SayCall;
+          const node = statements[0] as SayStatement;
           expect(node.what).toEqual({ type: "number", value: 5 });
         });
 
@@ -21,7 +21,7 @@ describe("rockstar", () => {
           expect(statements.length).toEqual(1);
           expect(statements[0].type).toEqual("say");
 
-          const node = statements[0] as SayCall;
+          const node = statements[0] as SayStatement;
           expect(node.what).toEqual({ type: "string", value: "5" });
         });
       });
@@ -41,7 +41,7 @@ describe("rockstar", () => {
             expect(statements.length).toEqual(1);
             expect(statements[0].type).toEqual("say");
 
-            const node = statements[0] as SayCall;
+            const node = statements[0] as SayStatement;
             expect(node.what).toEqual({ type: "variable", name: variable });
           });
         }
@@ -56,10 +56,22 @@ describe("rockstar", () => {
             expect(statements.length).toEqual(1);
             expect(statements[0].type).toEqual("say");
 
-            const node = statements[0] as SayCall;
+            const node = statements[0] as SayStatement;
             expect(node.what).toEqual({ type: "pronoun" });
           });
         }
+      });
+    });
+
+    describe("listen", () => {
+      it("Listen to your heart", () => {
+        const { statements } = parse("Listen to your heart");
+
+        expect(statements.length).toEqual(1);
+        expect(statements[0].type).toEqual("listen");
+
+        const node = statements[0] as ListenStatement;
+        expect(node.to).toEqual({ type: "variable", name: "your heart" });
       });
     });
   });

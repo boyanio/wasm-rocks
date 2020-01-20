@@ -119,12 +119,17 @@ export type DecrementOperation = {
   times: number;
 };
 
-export type SayCall = {
+export type SayStatement = {
   type: "say";
   what: SimpleExpression;
 };
 
-export type IOOperation = SayCall;
+export type ListenStatement = {
+  type: "listen";
+  to: NamedVariable;
+};
+
+export type IOOperation = SayStatement | ListenStatement;
 
 export type Assignment = {
   type: "assignment";

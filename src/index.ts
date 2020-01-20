@@ -69,6 +69,13 @@ Whisper my desire
           env: {
             print: (what: number): void => {
               wasmOutput.innerHTML = (wasmOutput.innerHTML || "") + what + "<br/>";
+            },
+            prompt: (): number => {
+              let enteredNumber: number | null = null;
+              while (enteredNumber === null || isNaN(enteredNumber)) {
+                enteredNumber = parseInt(prompt("Please, enter an integer") || "", 10);
+              }
+              return enteredNumber;
             }
           }
         }).then(({ instance }) => {
