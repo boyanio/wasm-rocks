@@ -1,33 +1,99 @@
 import * as rockstar from "./rockstar/ast";
 import * as wasm from "./wasm/ast";
 import { resolveExpressionType } from "./rockstar/expressionTypeResolver";
+import { getOrThrow } from "./utils/map-utils";
+
+const wasmFactory = {
+  const: (value: number): wasm.ConstInstruction => ({
+    instructionType: "const",
+    value,
+    valueType: "i32"
+  }),
+
+  binaryOperation: (operation: wasm.BinaryOperation): wasm.BinaryOperationInstruction => ({
+    instructionType: "binaryOperation",
+    operation
+  }),
+
+  unaryOperation: (operation: wasm.UnaryOperation): wasm.UnaryOperationInstruction => ({
+    instructionType: "unaryOperation",
+    operation
+  }),
+
+  variable: (
+    index: number,
+    operation: wasm.VariableInstructionOperation
+  ): wasm.VariableInstruction => ({
+    instructionType: "variable",
+    operation,
+    index
+  }),
+
+  call: (id: wasm.Identifier): wasm.CallControlInstruction => ({
+    instructionType: "call",
+    id
+  }),
+
+  local: (index: number): wasm.Local => ({
+    index,
+    localType: "i32"
+  })
+};
+
+class FunctionLocals {
+  private locals: Map<string, number>;
+  private lastAccessedLocalIndex: number | null = null;
+
+  constructor(initialVariables: rockstar.Variable[]) {
+    this.locals = new Map<string, number>(
+      initialVariables.map((variable, index) => [variable.name, index])
+    );
+  }
+
+  getOrAdd(target: rockstar.Variable | rockstar.Pronoun): number {
+    if (target.type === "pronoun") {
+      if (!this.lastAccessedLocalIndex)
+        throw new Error("Cannot resolve pronoun - no variables declared in the scope");
+
+      return this.lastAccessedLocalIndex;
+    }
+
+    const variable = target as rockstar.Variable;
+    if (!this.locals.has(variable.name)) {
+      this.locals.set(variable.name, this.locals.size);
+    }
+
+    this.lastAccessedLocalIndex = this.locals.get(variable.name) as number;
+    return this.lastAccessedLocalIndex;
+  }
+
+  build(): wasm.Local[] {
+    return Array.from(this.locals.values()).map<wasm.Local>(wasmFactory.local);
+  }
+}
 
 export const transform = (rockstarAst: rockstar.Program): wasm.Module => {
-  const module = {
+  const wasmModule = {
     exports: [] as wasm.Export[],
     functions: [] as wasm.Function[],
     imports: [] as wasm.Import[],
     memories: [] as wasm.Memory[]
   };
 
-  const registeredCalls = new Map<wasm.Identifier, wasm.FunctionType>();
   const processedStatements: rockstar.Statement[] = [];
 
-  const toIdentifier = (input: string): wasm.Identifier => `$${input}`;
+  const wasmIdentifier = (input: string): wasm.Identifier => `$${input}`;
 
-  const transformFunctionInternal = (
+  const transformFunctionDeclarationInternal = (
     name: string,
     args: rockstar.Variable[],
-    result: rockstar.SimpleExpression | null,
     statements: rockstar.Statement[]
   ): wasm.Function => {
-    const locals = new Map<string, number>(args.map((arg, index) => [arg.name, index]));
-    const declaredRockstarVariables: rockstar.Variable[] = [];
     const wasmFn: wasm.Function = {
       id: `$${name}`,
       functionType: {
         params: args.map(() => "i32"),
-        result: result ? "i32" : null
+        result: "i32"
       },
       instructions: [],
       locals: []
@@ -43,76 +109,7 @@ export const transform = (rockstarAst: rockstar.Program): wasm.Module => {
       }
     };
 
-    const lastReferencedVariable = (): rockstar.Variable => {
-      if (!declaredRockstarVariables.length)
-        throw new Error("Cannot resolve variable - no variables declared in the scope");
-
-      return declaredRockstarVariables[declaredRockstarVariables.length - 1];
-    };
-
-    const toVariable = (expression: rockstar.Variable | rockstar.Pronoun): rockstar.Variable =>
-      expression.type === "pronoun" ? lastReferencedVariable() : (expression as rockstar.Variable);
-
-    const localIndex = (variable: rockstar.Variable): number => {
-      if (!locals.has(variable.name)) {
-        locals.set(variable.name, locals.size);
-      }
-      return locals.get(variable.name) as number;
-    };
-
-    const binaryOperationInstruction = (
-      operation: wasm.BinaryOperation
-    ): wasm.BinaryOperationInstruction => ({
-      instructionType: "binaryOperation",
-      operation
-    });
-
-    const unaryOperationInstruction = (
-      operation: wasm.UnaryOperation
-    ): wasm.UnaryOperationInstruction => ({
-      instructionType: "unaryOperation",
-      operation
-    });
-
-    const variableInstruction = (
-      target: rockstar.Variable,
-      operation: wasm.VariableInstructionOperation
-    ): wasm.VariableInstruction => ({
-      instructionType: "variable",
-      operation,
-      index: localIndex(target)
-    });
-
-    const constInstruction = (value: number): wasm.ConstInstruction => ({
-      instructionType: "const",
-      value,
-      valueType: "i32"
-    });
-
-    function transformSimpleExpression(expression: rockstar.SimpleExpression): wasm.Instruction {
-      validateRockstarExpressionType(expression);
-
-      switch (expression.type) {
-        case "number":
-          return constInstruction((expression as rockstar.NumberLiteral).value);
-
-        case "boolean":
-          return constInstruction((expression as rockstar.BooleanLiteral).value ? 1 : 0);
-
-        case "string":
-          throw new Error("String expressions are not supperted by the transofmration yet");
-
-        case "mysterious":
-        case "null":
-          return constInstruction(0);
-
-        case "variable":
-          return variableInstruction(expression as rockstar.Variable, "get");
-
-        case "pronoun":
-          return variableInstruction(lastReferencedVariable(), "get");
-      }
-    }
+    const locals = new FunctionLocals(args);
 
     const binaryOperatorMap = new Map<rockstar.BinaryOperator, wasm.BinaryOperation>()
       .set("add", "i32.add")
@@ -126,10 +123,63 @@ export const transform = (rockstarAst: rockstar.Program): wasm.Module => {
       .set("lowerThan", "i32.lt_s")
       .set("lowerThanOrEquals", "i32.le_s");
 
-    const transformBinaryOperator = (operator: rockstar.BinaryOperator): wasm.Instruction => {
-      if (!binaryOperatorMap.has(operator)) throw new Error(`Unknown binary operator: ${operator}`);
+    const transformBinaryOperator = (operator: rockstar.BinaryOperator): wasm.Instruction =>
+      wasmFactory.binaryOperation(
+        getOrThrow(binaryOperatorMap, operator, `Unknown binary operator: ${operator}`)
+      );
 
-      return binaryOperationInstruction(binaryOperatorMap.get(operator) as wasm.BinaryOperation);
+    const transformExpression = (expression: rockstar.Expression): wasm.Instruction[] => {
+      const transformFunctionCall = (
+        functionCall: rockstar.FunctionCallExpression
+      ): wasm.Instruction[] => [
+        ...functionCall.args.flatMap(transformExpression),
+        wasmFactory.call(functionCall.name)
+      ];
+
+      const transformSimpleExpression = (
+        expression: rockstar.SimpleExpression
+      ): wasm.Instruction => {
+        validateRockstarExpressionType(expression);
+
+        switch (expression.type) {
+          case "number":
+            return wasmFactory.const(expression.value);
+
+          case "boolean":
+            return wasmFactory.const(expression.value ? 1 : 0);
+
+          case "string":
+            throw new Error("String expressions are not supperted by the transofmration yet");
+
+          case "mysterious":
+          case "null":
+            return wasmFactory.const(0);
+
+          case "pronoun":
+          case "variable":
+            return wasmFactory.variable(locals.getOrAdd(expression), "get");
+        }
+      };
+
+      switch (expression.type) {
+        case "binaryExpression":
+          return [
+            ...transformExpression(expression.lhs),
+            ...transformExpression(expression.rhs),
+            transformBinaryOperator(expression.operator)
+          ];
+
+        case "unaryExpression": {
+          // TODO
+          return [];
+        }
+
+        case "functionCall":
+          return transformFunctionCall(expression);
+
+        default:
+          return [transformSimpleExpression(expression)];
+      }
     };
 
     const arithmeticRoundingDirectionMap = new Map<
@@ -140,107 +190,46 @@ export const transform = (rockstarAst: rockstar.Program): wasm.Module => {
       .set("down", "f32.floor")
       .set("upOrDown", "f32.nearest");
 
-    function transformArithmeticRounding(
+    const transformArithmeticRounding = (
       statement: rockstar.ArithmeticRoundingOperation
-    ): wasm.Instruction[] {
-      if (!arithmeticRoundingDirectionMap.has(statement.direction))
-        throw new Error(`Unknown arithmetic rounding direction: ${statement.direction}`);
+    ): wasm.Instruction[] => [
+      ...transformExpression(statement.target),
+      wasmFactory.unaryOperation("f32.convert_i32_s"),
+      wasmFactory.unaryOperation(
+        getOrThrow(
+          arithmeticRoundingDirectionMap,
+          statement.direction,
+          `Unknown arithmetic rounding direction: ${statement.direction}`
+        )
+      ),
+      wasmFactory.unaryOperation("i32.trunc_f32_s"),
+      wasmFactory.variable(locals.getOrAdd(statement.target), "set")
+    ];
 
-      return [
-        transformSimpleExpression(statement.target),
-        unaryOperationInstruction("f32.convert_i32_s"),
-        unaryOperationInstruction(
-          arithmeticRoundingDirectionMap.get(statement.direction) as wasm.UnaryOperation
-        ),
-        unaryOperationInstruction("i32.trunc_f32_s"),
-        variableInstruction(toVariable(statement.target), "set")
-      ];
-    }
+    const transformAssignment = (statement: rockstar.Assignment): wasm.Instruction[] => [
+      ...transformExpression(statement.expression),
+      wasmFactory.variable(locals.getOrAdd(statement.target), "set")
+    ];
 
-    function transformFunctionCall(
-      rockstarCall: rockstar.FunctionCallExpression,
-      result: wasm.ValueType | null
-    ): wasm.Instruction[] {
-      const { name, args } = rockstarCall;
-      const callId = toIdentifier(name);
-
-      // register the function call
-      if (!registeredCalls.has(callId)) {
-        registeredCalls.set(callId, {
-          params: args.map(() => "i32"),
-          result
-        });
-      }
-
-      return [
-        // eslint-disable-next-line @typescript-eslint/no-use-before-define
-        ...args.flatMap(transformExpression),
-        {
-          instructionType: "call",
-          id: callId
-        }
-      ];
-    }
-
-    function transformExpression(expression: rockstar.Expression): wasm.Instruction[] {
-      switch (expression.type) {
-        case "binaryExpression": {
-          return [
-            ...transformExpression(expression.lhs),
-            ...transformExpression(expression.rhs),
-            transformBinaryOperator(expression.operator)
-          ];
-        }
-
-        case "unaryExpression": {
-          // TODO
-          return [];
-        }
-
-        case "functionCall": {
-          return transformFunctionCall(expression, "i32");
-        }
-
-        default:
-          return [transformSimpleExpression(expression)];
-      }
-    }
-
-    function transformAssignment(statement: rockstar.Assignment): wasm.Instruction[] {
-      return [
-        ...transformExpression(statement.expression),
-        variableInstruction(statement.target, "set")
-      ];
-    }
-
-    function transformVariableDeclaration(
+    const transformVariableDeclaration = (
       statement: rockstar.VariableDeclaration
-    ): wasm.Instruction[] {
-      declaredRockstarVariables.push(statement.variable);
+    ): wasm.Instruction[] => [
+      ...transformExpression(statement.value),
+      wasmFactory.variable(locals.getOrAdd(statement.variable), "set")
+    ];
 
-      return [
-        transformSimpleExpression(statement.value),
-        {
-          instructionType: "variable",
-          operation: "set",
-          index: localIndex(statement.variable)
-        }
-      ];
-    }
-
-    for (const statement of statements) {
+    statements.forEach(statement => {
       switch (statement.type) {
         case "variableDeclaration": {
-          wasmFn.instructions.push(
-            ...transformVariableDeclaration(statement as rockstar.VariableDeclaration)
-          );
+          wasmFn.instructions.push(...transformVariableDeclaration(statement));
           break;
         }
 
         case "say": {
           const { what } = statement as rockstar.SayStatement;
           wasmFn.instructions.push(
-            ...transformFunctionCall({ type: "functionCall", name: "print", args: [what] }, null)
+            ...transformExpression(what),
+            wasmFactory.call(wasmIdentifier("print"))
           );
           break;
         }
@@ -248,48 +237,46 @@ export const transform = (rockstarAst: rockstar.Program): wasm.Module => {
         case "listen": {
           const { to } = statement as rockstar.ListenStatement;
           wasmFn.instructions.push(
-            ...transformFunctionCall({ type: "functionCall", name: "prompt", args: [] }, "i32"),
-            variableInstruction(to, "set")
+            wasmFactory.call(wasmIdentifier("prompt")),
+            wasmFactory.variable(locals.getOrAdd(to), "set")
           );
           break;
         }
 
         case "assignment": {
-          wasmFn.instructions.push(...transformAssignment(statement as rockstar.Assignment));
+          wasmFn.instructions.push(...transformAssignment(statement));
           break;
         }
 
         case "increment": {
-          const { target } = statement as rockstar.IncrementOperation;
+          const { target } = statement;
           wasmFn.instructions.push(
-            transformSimpleExpression(target),
-            constInstruction(1),
-            binaryOperationInstruction("i32.add"),
-            variableInstruction(toVariable(target), "set")
+            ...transformExpression(target),
+            wasmFactory.const(1),
+            wasmFactory.binaryOperation("i32.add"),
+            wasmFactory.variable(locals.getOrAdd(target), "set")
           );
           break;
         }
 
         case "decrement": {
-          const { target } = statement as rockstar.DecrementOperation;
+          const { target } = statement;
           wasmFn.instructions.push(
-            transformSimpleExpression(target),
-            constInstruction(1),
-            binaryOperationInstruction("i32.sub"),
-            variableInstruction(toVariable(target), "set")
+            ...transformExpression(target),
+            wasmFactory.const(1),
+            wasmFactory.binaryOperation("i32.sub"),
+            wasmFactory.variable(locals.getOrAdd(target), "set")
           );
           break;
         }
 
         case "round": {
-          wasmFn.instructions.push(
-            ...transformArithmeticRounding(statement as rockstar.ArithmeticRoundingOperation)
-          );
+          wasmFn.instructions.push(...transformArithmeticRounding(statement));
           break;
         }
 
         case "comment": {
-          const { comment } = statement as rockstar.Comment;
+          const { comment } = statement;
           wasmFn.instructions.push({
             instructionType: "comment",
             value: comment
@@ -298,7 +285,7 @@ export const transform = (rockstarAst: rockstar.Program): wasm.Module => {
         }
 
         case "function": {
-          const { name } = statement as rockstar.FunctionDeclaration;
+          const { name } = statement;
           throw new Error(
             `Nesting functions within functions is not allowed. Function declaration ${name} encountered.`
           );
@@ -306,62 +293,35 @@ export const transform = (rockstarAst: rockstar.Program): wasm.Module => {
       }
 
       processedStatements.push(statement);
-    }
+    });
 
-    // add locals
-    wasmFn.locals.push(
-      ...Array.from(locals.values()).map<wasm.Local>(l => ({
-        type: "local",
-        index: l,
-        localType: "i32"
-      }))
-    );
+    // build locals
+    wasmFn.locals = locals.build();
 
     return wasmFn;
   };
 
-  const transformFunction = (func: rockstar.FunctionDeclaration): void => {
-    const wasmFn = transformFunctionInternal(func.name, func.args, func.result, func.statements);
-    module.functions.unshift(wasmFn);
+  const transformFunctionDeclaration = (func: rockstar.FunctionDeclaration): void => {
+    const wasmFn = transformFunctionDeclarationInternal(func.name, func.args, func.statements);
+    wasmModule.functions.push(wasmFn);
   };
 
-  const transformFunctions = (funcs: rockstar.FunctionDeclaration[]): void =>
-    funcs.forEach(transformFunction);
+  const transformFunctionDeclarations = (funcs: rockstar.FunctionDeclaration[]): void =>
+    funcs.forEach(transformFunctionDeclaration);
 
-  const transformMainFunction = (statements: rockstar.Statement[]): void => {
-    const mainFn = transformFunctionInternal("main", [], null, statements);
+  const transformMainFunctionDeclaration = (statements: rockstar.Statement[]): void => {
+    const mainFn = transformFunctionDeclarationInternal("main", [], statements);
 
     // Add result, as we intend to end the main procedure with 0
     mainFn.functionType.result = "i32";
-
-    const endInstr: wasm.ConstInstruction = {
-      instructionType: "const",
-      value: 0,
-      valueType: "i32"
-    };
-    mainFn.instructions.push(endInstr);
+    mainFn.instructions.push(wasmFactory.const(0));
 
     // register the function
-    module.functions.push(mainFn);
+    wasmModule.functions.push(mainFn);
 
     // Export the main function
-    module.exports.push({ id: mainFn.id, name: "main", exportType: "func" });
+    wasmModule.exports.push({ id: mainFn.id, name: "main", exportType: "func" });
   };
-
-  const createImportsForNonDefinedFunctions = (
-    definedFunctions: Set<wasm.Identifier>
-  ): wasm.Import[] =>
-    Array.from(registeredCalls.keys())
-      .filter(callId => !definedFunctions.has(callId))
-      .map<wasm.Import>(callId => ({
-        module: "env",
-        name: callId.substring(1),
-        importType: {
-          name: "func",
-          id: callId,
-          functionType: registeredCalls.get(callId) as wasm.FunctionType
-        }
-      }));
 
   const { fnNodes, nonFnNodes } = rockstarAst.statements.reduce(
     (split, node) =>
@@ -378,19 +338,12 @@ export const transform = (rockstarAst: rockstar.Program): wasm.Module => {
   if (hasMainFn) throw new Error("The function name `main` is reserved.");
 
   // functions
-  transformMainFunction(nonFnNodes);
-  transformFunctions(fnNodes);
+  transformFunctionDeclarations(fnNodes);
+  transformMainFunctionDeclaration(nonFnNodes);
 
-  // imports
-  module.imports.push(
-    ...createImportsForNonDefinedFunctions(
-      new Set<wasm.Identifier>(module.functions.map(f => f.id))
-    )
-  );
+  // memory
+  wasmModule.memories.push({ id: "$0", memoryType: { minSize: 1 } });
+  wasmModule.exports.push({ id: "$0", exportType: "memory", name: "memory" });
 
-  // memories
-  module.memories.push({ id: "$0", memoryType: { minSize: 1 } });
-  module.exports.push({ id: "$0", exportType: "memory", name: "memory" });
-
-  return module;
+  return wasmModule;
 };
