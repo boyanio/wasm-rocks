@@ -3,7 +3,7 @@ import {
   Program,
   Expression,
   Assignment,
-  NamedVariable,
+  Variable,
   Pronoun,
   StringLiteral,
   NumberLiteral,
@@ -39,23 +39,20 @@ export const mysterious: MysteriousLiteral = {
   type: "mysterious"
 };
 
-export const variable = (name: string): NamedVariable => ({
+export const variable = (name: string): Variable => ({
   type: "variable",
   name
 });
 
 export const pronoun: Pronoun = { type: "pronoun" };
 
-export const assignment = (target: NamedVariable, expression: Expression): Assignment => ({
+export const assignment = (target: Variable, expression: Expression): Assignment => ({
   type: "assignment",
   target,
   expression
 });
 
-export const variableDeclaration = (
-  variable: NamedVariable,
-  value: Literal
-): VariableDeclaration => ({
+export const variableDeclaration = (variable: Variable, value: Literal): VariableDeclaration => ({
   type: "variableDeclaration",
   variable,
   value

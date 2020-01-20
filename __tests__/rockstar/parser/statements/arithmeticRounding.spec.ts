@@ -1,5 +1,5 @@
 import { parse } from "../../../../src/rockstar/parser";
-import { NamedVariable, ArithmeticRoundingOperation } from "../../../../src/rockstar/ast";
+import { Variable, ArithmeticRoundingOperation } from "../../../../src/rockstar/ast";
 
 describe("rockstar", () => {
   describe("parser", () => {
@@ -34,7 +34,7 @@ describe("rockstar", () => {
               const firstNode = statements[0] as ArithmeticRoundingOperation;
               expect(firstNode.direction).toEqual(direction);
               expect(firstNode.target.type).toEqual("variable");
-              expect((firstNode.target as NamedVariable).name).toEqual(variable);
+              expect((firstNode.target as Variable).name).toEqual(variable);
             });
           }
         });

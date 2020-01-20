@@ -1,6 +1,6 @@
 import { Parser } from "../types";
 import { namedVariable, expression } from "../expressions/expression";
-import { Assignment, BinaryOperator, Expression, NamedVariable } from "../../ast";
+import { Assignment, BinaryOperator, Expression, Variable } from "../../ast";
 import { anyOf, sequence, keysOf, word } from "../parsers";
 
 type CompoundAssignment = {
@@ -31,7 +31,7 @@ const compoundAssignment: Parser<CompoundAssignment> = sequence(
 );
 
 const convertTemporaryExpression = (
-  target: NamedVariable,
+  target: Variable,
   expression: CompoundAssignment | Expression
 ): Expression => {
   if (expression.type === "compoundAssignment") {

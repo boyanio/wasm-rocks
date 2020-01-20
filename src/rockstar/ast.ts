@@ -27,7 +27,7 @@ export type StringLiteral = {
 
 export type Literal = NumberLiteral | StringLiteral | ConstantLiteral;
 
-export type NamedVariable = {
+export type Variable = {
   type: "variable";
   name: Identifier;
 };
@@ -36,9 +36,7 @@ export type Pronoun = {
   type: "pronoun";
 };
 
-export type Variable = NamedVariable | Pronoun;
-
-export type SimpleExpression = Literal | Variable;
+export type SimpleExpression = Literal | Variable | Pronoun;
 
 export type FunctionCallExpression = {
   type: "functionCall";
@@ -87,14 +85,14 @@ export type ExpressionType = "string" | "boolean" | "integer" | "float" | "myste
 
 export type VariableDeclaration = {
   type: "variableDeclaration";
-  variable: NamedVariable;
+  variable: Variable;
   value: Literal;
 };
 
 export type FunctionDeclaration = {
   type: "function";
   name: Identifier;
-  args: NamedVariable[];
+  args: Variable[];
   result: SimpleExpression;
   statements: Statement[];
 };
@@ -103,19 +101,19 @@ export type ArithmeticRoundingDirection = "up" | "down" | "upOrDown";
 
 export type ArithmeticRoundingOperation = {
   type: "round";
-  target: Variable;
+  target: Variable | Pronoun;
   direction: ArithmeticRoundingDirection;
 };
 
 export type IncrementOperation = {
   type: "increment";
-  target: Variable;
+  target: Variable | Pronoun;
   times: number;
 };
 
 export type DecrementOperation = {
   type: "decrement";
-  target: Variable;
+  target: Variable | Pronoun;
   times: number;
 };
 
@@ -126,14 +124,14 @@ export type SayStatement = {
 
 export type ListenStatement = {
   type: "listen";
-  to: NamedVariable;
+  to: Variable;
 };
 
 export type IOOperation = SayStatement | ListenStatement;
 
 export type Assignment = {
   type: "assignment";
-  target: NamedVariable;
+  target: Variable;
   expression: Expression;
 };
 

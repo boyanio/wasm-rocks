@@ -17,12 +17,12 @@ export const transform = (rockstarAst: rockstar.Program): wasm.Module => {
 
   const transformFunctionInternal = (
     name: string,
-    args: rockstar.NamedVariable[],
+    args: rockstar.Variable[],
     result: rockstar.SimpleExpression | null,
     statements: rockstar.Statement[]
   ): wasm.Function => {
     const locals = new Map<string, number>(args.map((arg, index) => [arg.name, index]));
-    const declaredRockstarVariables: rockstar.NamedVariable[] = [];
+    const declaredRockstarVariables: rockstar.Variable[] = [];
     const wasmFn: wasm.Function = {
       id: `$${name}`,
       functionType: {
@@ -43,21 +43,21 @@ export const transform = (rockstarAst: rockstar.Program): wasm.Module => {
       }
     };
 
+    const lastReferencedVariable = (): rockstar.Variable => {
+      if (!declaredRockstarVariables.length)
+        throw new Error("Cannot resolve variable - no variables declared in the scope");
+
+      return declaredRockstarVariables[declaredRockstarVariables.length - 1];
+    };
+
+    const toVariable = (expression: rockstar.Variable | rockstar.Pronoun): rockstar.Variable =>
+      expression.type === "pronoun" ? lastReferencedVariable() : (expression as rockstar.Variable);
+
     const localIndex = (variable: rockstar.Variable): number => {
-      let namedVariable: rockstar.NamedVariable;
-      if (variable.type === "pronoun") {
-        if (!declaredRockstarVariables.length)
-          throw new Error("Cannot resolve pronoun - no variables declared");
-
-        namedVariable = declaredRockstarVariables[declaredRockstarVariables.length - 1];
-      } else {
-        namedVariable = variable as rockstar.NamedVariable;
+      if (!locals.has(variable.name)) {
+        locals.set(variable.name, locals.size);
       }
-
-      if (!locals.has(namedVariable.name)) {
-        locals.set(namedVariable.name, locals.size);
-      }
-      return locals.get(namedVariable.name) as number;
+      return locals.get(variable.name) as number;
     };
 
     const binaryOperationInstruction = (
@@ -107,8 +107,10 @@ export const transform = (rockstarAst: rockstar.Program): wasm.Module => {
           return constInstruction(0);
 
         case "variable":
-        case "pronoun":
           return variableInstruction(expression as rockstar.Variable, "get");
+
+        case "pronoun":
+          return variableInstruction(lastReferencedVariable(), "get");
       }
     }
 
@@ -151,7 +153,7 @@ export const transform = (rockstarAst: rockstar.Program): wasm.Module => {
           arithmeticRoundingDirectionMap.get(statement.direction) as wasm.UnaryOperation
         ),
         unaryOperationInstruction("i32.trunc_f32_s"),
-        variableInstruction(statement.target, "set")
+        variableInstruction(toVariable(statement.target), "set")
       ];
     }
 
@@ -263,7 +265,7 @@ export const transform = (rockstarAst: rockstar.Program): wasm.Module => {
             transformSimpleExpression(target),
             constInstruction(1),
             binaryOperationInstruction("i32.add"),
-            variableInstruction(target, "set")
+            variableInstruction(toVariable(target), "set")
           );
           break;
         }
@@ -274,7 +276,7 @@ export const transform = (rockstarAst: rockstar.Program): wasm.Module => {
             transformSimpleExpression(target),
             constInstruction(1),
             binaryOperationInstruction("i32.sub"),
-            variableInstruction(target, "set")
+            variableInstruction(toVariable(target), "set")
           );
           break;
         }

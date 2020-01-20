@@ -1,5 +1,5 @@
 import { Parser } from "../types";
-import { FunctionDeclaration, NamedVariable, Statement } from "../../ast";
+import { FunctionDeclaration, Variable, Statement } from "../../ast";
 import { identifier, namedVariable, simpleExpression } from "../expressions/expression";
 import { comment } from "./comment";
 import {
@@ -62,7 +62,7 @@ export const functionDeclaration: Parser<FunctionDeclaration> = toNextLine(
     ([name, args], statements, result) => ({
       type: "function",
       name: name as string,
-      args: args as NamedVariable[],
+      args: args as Variable[],
       result,
       statements
     }),

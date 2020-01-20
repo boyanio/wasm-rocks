@@ -1,5 +1,5 @@
 import { Parser } from "../types";
-import { IncrementOperation, DecrementOperation, Variable } from "../../ast";
+import { IncrementOperation, DecrementOperation, Pronoun, Variable } from "../../ast";
 import { namedVariable, pronoun } from "../expressions/expression";
 import { sequence, punctuation, anyOf, zeroOrMany, word } from "../parsers";
 
@@ -10,7 +10,7 @@ const increment: Parser<IncrementOperation> = sequence(
     times: 1 + restUps.filter(x => x).length
   }),
   word("Build"),
-  anyOf<Variable>(pronoun, namedVariable),
+  anyOf<Variable | Pronoun>(pronoun, namedVariable),
   word("up"),
   zeroOrMany(anyOf(punctuation, word("up")))
 );
@@ -22,7 +22,7 @@ const decrement: Parser<DecrementOperation> = sequence(
     times: 1 + restDowns.filter(x => x).length
   }),
   word("Knock"),
-  anyOf<Variable>(pronoun, namedVariable),
+  anyOf<Variable | Pronoun>(pronoun, namedVariable),
   word("down"),
   zeroOrMany(anyOf(punctuation, word("down")))
 );

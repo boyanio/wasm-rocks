@@ -3,7 +3,7 @@ import {
   ExpressionType,
   Literal,
   VariableDeclaration,
-  NamedVariable,
+  Variable,
   Assignment,
   Statement,
   BinaryExpression,
@@ -56,7 +56,7 @@ export const resolveExpressionType = (
   const resolveAssignment = (assignment: Assignment): ExpressionType =>
     resolveExpressionType(assignment.expression, scope);
 
-  const resolveVariable = (variable: NamedVariable): ExpressionType => {
+  const resolveVariable = (variable: Variable): ExpressionType => {
     const statement = findLastVariableDeclarationOrAssignment(variable.name);
 
     if (statement.type === "variableDeclaration")
@@ -114,7 +114,7 @@ export const resolveExpressionType = (
       return resolveLiteral(expression as Literal);
 
     case "variable":
-      return resolveVariable(expression as NamedVariable);
+      return resolveVariable(expression as Variable);
 
     case "pronoun":
       return resolvePronoun();

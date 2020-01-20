@@ -5,7 +5,7 @@ import {
   BooleanLiteral,
   StringLiteral,
   NumberLiteral,
-  NamedVariable,
+  Variable,
   Pronoun,
   Expression,
   Literal,
@@ -173,7 +173,7 @@ const simpleVariableName: Parser<Identifier> = map(
 
 export const identifier = anyOf(properVariableName, commonVariableName, simpleVariableName);
 
-export const namedVariable: Parser<NamedVariable> = map(
+export const namedVariable: Parser<Variable> = map(
   (name: string) => ({ type: "variable", name }),
   identifier
 );
