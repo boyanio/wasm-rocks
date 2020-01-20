@@ -156,7 +156,7 @@ export const transform = (rockstarAst: rockstar.Program): wasm.Module => {
     }
 
     function transformFunctionCall(
-      rockstarCall: rockstar.FunctionCall,
+      rockstarCall: rockstar.FunctionCallExpression,
       result: wasm.ValueType | null
     ): wasm.Instruction[] {
       const { name, args } = rockstarCall;
@@ -195,7 +195,7 @@ export const transform = (rockstarAst: rockstar.Program): wasm.Module => {
           return [];
         }
 
-        case "call": {
+        case "functionCall": {
           return transformFunctionCall(expression, "i32");
         }
 
@@ -238,7 +238,7 @@ export const transform = (rockstarAst: rockstar.Program): wasm.Module => {
         case "say": {
           const { what } = statement as rockstar.SayCall;
           wasmFn.instructions.push(
-            ...transformFunctionCall({ type: "call", name: "print", args: [what] }, null)
+            ...transformFunctionCall({ type: "functionCall", name: "print", args: [what] }, null)
           );
           break;
         }

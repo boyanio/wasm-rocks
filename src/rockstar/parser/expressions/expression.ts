@@ -10,7 +10,7 @@ import {
   Expression,
   Literal,
   Identifier,
-  FunctionCall,
+  FunctionCallExpression,
   Operator
 } from "../../ast";
 import { Parser } from "../types";
@@ -217,9 +217,9 @@ export const literal = anyOf<Literal>(
 
 export const simpleExpression = anyOf<SimpleExpression>(namedVariable, literal, pronoun);
 
-export const functionCall: Parser<FunctionCall> = sequence(
+export const functionCall: Parser<FunctionCallExpression> = sequence(
   (name, firstArg, otherArgs) => ({
-    type: "call",
+    type: "functionCall",
     name,
     args: [firstArg, ...otherArgs]
   }),

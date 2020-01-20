@@ -299,7 +299,7 @@ const caseGroups: CaseGroup[] = [
         "Multiply taking the cat",
         false,
         {
-          type: "call",
+          type: "functionCall",
           name: "multiply",
           args: [{ type: "variable", name: "the cat" }]
         },
@@ -310,7 +310,7 @@ const caseGroups: CaseGroup[] = [
         'Multiply taking "yo yo"',
         false,
         {
-          type: "call",
+          type: "functionCall",
           name: "multiply",
           args: [{ type: "string", value: "yo yo" }]
         },
@@ -321,7 +321,7 @@ const caseGroups: CaseGroup[] = [
         "Multiply taking 5",
         false,
         {
-          type: "call",
+          type: "functionCall",
           name: "multiply",
           args: [{ type: "number", value: 5 }]
         },
@@ -332,7 +332,7 @@ const caseGroups: CaseGroup[] = [
         "Multiply taking 5 'n' cool",
         false,
         {
-          type: "call",
+          type: "functionCall",
           name: "multiply",
           args: [
             { type: "number", value: 5 },
@@ -346,7 +346,7 @@ const caseGroups: CaseGroup[] = [
         "Multiply taking cool and cool",
         false,
         {
-          type: "call",
+          type: "functionCall",
           name: "multiply",
           args: [
             { type: "variable", name: "cool" },
@@ -360,7 +360,7 @@ const caseGroups: CaseGroup[] = [
         'Multiply taking cool & "ya"',
         false,
         {
-          type: "call",
+          type: "functionCall",
           name: "multiply",
           args: [
             { type: "variable", name: "cool" },
@@ -416,7 +416,7 @@ const caseGroups: CaseGroup[] = [
         {
           type: "binaryExpression",
           operator: "notEquals",
-          lhs: { type: "call", name: "aaa", args: [{ type: "variable", name: "bbb" }] },
+          lhs: { type: "functionCall", name: "aaa", args: [{ type: "variable", name: "bbb" }] },
           rhs: { type: "variable", name: "ccc" }
         },
         25
@@ -440,7 +440,7 @@ const caseGroups: CaseGroup[] = [
               type: "binaryExpression",
               operator: "multiply",
               lhs: {
-                type: "call",
+                type: "functionCall",
                 name: "aaa",
                 args: [{ type: "variable", name: "bbb" }]
               },

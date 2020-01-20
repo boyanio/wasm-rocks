@@ -166,7 +166,7 @@ describe("rockstar", () => {
                 name: "large"
               },
               expression: {
-                type: "call",
+                type: "functionCall",
                 name: "multiply",
                 args: [{ type: "variable", name: "the cat" }]
               }
@@ -186,7 +186,7 @@ describe("rockstar", () => {
                 name: "large"
               },
               expression: {
-                type: "call",
+                type: "functionCall",
                 name: "multiply",
                 args: [{ type: "string", value: "yo yo" }]
               }
@@ -206,7 +206,7 @@ describe("rockstar", () => {
                 name: "large"
               },
               expression: {
-                type: "call",
+                type: "functionCall",
                 name: "multiply",
                 args: [{ type: "number", value: 3 }]
               }
@@ -226,7 +226,7 @@ describe("rockstar", () => {
                 name: "large"
               },
               expression: {
-                type: "call",
+                type: "functionCall",
                 name: "multiply",
                 args: [
                   { type: "number", value: 3 },

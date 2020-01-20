@@ -1,3 +1,5 @@
+export type Identifier = string;
+
 export type BooleanLiteral = {
   type: "boolean";
   value: boolean;
@@ -23,8 +25,6 @@ export type StringLiteral = {
   value: string;
 };
 
-export type ExpressionType = "string" | "boolean" | "integer" | "float" | "mysterious" | "null";
-
 export type Literal = NumberLiteral | StringLiteral | ConstantLiteral;
 
 export type NamedVariable = {
@@ -38,20 +38,57 @@ export type Pronoun = {
 
 export type Variable = NamedVariable | Pronoun;
 
-export type Identifier = string;
-
 export type SimpleExpression = Literal | Variable;
+
+export type FunctionCallExpression = {
+  type: "functionCall";
+  name: Identifier;
+  args: SimpleExpression[];
+};
+
+export type UnaryOperator = "not";
+
+export type UnaryExpression = {
+  type: "unaryExpression";
+  rhs: Expression;
+  operator: UnaryOperator;
+};
+
+export type Comparator =
+  | "equals"
+  | "notEquals"
+  | "greaterThan"
+  | "greaterThanOrEquals"
+  | "lowerThan"
+  | "lowerThanOrEquals";
+
+export type LogicalOperator = "and" | "or" | "nor" | "not";
+
+export type ArithmeticOperator = "add" | "subtract" | "multiply" | "divide";
+
+export type BinaryOperator = Comparator | LogicalOperator | ArithmeticOperator;
+
+export type BinaryExpression = {
+  type: "binaryExpression";
+  lhs: Expression;
+  rhs: Expression;
+  operator: BinaryOperator;
+};
+
+export type Operator = BinaryOperator | UnaryOperator;
+
+export type Expression =
+  | SimpleExpression
+  | FunctionCallExpression
+  | BinaryExpression
+  | UnaryExpression;
+
+export type ExpressionType = "string" | "boolean" | "integer" | "float" | "mysterious" | "null";
 
 export type VariableDeclaration = {
   type: "variableDeclaration";
   variable: NamedVariable;
   value: Literal;
-};
-
-export type FunctionCall = {
-  type: "call";
-  name: Identifier;
-  args: SimpleExpression[];
 };
 
 export type FunctionDeclaration = {
@@ -104,39 +141,6 @@ export type BlockStatement = {
   type: "block";
   statements: Statement[];
 };
-
-export type LogicalOperator = "and" | "or" | "nor" | "not";
-
-export type Comparator =
-  | "equals"
-  | "notEquals"
-  | "greaterThan"
-  | "greaterThanOrEquals"
-  | "lowerThan"
-  | "lowerThanOrEquals";
-
-export type ArithmeticOperator = "add" | "subtract" | "multiply" | "divide";
-
-export type UnaryOperator = "not";
-
-export type UnaryExpression = {
-  type: "unaryExpression";
-  rhs: Expression;
-  operator: BinaryOperator;
-};
-
-export type BinaryOperator = Comparator | LogicalOperator | ArithmeticOperator;
-
-export type BinaryExpression = {
-  type: "binaryExpression";
-  lhs: Expression;
-  rhs: Expression;
-  operator: BinaryOperator;
-};
-
-export type Operator = BinaryOperator | UnaryOperator;
-
-export type Expression = SimpleExpression | FunctionCall | BinaryExpression | UnaryExpression;
 
 export type IfStatement = {
   type: "if";

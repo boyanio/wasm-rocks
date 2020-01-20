@@ -51,7 +51,7 @@ describe("transformer", () => {
     expect(() => transform(rockstarAst)).toThrow();
   });
 
-  it("adds an import for I/O", () => {
+  it("adds an import for I/O: say", () => {
     const rockstarAst: rockstar.Program = {
       type: "program",
       statements: [{ type: "say", what: { type: "number", value: 5 } }]
