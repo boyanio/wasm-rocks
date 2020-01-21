@@ -1,7 +1,7 @@
 import { Parser } from "../types";
 import { IncrementOperation, DecrementOperation, Pronoun, Variable } from "../../ast";
-import { namedVariable, pronoun } from "../expressions/expression";
-import { sequence, punctuation, anyOf, zeroOrMany, word } from "../parsers";
+import { variable, pronoun } from "../expressions/expression";
+import { sequence, punctuation, anyOf, zeroOrMany, word, $1, nextLineOrEOF } from "../parsers";
 
 const increment: Parser<IncrementOperation> = sequence(
   (_1, target, _3, restUps) => ({
@@ -10,7 +10,7 @@ const increment: Parser<IncrementOperation> = sequence(
     times: 1 + restUps.filter(x => x).length
   }),
   word("Build"),
-  anyOf<Variable | Pronoun>(pronoun, namedVariable),
+  anyOf<Variable | Pronoun>(pronoun, variable),
   word("up"),
   zeroOrMany(anyOf(punctuation, word("up")))
 );
@@ -22,7 +22,7 @@ const decrement: Parser<DecrementOperation> = sequence(
     times: 1 + restDowns.filter(x => x).length
   }),
   word("Knock"),
-  anyOf<Variable | Pronoun>(pronoun, namedVariable),
+  anyOf<Variable | Pronoun>(pronoun, variable),
   word("down"),
   zeroOrMany(anyOf(punctuation, word("down")))
 );
@@ -33,6 +33,6 @@ const decrement: Parser<DecrementOperation> = sequence(
  *    Build <variable | pronoun> up[,? up]*
  *    Knock <variable | pronoun> down[,? down]*
  */
-export const incrementDecrement: Parser<IncrementOperation | DecrementOperation> = anyOf<
-  IncrementOperation | DecrementOperation
->(increment, decrement);
+export const incrementDecrement = nextLineOrEOF(
+  sequence($1, anyOf<IncrementOperation | DecrementOperation>(increment, decrement), punctuation)
+);

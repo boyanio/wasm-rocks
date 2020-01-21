@@ -1,6 +1,6 @@
 import { Parser, Context, Parsed } from "../types";
 import { VariableDeclaration, Literal } from "../../ast";
-import { namedVariable, literal } from "../expressions/expression";
+import { variable, literal } from "../expressions/expression";
 import {
   anyOf,
   lineIndexWithinBounds,
@@ -10,7 +10,9 @@ import {
   map,
   word,
   batch,
-  $1
+  $1,
+  punctuation,
+  nextLineOrEOF
 } from "../parsers";
 
 const poeticStringLiteral = map(
@@ -27,7 +29,7 @@ const withPoeticString: Parser<VariableDeclaration> = sequence(
     variable,
     value
   }),
-  batch($1, namedVariable, word("says")),
+  batch($1, variable, word("says")),
   poeticStringLiteral
 );
 
@@ -61,9 +63,11 @@ const withNonStringPoeticLiteral: Parser<VariableDeclaration> = sequence(
     variable,
     value
   }),
-  namedVariable,
+  variable,
   anyWord("is", "are", "was", "were"),
   anyOf(literal, poeticNumberLiteral)
 );
 
-export const variableDeclaration = anyOf(withPoeticString, withNonStringPoeticLiteral);
+export const variableDeclaration = nextLineOrEOF(
+  sequence($1, anyOf(withPoeticString, withNonStringPoeticLiteral), punctuation)
+);

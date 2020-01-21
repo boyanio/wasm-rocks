@@ -1,7 +1,7 @@
 import { Parser } from "../types";
 import { IOOperation } from "../../ast";
-import { simpleExpression, namedVariable } from "../expressions/expression";
-import { sequence, anyWord, wordSequence, anyOf } from "../parsers";
+import { simpleExpression, variable } from "../expressions/expression";
+import { sequence, anyWord, wordSequence, anyOf, punctuation, $1, nextLineOrEOF } from "../parsers";
 
 const listen: Parser<IOOperation> = sequence(
   (_1, to) => ({
@@ -9,7 +9,7 @@ const listen: Parser<IOOperation> = sequence(
     to
   }),
   wordSequence("Listen", "to"),
-  namedVariable
+  variable
 );
 
 const say: Parser<IOOperation> = sequence(
@@ -21,4 +21,4 @@ const say: Parser<IOOperation> = sequence(
   simpleExpression
 );
 
-export const io: Parser<IOOperation> = anyOf(say, listen);
+export const io = nextLineOrEOF(sequence($1, anyOf(say, listen), punctuation));

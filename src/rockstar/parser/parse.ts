@@ -1,16 +1,7 @@
-import { Program, Statement } from "../ast";
+import { Program } from "../ast";
 import { Context, ParseError } from "./types";
-import { statement, functionDeclaration } from "./statements/functionDeclarations";
-import { anyOf, map, isParseError, oneOrMany, emptyLine, toNextLine } from "./parsers";
-
-const program = map(
-  (statements: (Statement | null)[]) =>
-    ({
-      type: "program",
-      statements: statements.filter(x => x)
-    } as Program),
-  oneOrMany(anyOf<Statement | null>(functionDeclaration, statement, toNextLine(emptyLine)))
-);
+import { isParseError } from "./parsers";
+import { program } from "./program";
 
 const createParseError = (error: ParseError): Error =>
   new Error(`Parse error at line ${error.lineIndex + 1}, offset ${error.offset}: ${error.message}`);
@@ -23,10 +14,6 @@ export const parse = (source: string): Program => {
     .split(/\r?\n/)
     .map(x => x.trim());
 
-  // add a fake line at the end so that parsing can always
-  // end with an empty line
-  lines.push("");
-
   const context: Context = {
     lineIndex: 0,
     offset: 0
@@ -34,8 +21,10 @@ export const parse = (source: string): Program => {
   const result = program(lines, context);
   if (isParseError(result)) throw createParseError(result as ParseError);
 
-  if (lines.length > 0 && context.lineIndex !== lines.length)
-    throw new Error(`Parsing ended on line ${context.lineIndex} (of ${lines.length - 1} lines)`);
+  if (lines.length > 0 && context.lineIndex !== lines.length - 1)
+    throw new Error(
+      `Parsing ended on line ${context.lineIndex + 1}, but there are ${lines.length} lines`
+    );
 
   return result as Program;
 };

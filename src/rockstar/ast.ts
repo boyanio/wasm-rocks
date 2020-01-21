@@ -140,22 +140,9 @@ export type Comment = {
   comment: string;
 };
 
-export type BlockStatement = {
-  type: "block";
-  statements: Statement[];
-};
-
-export type IfStatement = {
-  type: "if";
-  condition: Expression;
-  then: BlockStatement;
-  else?: BlockStatement;
-};
-
 export type Statement =
   | Comment
   | Assignment
-  | FunctionDeclaration
   | IOOperation
   | VariableDeclaration
   | ArithmeticRoundingOperation
@@ -163,9 +150,20 @@ export type Statement =
   | DecrementOperation
   | IfStatement;
 
+export type Block = {
+  statements: Statement[];
+};
+
+export type IfStatement = {
+  type: "if";
+  condition: Expression;
+  then: Block;
+  else: Block | null;
+};
+
 export type Program = {
   type: "program";
-  statements: Statement[];
+  statements: (Statement | FunctionDeclaration)[];
 };
 
 export type Scope = Program | FunctionDeclaration;

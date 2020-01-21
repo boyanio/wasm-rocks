@@ -109,7 +109,9 @@ const keywords = new Set<string>([
   "maybe",
   "definitely maybe",
   "if",
+  "else",
   "while",
+  "until",
   "and",
   "or",
   "is",
@@ -173,7 +175,7 @@ const simpleVariableName: Parser<Identifier> = map(
 
 export const identifier = anyOf(properVariableName, commonVariableName, simpleVariableName);
 
-export const namedVariable: Parser<Variable> = map(
+export const variable: Parser<Variable> = map(
   (name: string) => ({ type: "variable", name }),
   identifier
 );
@@ -216,7 +218,7 @@ export const literal = anyOf<Literal>(
   stringLiteral
 );
 
-export const simpleExpression = anyOf<SimpleExpression>(namedVariable, literal, pronoun);
+export const simpleExpression = anyOf<SimpleExpression>(variable, literal, pronoun);
 
 export const functionCall: Parser<FunctionCallExpression> = sequence(
   (name, firstArg, otherArgs) => ({

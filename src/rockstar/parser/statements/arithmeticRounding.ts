@@ -1,7 +1,17 @@
 import { ArithmeticRoundingOperation, ArithmeticRoundingDirection } from "../../ast";
-import { pronoun, namedVariable } from "../expressions/expression";
+import { pronoun, variable } from "../expressions/expression";
 import { Parser } from "../types";
-import { anyOf, sequence, word, keysOf, $2, batch } from "../parsers";
+import {
+  anyOf,
+  sequence,
+  word,
+  keysOf,
+  $2,
+  batch,
+  $1,
+  punctuation,
+  nextLineOrEOF
+} from "../parsers";
 
 type ArithmeticRoundingDirections = { [key: string]: ArithmeticRoundingDirection };
 const arithmeticRoundingDirections: ArithmeticRoundingDirections = {
@@ -18,7 +28,7 @@ const namedVariableRounding: Parser<ArithmeticRoundingOperation> = sequence(
     target
   }),
   batch($2, word("Turn"), keysOf(arithmeticRoundingDirections)),
-  namedVariable
+  variable
 );
 
 const pronounRounding: Parser<ArithmeticRoundingOperation> = sequence(
@@ -37,7 +47,6 @@ const pronounRounding: Parser<ArithmeticRoundingOperation> = sequence(
  *    Turn [up|down|round|around] <variable>
  *    Turn <pronoun> [up|down|round|around]
  */
-export const arithmeticRounding: Parser<ArithmeticRoundingOperation> = anyOf(
-  pronounRounding,
-  namedVariableRounding
+export const arithmeticRounding = nextLineOrEOF(
+  sequence($1, anyOf(pronounRounding, namedVariableRounding), punctuation)
 );

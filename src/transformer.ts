@@ -283,13 +283,6 @@ export const transform = (rockstarAst: rockstar.Program): wasm.Module => {
           });
           break;
         }
-
-        case "function": {
-          const { name } = statement;
-          throw new Error(
-            `Nesting functions within functions is not allowed. Function declaration ${name} encountered.`
-          );
-        }
       }
 
       processedStatements.push(statement);

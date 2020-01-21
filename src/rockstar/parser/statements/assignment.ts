@@ -1,7 +1,7 @@
 import { Parser } from "../types";
-import { namedVariable, expression } from "../expressions/expression";
+import { variable, expression } from "../expressions/expression";
 import { Assignment, BinaryOperator, Expression, Variable } from "../../ast";
-import { anyOf, sequence, keysOf, word } from "../parsers";
+import { anyOf, sequence, keysOf, word, punctuation, $1, nextLineOrEOF } from "../parsers";
 
 type CompoundAssignment = {
   type: "compoundAssignment";
@@ -54,7 +54,7 @@ const putAssignment: Parser<Assignment> = sequence(
   word("Put"),
   expression,
   word("into"),
-  namedVariable
+  variable
 );
 
 const letAssignment: Parser<Assignment> = sequence(
@@ -64,7 +64,7 @@ const letAssignment: Parser<Assignment> = sequence(
     expression: convertTemporaryExpression(target, expression)
   }),
   word("Let"),
-  namedVariable,
+  variable,
   word("be"),
   anyOf<CompoundAssignment | Expression>(compoundAssignment, expression)
 );
@@ -75,4 +75,6 @@ const letAssignment: Parser<Assignment> = sequence(
  *    Let <variable> be <expression>
  *    Put <expression> into <variable>
  */
-export const assignment: Parser<Assignment> = anyOf(putAssignment, letAssignment);
+export const assignment = nextLineOrEOF(
+  sequence($1, anyOf(putAssignment, letAssignment), punctuation)
+);

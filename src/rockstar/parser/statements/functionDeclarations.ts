@@ -1,54 +1,48 @@
-import { Parser } from "../types";
 import { FunctionDeclaration, Variable, Statement } from "../../ast";
-import { identifier, namedVariable, simpleExpression } from "../expressions/expression";
+import { identifier, variable, simpleExpression } from "../expressions/expression";
 import { comment } from "./comment";
 import {
+  $1,
+  $2,
   sequence,
   anyWord,
   zeroOrMany,
-  $2,
   anyOf,
-  toNextLine,
-  $3,
+  nextLineOrEOF,
   word,
   batch,
-  $1,
   emptyLine,
-  punctuation
+  wordSequence
 } from "../parsers";
 import { assignment } from "./assignment";
 import { variableDeclaration } from "./variableDeclaration";
 import { incrementDecrement } from "./incrementDecrement";
 import { arithmeticRounding } from "./arithmeticRounding";
 import { io } from "./io";
+import { ifStatement } from "./ifStatement";
 
-export const statement = toNextLine(
-  sequence(
-    $1,
-    anyOf<Statement>(
-      comment,
-      assignment,
-      variableDeclaration,
-      incrementDecrement,
-      arithmeticRounding,
-      io
-    ),
-    punctuation
-  )
+const statement = anyOf<Statement>(
+  ifStatement,
+  comment,
+  assignment,
+  variableDeclaration,
+  incrementDecrement,
+  arithmeticRounding,
+  io
 );
 
-const functionHeader = toNextLine(
+const functionHeader = nextLineOrEOF(
   sequence(
     (name, firstArg, restArgs) => [name, [firstArg, ...restArgs]],
     batch($1, identifier, word("takes")),
-    namedVariable,
-    zeroOrMany(sequence($2, anyWord("and", "&", "'n'", ","), namedVariable))
+    variable,
+    zeroOrMany(sequence($2, anyWord("and", "&", "'n'", ","), variable))
   )
 );
 
-const functionBody = sequence($1, zeroOrMany(statement), toNextLine(emptyLine));
+const functionBody = sequence($1, zeroOrMany(statement), nextLineOrEOF(emptyLine));
 
-const functionFooter = toNextLine(batch($3, word("Give"), word("back"), simpleExpression));
+const functionFooter = nextLineOrEOF(sequence($2, wordSequence("Give", "back"), simpleExpression));
 
 /**
  * Parses a function
@@ -57,17 +51,19 @@ const functionFooter = toNextLine(batch($3, word("Give"), word("back"), simpleEx
  *    <statements>
  *    Give back <expr>
  */
-export const functionDeclaration: Parser<FunctionDeclaration> = toNextLine(
+export const functionDeclaration = nextLineOrEOF(
   sequence(
-    ([name, args], statements, result) => ({
-      type: "function",
-      name: name as string,
-      args: args as Variable[],
-      result,
-      statements
-    }),
+    ([name, args], statements, result) =>
+      ({
+        type: "function",
+        name: name as string,
+        args: args as Variable[],
+        result,
+        statements
+      } as FunctionDeclaration),
     functionHeader,
     functionBody,
-    functionFooter
+    functionFooter,
+    nextLineOrEOF(emptyLine)
   )
 );

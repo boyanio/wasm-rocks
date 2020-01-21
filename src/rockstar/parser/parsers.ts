@@ -18,7 +18,7 @@ export const lineIndexWithinBounds = <T>(parser: Parser<T>): Parser<T> => (
   context: Context
 ): Parsed<T> => {
   if (context.lineIndex < 0 || context.lineIndex >= lines.length)
-    return parseError(`Invalid line: ${context.lineIndex}`, context);
+    return parseError(`Invalid line: ${context.lineIndex + 1}`, context);
 
   return parser(lines, context);
 };
@@ -206,9 +206,7 @@ export const drop = <T>(parser: Parser<T>): Parser<null> => map(() => null, pars
 /**
  * Matches punctuation, whitespace or end of the line
  */
-export const punctuation: Parser<null> = drop(
-  anyOf(pattern("[.,!?:;]+\\s*"), whitespace, endOfLine)
-);
+export const punctuation: Parser<string> = pattern("([.,!?:;]+\\s*)|\\s+|$");
 
 /**
  * Matches against word, followed by punctuation.
@@ -299,21 +297,34 @@ export const optional = <T>(parser: Parser<T>): Parser<T | null> => (
 };
 
 /**
- * Increases the line number in the context
+ * Increases the line number in the context, unless it is the last one
  */
-export const toNextLine = <T>(parser: Parser<T>): Parser<T> => (
+export const nextLineOrEOF = <T>(parser: Parser<T>): Parser<T> => (
   lines: string[],
   context: Context
 ): Parsed<T> => {
   const result = parser(lines, context);
   if (!isParseError(result)) {
-    context.lineIndex++;
-    context.offset = 0;
+    if (context.lineIndex < lines.length - 1) {
+      context.lineIndex++;
+      context.offset = 0;
+    }
   }
   return result;
+};
+
+export const eof = (lines: string[], context: Context): Parsed<null> => {
+  const isLastLine = context.lineIndex === lines.length - 1;
+  const isLastOffsetOfLine = isLastLine && context.offset === lines[context.lineIndex].length;
+  return isLastOffsetOfLine ? null : parseError("Expected EOF", context);
 };
 
 /**
  * Matches an empty line.
  */
-export const emptyLine: Parser<null> = drop(sequence($1, optional(whitespace), endOfLine));
+export const emptyLine = sequence($1, optional(whitespace), endOfLine);
+
+/**
+ * Matches an empty line or EOF.
+ */
+export const emptyLineOrEOF = nextLineOrEOF(anyOf(emptyLine, eof));
