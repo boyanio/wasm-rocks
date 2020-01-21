@@ -20,9 +20,11 @@ import { incrementDecrement } from "./incrementDecrement";
 import { arithmeticRounding } from "./arithmeticRounding";
 import { io } from "./io";
 import { ifStatement } from "./ifStatement";
+import { loop } from "./loop";
 
 const statement = anyOf<Statement>(
   ifStatement,
+  loop,
   comment,
   assignment,
   variableDeclaration,

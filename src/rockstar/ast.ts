@@ -148,7 +148,8 @@ export type Statement =
   | ArithmeticRoundingOperation
   | IncrementOperation
   | DecrementOperation
-  | IfStatement;
+  | IfStatement
+  | Loop;
 
 export type Block = {
   statements: Statement[];
@@ -159,6 +160,12 @@ export type IfStatement = {
   condition: Expression;
   then: Block;
   else: Block | null;
+};
+
+export type Loop = {
+  type: "loop";
+  condition: Expression;
+  block: Block;
 };
 
 export type Program = {

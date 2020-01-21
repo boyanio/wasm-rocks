@@ -8,9 +8,11 @@ import { variableDeclaration } from "./statements/variableDeclaration";
 import { assignment } from "./statements/assignment";
 import { ifStatement } from "./statements/ifStatement";
 import { io } from "./statements/io";
+import { loop } from "./statements/loop";
 
 const statement = anyOf<Statement>(
   ifStatement,
+  loop,
   comment,
   assignment,
   variableDeclaration,
