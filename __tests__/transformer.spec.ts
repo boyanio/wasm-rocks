@@ -68,7 +68,7 @@ describe("transformer", () => {
     expect(imports.length).toEqual(1);
 
     const funcImportType = imports[0].importType as wasm.FunctionImportType;
-    expect(funcImportType.functionType.params).toEqual(["i32"]);
+    expect(funcImportType.functionType.params).toEqual([{ valueType: "i32", id: "$what" }]);
     expect(funcImportType.functionType.result).toBeNull();
   });
 
@@ -116,9 +116,9 @@ describe("transformer", () => {
       expect(mainFn.locals.length).toEqual(1);
       expect(mainFn.instructions).toEqual([
         { instructionType: "const", value: 5, valueType: "i32" },
-        { instructionType: "variable", index: 0, operation: "set" },
+        { instructionType: "variable", id: "$x", operation: "set" },
         { instructionType: "const", value: 10, valueType: "i32" },
-        { instructionType: "variable", index: 0, operation: "set" },
+        { instructionType: "variable", id: "$x", operation: "set" },
         { instructionType: "const", value: 0, valueType: "i32" } // main fn ends with this
       ]);
     });
@@ -136,7 +136,7 @@ describe("transformer", () => {
           statements: [
             {
               type: "variableDeclaration",
-              variable: { type: "variable", name: "x" },
+              variable: { type: "variable", name: "my desire" },
               value: { type: "number", value: 5 }
             },
             {
@@ -146,7 +146,7 @@ describe("transformer", () => {
             },
             {
               type: "assignment",
-              target: { type: "variable", name: "x" },
+              target: { type: "variable", name: "my desire" },
               expression: {
                 type: "binaryExpression",
                 lhs: { type: "variable", name: "y" },
@@ -162,13 +162,13 @@ describe("transformer", () => {
         expect(mainFn.locals.length).toEqual(2);
         expect(mainFn.instructions).toEqual([
           { instructionType: "const", value: 5, valueType: "i32" },
-          { instructionType: "variable", index: 0, operation: "set" },
+          { instructionType: "variable", id: "$mydesire", operation: "set" },
           { instructionType: "const", value: 6, valueType: "i32" },
-          { instructionType: "variable", index: 1, operation: "set" },
-          { instructionType: "variable", index: 1, operation: "get" },
+          { instructionType: "variable", id: "$y", operation: "set" },
+          { instructionType: "variable", id: "$y", operation: "get" },
           { instructionType: "const", value: 10, valueType: "i32" },
           { instructionType: "binaryOperation", operation: binaryOperation },
-          { instructionType: "variable", index: 0, operation: "set" },
+          { instructionType: "variable", id: "$mydesire", operation: "set" },
           { instructionType: "const", value: 0, valueType: "i32" } // main fn ends with this
         ]);
       });
@@ -209,11 +209,11 @@ describe("transformer", () => {
       expect(mainFn.locals.length).toEqual(1);
       expect(mainFn.instructions).toEqual([
         { instructionType: "const", value: 5, valueType: "i32" },
-        { instructionType: "variable", index: 0, operation: "set" },
-        { instructionType: "variable", index: 0, operation: "get" },
+        { instructionType: "variable", id: "$x", operation: "set" },
+        { instructionType: "variable", id: "$x", operation: "get" },
         { instructionType: "const", value: 5, valueType: "i32" },
         { instructionType: "binaryOperation", operation: binaryOperation },
-        { instructionType: "variable", index: 0, operation: "set" },
+        { instructionType: "variable", id: "$x", operation: "set" },
         { instructionType: "const", value: 0, valueType: "i32" } // main fn ends with this
       ]);
     });
@@ -246,11 +246,11 @@ describe("transformer", () => {
       expect(mainFn.locals.length).toEqual(1);
       expect(mainFn.instructions).toEqual([
         { instructionType: "const", value: 5, valueType: "i32" },
-        { instructionType: "variable", index: 0, operation: "set" },
-        { instructionType: "variable", index: 0, operation: "get" },
+        { instructionType: "variable", id: "$x", operation: "set" },
+        { instructionType: "variable", id: "$x", operation: "get" },
         { instructionType: "const", value: 1, valueType: "i32" },
         { instructionType: "binaryOperation", operation: binaryOperation },
-        { instructionType: "variable", index: 0, operation: "set" },
+        { instructionType: "variable", id: "$x", operation: "set" },
         { instructionType: "const", value: 0, valueType: "i32" } // main fn ends with this
       ]);
     });
@@ -284,12 +284,12 @@ describe("transformer", () => {
       expect(mainFn.locals.length).toEqual(1);
       expect(mainFn.instructions).toEqual([
         { instructionType: "const", value: 5, valueType: "i32" },
-        { instructionType: "variable", index: 0, operation: "set" },
-        { instructionType: "variable", index: 0, operation: "get" },
+        { instructionType: "variable", id: "$x", operation: "set" },
+        { instructionType: "variable", id: "$x", operation: "get" },
         { instructionType: "unaryOperation", operation: "f32.convert_i32_s" },
         { instructionType: "unaryOperation", operation: unaryOperation },
         { instructionType: "unaryOperation", operation: "i32.trunc_f32_s" },
-        { instructionType: "variable", index: 0, operation: "set" },
+        { instructionType: "variable", id: "$x", operation: "set" },
         { instructionType: "const", value: 0, valueType: "i32" } // main fn ends with this
       ]);
     });
@@ -374,5 +374,43 @@ describe("transformer", () => {
 
     const fn = wasmAst.functions.find(f => f.id === "$hello") as wasm.Function;
     expect(fn.locals.length).toEqual(1);
+  });
+
+  it("creates single memory with min size 1 and no max size", () => {
+    const wasmAst = transform({
+      type: "program",
+      statements: [
+        {
+          type: "variableDeclaration",
+          variable: { type: "variable", name: "x" },
+          value: { type: "number", value: 5 }
+        }
+      ]
+    });
+
+    expect(wasmAst.memories.length).toEqual(1);
+
+    const memory = wasmAst.memories[0];
+    expect(memory.id).toEqual("$memory");
+    expect(memory.memoryType.minSize).toEqual(1);
+    expect(memory.memoryType.maxSize).toBeFalsy();
+  });
+
+  it("exports the single memory", () => {
+    const wasmAst = transform({
+      type: "program",
+      statements: [
+        {
+          type: "variableDeclaration",
+          variable: { type: "variable", name: "x" },
+          value: { type: "number", value: 5 }
+        }
+      ]
+    });
+
+    const $export = wasmAst.exports.find(x => x.id === "$memory") as wasm.Export;
+    expect($export).toBeTruthy();
+    expect($export.name).toEqual("memory");
+    expect($export.exportType).toEqual("memory");
   });
 });

@@ -4,19 +4,21 @@ import { astFactory as wasmFactory } from "./wasm/astFactory";
 import { resolveExpressionType } from "./rockstar/expressionTypeResolver";
 import { getOrThrow } from "./utils/map-utils";
 
+const wasmId = (input: string): wasm.Identifier => "$" + input.replace(/\W/g, "").toLowerCase();
+
 class FunctionLocals {
-  private locals: Map<string, number>;
+  private locals: Map<string, wasm.Identifier>;
   private skipLocals: number;
-  private lastAccessedLocal: number | null = null;
+  private lastAccessedLocal: wasm.Identifier | null = null;
 
   constructor(initialVariables: rockstar.Variable[]) {
     this.skipLocals = initialVariables.length;
-    this.locals = new Map<string, number>(
-      initialVariables.map((variable, index) => [variable.name, index])
+    this.locals = new Map<string, wasm.Identifier>(
+      initialVariables.map(variable => [variable.name, wasmId(variable.name)])
     );
   }
 
-  getOrAdd(target: rockstar.Variable | rockstar.Pronoun): number {
+  getOrAdd(target: rockstar.Variable | rockstar.Pronoun): wasm.Identifier {
     if (target.type === "pronoun") {
       if (!this.lastAccessedLocal)
         throw new Error("Cannot resolve pronoun - no variables declared in the scope");
@@ -26,17 +28,18 @@ class FunctionLocals {
 
     const variable = target as rockstar.Variable;
     if (!this.locals.has(variable.name)) {
-      this.locals.set(variable.name, this.locals.size);
+      this.locals.set(variable.name, wasmId(variable.name));
     }
 
-    this.lastAccessedLocal = this.locals.get(variable.name) as number;
+    this.lastAccessedLocal = this.locals.get(variable.name) as wasm.Identifier;
     return this.lastAccessedLocal;
   }
 
   build(): wasm.Local[] {
     // Skip initial ones, as they are automatically added
     return [...this.locals.values()].reduce(
-      (locals, index) => (index >= this.skipLocals ? [...locals, wasmFactory.local()] : locals),
+      (locals, id, index) =>
+        index >= this.skipLocals ? [...locals, wasmFactory.local(id)] : locals,
       [] as wasm.Local[]
     );
   }
@@ -59,17 +62,15 @@ export const transform = (rockstarAst: rockstar.Program): wasm.Module => {
     }
   };
 
-  const wasmIdentifier = (input: string): wasm.Identifier => `$${input}`;
-
   const transformFunctionDeclarationInternal = (
     name: string,
     args: rockstar.Variable[],
     statements: rockstar.Statement[]
   ): wasm.Function => {
     const wasmFn: wasm.Function = {
-      id: `$${name}`,
+      id: wasmId(name),
       functionType: {
-        params: args.map(() => "i32"),
+        params: args.map<wasm.Param>(arg => ({ valueType: "i32", id: wasmId(arg.name) })),
         result: "i32"
       },
       instructions: [],
@@ -204,7 +205,7 @@ export const transform = (rockstarAst: rockstar.Program): wasm.Module => {
 
         case "say": {
           const { what } = statement as rockstar.SayStatement;
-          const id = wasmIdentifier("print");
+          const id = wasmId("print");
           wasmFn.instructions.push(...transformExpression(what), wasmFactory.call(id));
           registerImport({
             module: "env",
@@ -213,7 +214,7 @@ export const transform = (rockstarAst: rockstar.Program): wasm.Module => {
               name: "func",
               id,
               functionType: {
-                params: ["i32"],
+                params: [{ valueType: "i32", id: wasmId("what") }],
                 result: null
               }
             }
@@ -223,7 +224,7 @@ export const transform = (rockstarAst: rockstar.Program): wasm.Module => {
 
         case "listen": {
           const { to } = statement as rockstar.ListenStatement;
-          const id = wasmIdentifier("prompt");
+          const id = wasmId("prompt");
           wasmFn.instructions.push(
             wasmFactory.call(id),
             wasmFactory.variable(locals.getOrAdd(to), "set")
@@ -338,8 +339,8 @@ export const transform = (rockstarAst: rockstar.Program): wasm.Module => {
   wasmModule.imports.push(...imports.values());
 
   // memory
-  wasmModule.memories.push({ id: "$0", memoryType: { minSize: 1 } });
-  wasmModule.exports.push({ id: "$0", exportType: "memory", name: "memory" });
+  wasmModule.memories.push({ id: wasmId("memory"), memoryType: { minSize: 1 } });
+  wasmModule.exports.push({ id: wasmId("memory"), exportType: "memory", name: "memory" });
 
   return wasmModule;
 };

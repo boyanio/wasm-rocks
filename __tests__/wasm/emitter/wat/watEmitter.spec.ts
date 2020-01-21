@@ -79,13 +79,16 @@ describe("wasm", () => {
               importType: {
                 name: "func",
                 id: "$hello",
-                functionType: { params: ["f32", "f32"], result: "f32" }
+                functionType: {
+                  params: [{ valueType: "f32", id: "$a" }, { valueType: "f32" }],
+                  result: "f32"
+                }
               }
             }
           ]
         });
         expect(wat).toEqual(
-          '(module (import "env" "hello" (func $hello (param f32) (param f32) (result f32))))'
+          '(module (import "env" "hello" (func $hello (param $a f32) (param f32) (result f32))))'
         );
       });
     });
@@ -147,7 +150,7 @@ describe("wasm", () => {
         it(`emits variable instruction: ${operation}`, () => {
           const variable: VariableInstruction = {
             instructionType: "variable",
-            index: 0,
+            id: 0,
             operation
           };
           const wat = emitWithWithNoFormat({
@@ -240,7 +243,7 @@ describe("wasm", () => {
             }
           ]
         });
-        expect(wat).toEqual("(module (func $hello (local f32 i32)))");
+        expect(wat).toEqual("(module (func $hello (local f32) (local i32)))");
       });
     });
   });

@@ -1,7 +1,10 @@
 import { VectorEncoder } from "../types";
 import { Module, Function, Memory, Export, Import } from "../../ast";
 
-export const emitWat = (ast: Module, encodeVector: VectorEncoder<string, string>): string => {
+export const emitWat = (
+  ast: Module,
+  encodeVector: VectorEncoder<string | number | undefined, string>
+): string => {
   const emitModule = (contents: string[]): string => encodeVector("module", ...contents);
 
   const emitMemory = (memory: Memory): string =>
@@ -16,17 +19,17 @@ export const emitWat = (ast: Module, encodeVector: VectorEncoder<string, string>
     const { id, locals, instructions, functionType } = func;
     const body: string[] = [];
 
-    // (local XX YY ZZ)
+    // (local $0 XX)
     if (locals.length) {
-      body.push(encodeVector("local", ...locals.map(local => local.valueType)));
+      body.push(...locals.map(local => encodeVector("local", local.id, local.valueType)));
     }
 
     // body
     for (const instruction of instructions) {
       switch (instruction.instructionType) {
         case "variable": {
-          const { operation, index } = instruction;
-          body.push(encodeVector(`local.${operation}`, index.toString()));
+          const { operation, id } = instruction;
+          body.push(encodeVector(`local.${operation}`, id));
           break;
         }
 
@@ -37,7 +40,7 @@ export const emitWat = (ast: Module, encodeVector: VectorEncoder<string, string>
 
         case "const": {
           const { valueType, value } = instruction;
-          body.push(encodeVector(`${valueType}.const`, value.toString()));
+          body.push(encodeVector(`${valueType}.const`, value));
           break;
         }
 
@@ -62,7 +65,7 @@ export const emitWat = (ast: Module, encodeVector: VectorEncoder<string, string>
     return encodeVector(
       "func",
       id,
-      ...functionType.params.map(p => encodeVector("param", p)),
+      ...functionType.params.map(p => encodeVector("param", p.id, p.valueType)),
       ...(functionType.result ? [functionType.result] : []).map(r => encodeVector("result", r)),
       ...body
     );

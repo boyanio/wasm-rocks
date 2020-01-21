@@ -3,18 +3,24 @@ export type Comment = {
   value: string;
 };
 
-export type Identifier = string;
+export type Identifier = number | string;
 
 export type ValueType = "f32" | "i32";
 
 export type ResultType = "f32" | "i32" | null;
 
+export type Param = {
+  valueType: ValueType;
+  id?: Identifier;
+};
+
 export type FunctionType = {
-  params: ValueType[];
-  result: ResultType | null;
+  params: Param[];
+  result?: ResultType;
 };
 
 export type Local = {
+  id?: Identifier;
   valueType: ValueType;
 };
 
@@ -30,7 +36,7 @@ export type VariableInstructionOperation = "get" | "set" | "tee";
 export type VariableInstruction = {
   instructionType: "variable";
   operation: VariableInstructionOperation;
-  index: number;
+  id: Identifier;
 };
 
 export type ConstInstruction = {

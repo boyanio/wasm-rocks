@@ -1,15 +1,23 @@
-import { VectorEncoder } from "../types";
+import { WatVectorEncoder } from "../types";
 
 const enclose = (what: string): string => `(${what})`;
 
-export const watSingleLineVectorEncoder = (): VectorEncoder<string, string> => (
-  ...data: string[]
-): string => enclose(data.join(" "));
+const filterData = (data: (string | number | undefined)[]): string[] =>
+  data.reduce<string[]>(
+    (result, item) => (item != null ? [...result, item.toString()] : result),
+    []
+  );
 
-export const watIdentedVectorEncoder = (identation: number): VectorEncoder<string, string> => (
-  ...data: string[]
+export const watSingleLineVectorEncoder = (): WatVectorEncoder => (
+  ...data: (string | number | undefined)[]
+): string => enclose(filterData(data).join(" "));
+
+export const watIdentedVectorEncoder = (identation: number): WatVectorEncoder => (
+  ...data: (string | number | undefined)[]
 ): string => {
-  if (data.length === 1) return data[0];
+  const filteredData = filterData(data);
+
+  if (filteredData.length === 1) return filteredData[0];
 
   let header = "";
   let body = "";
@@ -18,24 +26,24 @@ export const watIdentedVectorEncoder = (identation: number): VectorEncoder<strin
   const whitespace = " ".repeat(identation);
   const nlWithWhitespace = `\n${whitespace}`;
 
-  switch (data[0]) {
+  switch (filteredData[0]) {
     case "module": {
       header = "(module" + nlWithWhitespace;
       footer = "\n)";
-      body = data
+      body = filteredData
         .slice(1)
         .map(x => x.replace(/\n/g, nlWithWhitespace))
         .join(nlWithWhitespace);
       break;
     }
     case "func": {
-      const paramsAndResultData = data
+      const paramsAndResultData = filteredData
         .slice(2)
         .filter(x => x.startsWith("(param ") || x.startsWith("(result "));
-      const bodyData = data.slice(2 + paramsAndResultData.length);
+      const bodyData = filteredData.slice(2 + paramsAndResultData.length);
       const hasBody = bodyData.length > 0;
 
-      header = `(func ${data[1]} ${paramsAndResultData.join(" ")}`.trim();
+      header = `(func ${filteredData[1]} ${paramsAndResultData.join(" ")}`.trim();
       if (hasBody) {
         body = nlWithWhitespace + bodyData.join(nlWithWhitespace);
         footer = "\n)";
@@ -47,7 +55,7 @@ export const watIdentedVectorEncoder = (identation: number): VectorEncoder<strin
     default: {
       header = "(";
       footer = ")";
-      body = data.join(" ");
+      body = filteredData.join(" ");
       break;
     }
   }

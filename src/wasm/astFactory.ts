@@ -7,9 +7,10 @@ import {
   VariableInstructionOperation,
   VariableInstruction,
   CallControlInstruction,
-  Local
+  Local,
+  Identifier,
+  Param
 } from "./ast";
-import { Identifier } from "src/rockstar/ast";
 
 export const astFactory = {
   const: (value: number): ConstInstruction => ({
@@ -28,10 +29,10 @@ export const astFactory = {
     operation
   }),
 
-  variable: (index: number, operation: VariableInstructionOperation): VariableInstruction => ({
+  variable: (id: Identifier, operation: VariableInstructionOperation): VariableInstruction => ({
     instructionType: "variable",
     operation,
-    index
+    id
   }),
 
   call: (id: Identifier): CallControlInstruction => ({
@@ -39,7 +40,13 @@ export const astFactory = {
     id
   }),
 
-  local: (): Local => ({
-    valueType: "i32"
+  local: (id: Identifier): Local => ({
+    valueType: "i32",
+    id
+  }),
+
+  param: (id: Identifier): Param => ({
+    valueType: "i32",
+    id
   })
 };
