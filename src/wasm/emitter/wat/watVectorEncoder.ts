@@ -1,64 +1,76 @@
 import { WatVectorEncoder } from "../types";
 
-const enclose = (what: string): string => `(${what})`;
+// remove null / undefined / empty array items
+const filter = (data: unknown[]): unknown[] =>
+  data.reduce<unknown[]>((filtered, item) => {
+    if (Array.isArray(item)) {
+      const filteredItem = filter(item);
+      return filteredItem.length ? [...filtered, filteredItem] : filtered;
+    } else {
+      const isValid = item != null;
+      return isValid ? [...filtered, item] : filtered;
+    }
+  }, []);
 
-const filterData = (data: (string | number | undefined)[]): string[] =>
-  data.reduce<string[]>(
-    (result, item) => (item != null ? [...result, item.toString()] : result),
-    []
+const encodeFilteredVectorAsSingleLine = (data: unknown[]): string => {
+  if (data.length === 1) return data[0] as string;
+
+  const firstArrayItemIndex = data.findIndex(Array.isArray);
+  const arrayItems = (firstArrayItemIndex < 0
+    ? []
+    : data.splice(firstArrayItemIndex)) as unknown[][];
+  const nonArrayItems = data;
+
+  return (
+    `(${nonArrayItems.join(" ")}` +
+    (arrayItems.length ? " " + arrayItems.map(encodeFilteredVectorAsSingleLine).join(" ") : "") +
+    ")"
   );
+};
 
-export const watSingleLineVectorEncoder = (): WatVectorEncoder => (
-  ...data: (string | number | undefined)[]
-): string => enclose(filterData(data).join(" "));
-
-export const watIdentedVectorEncoder = (identation: number): WatVectorEncoder => (
-  ...data: (string | number | undefined)[]
+const encodeFilteredVectorWithIdentation = (
+  data: unknown[],
+  scope: number,
+  identation: number
 ): string => {
-  const filteredData = filterData(data);
+  const whitespace = " ".repeat(identation * scope);
+  if (data.length === 1) return (scope > 0 ? "\n" : "") + `${whitespace}${data[0]}`;
 
-  if (filteredData.length === 1) return filteredData[0];
+  const firstItem = data[0] as string;
 
-  let header = "";
-  let body = "";
-  let footer = "";
+  // param / result vectors should be on the same line with the func
+  if (["param", "result"].includes(firstItem)) return " " + encodeFilteredVectorAsSingleLine(data);
 
-  const whitespace = " ".repeat(identation);
-  const nlWithWhitespace = `\n${whitespace}`;
+  // import / export vectors should be on the same line
+  if (["import", "export"].includes(firstItem))
+    return "\n" + whitespace + encodeFilteredVectorAsSingleLine(data);
 
-  switch (filteredData[0]) {
-    case "module": {
-      header = "(module" + nlWithWhitespace;
-      footer = "\n)";
-      body = filteredData
-        .slice(1)
-        .map(x => x.replace(/\n/g, nlWithWhitespace))
-        .join(nlWithWhitespace);
-      break;
-    }
-    case "func": {
-      const paramsAndResultData = filteredData
-        .slice(2)
-        .filter(x => x.startsWith("(param ") || x.startsWith("(result "));
-      const bodyData = filteredData.slice(2 + paramsAndResultData.length);
-      const hasBody = bodyData.length > 0;
+  let result = "";
+  if (scope > 0) {
+    result += "\n";
+  }
+  result += whitespace;
 
-      header = `(func ${filteredData[1]} ${paramsAndResultData.join(" ")}`.trim();
-      if (hasBody) {
-        body = nlWithWhitespace + bodyData.join(nlWithWhitespace);
-        footer = "\n)";
-      } else {
-        footer = ")";
-      }
-      break;
-    }
-    default: {
-      header = "(";
-      footer = ")";
-      body = filteredData.join(" ");
-      break;
-    }
+  let i = 0;
+  for (; i < data.length; i++) {
+    if (Array.isArray(data[i])) break;
+
+    result += (i === 0 ? "(" : " ") + data[i];
   }
 
-  return header + body + footer;
+  if (i < data.length) {
+    for (; i < data.length; i++) {
+      result += encodeFilteredVectorWithIdentation(data[i] as unknown[], scope + 1, identation);
+    }
+    result += "\n" + whitespace;
+  }
+  result += ")";
+  return result;
 };
+
+export const watSingleLineVectorEncoder = (data: unknown[]): string =>
+  encodeFilteredVectorAsSingleLine(filter(data));
+
+export const watIdentedVectorEncoder = (identation: number): WatVectorEncoder => (
+  data: unknown[]
+): string => encodeFilteredVectorWithIdentation(filter(data), 0, identation);

@@ -33,7 +33,7 @@ export const ifStatement: Parser<IfStatement> = batch(
     type: "if",
     condition,
     then: { statements: then },
-    else: $else ? { statements: $else } : null
+    $else: $else ? { statements: $else } : null
   }),
   nextLineOrEOF(sequence($2, word("If"), expression)),
   oneOrMany(statement),

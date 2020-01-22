@@ -159,7 +159,7 @@ export type IfStatement = {
   type: "if";
   condition: Expression;
   then: Block;
-  else: Block | null;
+  $else: Block | null;
 };
 
 export type Loop = {

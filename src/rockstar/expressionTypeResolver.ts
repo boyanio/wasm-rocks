@@ -44,7 +44,7 @@ export const resolveExpressionType = (
         }`
       );
 
-    return statement as VariableDeclaration | Assignment;
+    return statement;
   };
 
   const resolveLiteral = (literal: Literal): ExpressionType =>
@@ -128,6 +128,8 @@ export const resolveExpressionType = (
 
     case "unaryExpression":
       return "boolean";
+
+    case "functionCall":
+      throw new Error("Not implemented yet");
   }
-  throw new Error(`Unknown expression type: ${expression.type}`);
 };

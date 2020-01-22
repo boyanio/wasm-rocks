@@ -36,7 +36,7 @@ const createModule = (options: ModuleOptions): Module =>
   );
 
 const emitWithWithNoFormat = (options: ModuleOptions): string =>
-  emitWat(createModule(options), watSingleLineVectorEncoder());
+  emitWat(createModule(options), watSingleLineVectorEncoder);
 
 describe("wasm", () => {
   describe("watEmitter", () => {

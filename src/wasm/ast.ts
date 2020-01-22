@@ -84,9 +84,20 @@ export type CallControlInstruction = {
   id: Identifier;
 };
 
+export type IfInstruction = {
+  instructionType: "if";
+  then: Instruction[];
+  $else?: Instruction[];
+};
+
 export type ControlInstruction = CallControlInstruction;
 
-export type Instruction = VariableInstruction | NumericInstruction | ControlInstruction | Comment;
+export type Instruction =
+  | VariableInstruction
+  | NumericInstruction
+  | ControlInstruction
+  | Comment
+  | IfInstruction;
 
 export type MemoryType = {
   minSize: number;

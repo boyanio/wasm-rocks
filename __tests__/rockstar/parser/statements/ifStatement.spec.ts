@@ -51,9 +51,9 @@ describe("rockstar", () => {
       expect(ifStatement.then.statements.length).toEqual(1);
       expect(ifStatement.then.statements[0].type).toEqual("say");
 
-      expect(ifStatement.else).toBeTruthy();
-      expect((ifStatement.else as Block).statements.length).toEqual(1);
-      expect((ifStatement.else as Block).statements[0].type).toEqual("say");
+      expect(ifStatement.$else).toBeTruthy();
+      expect((ifStatement.$else as Block).statements.length).toEqual(1);
+      expect((ifStatement.$else as Block).statements[0].type).toEqual("say");
     });
   });
 });

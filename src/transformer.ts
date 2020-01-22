@@ -78,7 +78,9 @@ export const transform = (rockstarAst: rockstar.Program): wasm.Module => {
     };
 
     const validateRockstarExpressionType = (expression: rockstar.Expression): void => {
-      const expressionType = resolveExpressionType(expression, processedStatements);
+      // all but the last statement
+      const scope = processedStatements.slice(0, -1);
+      const expressionType = resolveExpressionType(expression, scope);
       switch (expressionType) {
         case "float":
           throw new Error("Floats are not supported by the transformation yet");
@@ -107,37 +109,7 @@ export const transform = (rockstarAst: rockstar.Program): wasm.Module => {
       );
 
     const transformExpression = (expression: rockstar.Expression): wasm.Instruction[] => {
-      const transformFunctionCall = (
-        functionCall: rockstar.FunctionCallExpression
-      ): wasm.Instruction[] => [
-        ...functionCall.args.flatMap(transformExpression),
-        wasmFactory.call(functionCall.name)
-      ];
-
-      const transformSimpleExpression = (
-        expression: rockstar.SimpleExpression
-      ): wasm.Instruction => {
-        validateRockstarExpressionType(expression);
-
-        switch (expression.type) {
-          case "number":
-            return wasmFactory.const(expression.value);
-
-          case "boolean":
-            return wasmFactory.const(expression.value ? 1 : 0);
-
-          case "string":
-            throw new Error("String expressions are not supperted by the transofmration yet");
-
-          case "mysterious":
-          case "null":
-            return wasmFactory.const(0);
-
-          case "pronoun":
-          case "variable":
-            return wasmFactory.variable(locals.getOrAdd(expression), "get");
-        }
-      };
+      validateRockstarExpressionType(expression);
 
       switch (expression.type) {
         case "binaryExpression":
@@ -153,10 +125,27 @@ export const transform = (rockstarAst: rockstar.Program): wasm.Module => {
         }
 
         case "functionCall":
-          return transformFunctionCall(expression);
+          return [
+            ...expression.args.flatMap(transformExpression),
+            wasmFactory.call(expression.name)
+          ];
 
-        default:
-          return [transformSimpleExpression(expression)];
+        case "number":
+          return [wasmFactory.const(expression.value)];
+
+        case "boolean":
+          return [wasmFactory.const(expression.value ? 1 : 0)];
+
+        case "string":
+          throw new Error("String expressions are not supperted by the transofmration yet");
+
+        case "mysterious":
+        case "null":
+          return [wasmFactory.const(0)];
+
+        case "pronoun":
+        case "variable":
+          return [wasmFactory.variable(locals.getOrAdd(expression), "get")];
       }
     };
 
@@ -196,17 +185,16 @@ export const transform = (rockstarAst: rockstar.Program): wasm.Module => {
       wasmFactory.variable(locals.getOrAdd(statement.variable), "set")
     ];
 
-    statements.forEach(statement => {
+    const transformStatement = (statement: rockstar.Statement): wasm.Instruction[] => {
+      processedStatements.push(statement);
+
       switch (statement.type) {
-        case "variableDeclaration": {
-          wasmFn.instructions.push(...transformVariableDeclaration(statement));
-          break;
-        }
+        case "variableDeclaration":
+          return transformVariableDeclaration(statement);
 
         case "say": {
           const { what } = statement as rockstar.SayStatement;
           const id = wasmId("print");
-          wasmFn.instructions.push(...transformExpression(what), wasmFactory.call(id));
           registerImport({
             module: "env",
             name: "print",
@@ -219,16 +207,12 @@ export const transform = (rockstarAst: rockstar.Program): wasm.Module => {
               }
             }
           });
-          break;
+          return [...transformExpression(what), wasmFactory.call(id)];
         }
 
         case "listen": {
           const { to } = statement as rockstar.ListenStatement;
           const id = wasmId("prompt");
-          wasmFn.instructions.push(
-            wasmFactory.call(id),
-            wasmFactory.variable(locals.getOrAdd(to), "set")
-          );
           registerImport({
             module: "env",
             name: "prompt",
@@ -241,52 +225,58 @@ export const transform = (rockstarAst: rockstar.Program): wasm.Module => {
               }
             }
           });
-          break;
+          return [wasmFactory.call(id), wasmFactory.variable(locals.getOrAdd(to), "set")];
         }
 
-        case "assignment": {
-          wasmFn.instructions.push(...transformAssignment(statement));
-          break;
-        }
+        case "assignment":
+          return transformAssignment(statement);
 
-        case "increment": {
-          const { target } = statement;
-          wasmFn.instructions.push(
-            ...transformExpression(target),
-            wasmFactory.const(1),
+        case "increment":
+          return [
+            ...transformExpression(statement.target),
+            wasmFactory.const(statement.times),
             wasmFactory.binaryOperation("i32.add"),
-            wasmFactory.variable(locals.getOrAdd(target), "set")
-          );
-          break;
-        }
+            wasmFactory.variable(locals.getOrAdd(statement.target), "set")
+          ];
 
-        case "decrement": {
-          const { target } = statement;
-          wasmFn.instructions.push(
-            ...transformExpression(target),
-            wasmFactory.const(1),
+        case "decrement":
+          return [
+            ...transformExpression(statement.target),
+            wasmFactory.const(statement.times),
             wasmFactory.binaryOperation("i32.sub"),
-            wasmFactory.variable(locals.getOrAdd(target), "set")
-          );
-          break;
+            wasmFactory.variable(locals.getOrAdd(statement.target), "set")
+          ];
+
+        case "round":
+          return transformArithmeticRounding(statement);
+
+        case "comment":
+          return [
+            {
+              instructionType: "comment",
+              value: statement.comment
+            }
+          ];
+
+        case "if": {
+          const { condition, then, $else } = statement;
+          return [
+            ...transformExpression(condition),
+            {
+              instructionType: "if",
+              then: then.statements.flatMap(x => transformStatement(x)),
+              $else: $else ? $else.statements.flatMap(x => transformStatement(x)) : undefined
+            }
+          ];
         }
 
-        case "round": {
-          wasmFn.instructions.push(...transformArithmeticRounding(statement));
-          break;
-        }
-
-        case "comment": {
-          const { comment } = statement;
-          wasmFn.instructions.push({
-            instructionType: "comment",
-            value: comment
-          });
-          break;
-        }
+        default:
+          throw new Error(`Unknown Rockstar statement: ${statement.type}`);
       }
+    };
 
-      processedStatements.push(statement);
+    statements.forEach(statement => {
+      wasmFn.instructions.push(...transformStatement(statement));
     });
 
     // build locals

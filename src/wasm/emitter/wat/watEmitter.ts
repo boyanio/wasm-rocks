@@ -1,81 +1,69 @@
-import { VectorEncoder } from "../types";
-import { Module, Function, Memory, Export, Import } from "../../ast";
+import { WatVectorEncoder } from "../types";
+import { Module, Function, Memory, Export, Import, Instruction } from "../../ast";
 
-export const emitWat = (
-  ast: Module,
-  encodeVector: VectorEncoder<string | number | undefined, string>
-): string => {
-  const emitModule = (contents: string[]): string => encodeVector("module", ...contents);
+export const emitWat = (ast: Module, encodeVector: WatVectorEncoder): string => {
+  const emitMemory = (memory: Memory): unknown[] => [
+    "memory",
+    memory.id,
+    memory.memoryType.minSize,
+    memory.memoryType.maxSize ? memory.memoryType.maxSize : undefined
+  ];
 
-  const emitMemory = (memory: Memory): string =>
-    encodeVector(
-      "memory",
-      memory.id,
-      memory.memoryType.minSize.toString(),
-      ...(memory.memoryType.maxSize ? [memory.memoryType.maxSize.toString()] : [])
-    );
-
-  const emitFunction = (func: Function): string => {
+  const emitFunction = (func: Function): unknown[] => {
     const { id, locals, instructions, functionType } = func;
-    const body: string[] = [];
+    const body: unknown[] = [];
 
     // (local $0 XX)
     if (locals.length) {
-      body.push(...locals.map(local => encodeVector("local", local.id, local.valueType)));
+      body.push(...locals.map(local => ["local", local.id, local.valueType]));
     }
 
     // body
-    for (const instruction of instructions) {
+    const encodeInstruction = (instruction: Instruction): unknown[] => {
       switch (instruction.instructionType) {
-        case "variable": {
-          const { operation, id } = instruction;
-          body.push(encodeVector(`local.${operation}`, id));
-          break;
-        }
+        case "variable":
+          return [`local.${instruction.operation}`, instruction.id];
 
-        case "call": {
-          body.push(encodeVector("call", instruction.id));
-          break;
-        }
+        case "call":
+          return ["call", instruction.id];
 
-        case "const": {
-          const { valueType, value } = instruction;
-          body.push(encodeVector(`${valueType}.const`, value));
-          break;
-        }
+        case "const":
+          return [`${instruction.valueType}.const`, instruction.value];
 
-        case "comment": {
-          body.push(encodeVector(`; ${instruction.value} ;`));
-          break;
-        }
+        case "comment":
+          return [";", instruction.value, ";"];
 
-        case "binaryOperation": {
-          body.push(instruction.operation);
-          break;
-        }
+        case "unaryOperation":
+        case "binaryOperation":
+          return [instruction.operation];
 
-        case "unaryOperation": {
-          body.push(instruction.operation);
-          break;
-        }
+        case "if":
+          return [
+            "if",
+            ["then", ...instruction.then.map(encodeInstruction)],
+            ...(instruction.$else ? [["else", ...instruction.$else.map(encodeInstruction)]] : [])
+          ];
       }
+    };
+
+    for (const instruction of instructions) {
+      body.push(encodeInstruction(instruction));
     }
 
     // func (param XX)* (result YY) body
-    return encodeVector(
+    return [
       "func",
       id,
-      ...functionType.params.map(p => encodeVector("param", p.id, p.valueType)),
-      ...(functionType.result ? [functionType.result] : []).map(r => encodeVector("result", r)),
+      ...functionType.params.map(p => ["param", p.id, p.valueType]),
+      ...(functionType.result ? [functionType.result] : []).map(r => ["result", r]),
       ...body
-    );
+    ];
   };
 
-  const emitExport = (ex: Export): string =>
-    encodeVector("export", `"${ex.name}"`, encodeVector(ex.exportType, ex.id));
+  const emitExport = (ex: Export): unknown[] => ["export", `"${ex.name}"`, [ex.exportType, ex.id]];
 
-  const emitImport = (im: Import): string => {
-    let importType: string;
+  const emitImport = (im: Import): unknown[] => {
+    let importType: unknown[];
     switch (im.importType.name) {
       case "func": {
         const { id, functionType } = im.importType;
@@ -97,13 +85,15 @@ export const emitWat = (
       default:
         throw new Error(`Unsupported import type: ${im.importType}`);
     }
-    return encodeVector("import", `"${im.module}"`, `"${im.name}"`, importType);
+    return ["import", `"${im.module}"`, `"${im.name}"`, importType];
   };
 
-  return emitModule([
+  const module = [
+    "module",
     ...ast.imports.map(emitImport),
     ...ast.memories.map(emitMemory),
     ...ast.functions.map(emitFunction),
     ...ast.exports.map(emitExport)
-  ]);
+  ];
+  return encodeVector(module);
 };

@@ -1,3 +1,3 @@
-export type VectorEncoder<S, D> = (...data: S[]) => D;
+export type VectorEncoder<T> = (data: unknown[]) => T;
 
-export type WatVectorEncoder = VectorEncoder<string | number | undefined, string>;
+export type WatVectorEncoder = VectorEncoder<string>;
