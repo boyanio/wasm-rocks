@@ -13,7 +13,10 @@ import {
   VariableDeclaration,
   Literal,
   BinaryExpression,
-  BinaryOperator
+  BinaryOperator,
+  FunctionDeclaration,
+  SimpleExpression,
+  FunctionCallExpression
 } from "../../../src/rockstar/ast";
 
 export const string = (value: string): StringLiteral => ({
@@ -67,6 +70,25 @@ export const binaryExpression = (
   operator,
   lhs,
   rhs
+});
+
+export const functionCall = (name: string, args: SimpleExpression[]): FunctionCallExpression => ({
+  type: "functionCall",
+  name,
+  args
+});
+
+export const functionDeclaration = (
+  name: string,
+  args: Variable[],
+  result: SimpleExpression,
+  statements: Statement[]
+): FunctionDeclaration => ({
+  type: "function",
+  name,
+  args,
+  result,
+  statements
 });
 
 export const program = (statements: Statement[]): Program => ({

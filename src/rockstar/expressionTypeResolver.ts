@@ -8,14 +8,16 @@ import {
   Statement,
   BinaryExpression,
   BinaryOperator,
-  ArithmeticOperator
+  ArithmeticOperator,
+  FunctionDeclaration
 } from "./ast";
 import { isInt } from "../../src/utils/number-utils";
 import { findReversed } from "../../src/utils/array-utils";
 
 export const resolveExpressionType = (
   expression: Expression,
-  scope: Statement[]
+  scope: Statement[],
+  functions: FunctionDeclaration[]
 ): ExpressionType => {
   const isNumber = (expressionType: ExpressionType): boolean =>
     expressionType === "integer" || expressionType === "float";
@@ -54,7 +56,7 @@ export const resolveExpressionType = (
     resolveLiteral(variableDeclaration.value);
 
   const resolveAssignment = (assignment: Assignment): ExpressionType =>
-    resolveExpressionType(assignment.expression, scope);
+    resolveExpressionType(assignment.expression, scope, functions);
 
   const resolveVariable = (variable: Variable): ExpressionType => {
     const statement = findLastVariableDeclarationOrAssignment(variable.name);
@@ -121,8 +123,8 @@ export const resolveExpressionType = (
 
     case "binaryExpression": {
       const binaryExpression = expression as BinaryExpression;
-      const lhs = resolveExpressionType(binaryExpression.lhs, scope);
-      const rhs = resolveExpressionType(binaryExpression.rhs, scope);
+      const lhs = resolveExpressionType(binaryExpression.lhs, scope, functions);
+      const rhs = resolveExpressionType(binaryExpression.rhs, scope, functions);
       return compareExpressionTypes(binaryExpression.operator, lhs, rhs);
     }
 
@@ -130,6 +132,6 @@ export const resolveExpressionType = (
       return "boolean";
 
     case "functionCall":
-      throw new Error("Not implemented yet");
+      return "integer";
   }
 };

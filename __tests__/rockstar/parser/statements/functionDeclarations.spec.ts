@@ -56,6 +56,23 @@ describe("rockstar", () => {
         expect(node.statements.length).toEqual(1);
         expect(node.statements[0].type).toEqual("say");
       });
+
+      it("parses function with loop", () => {
+        const { statements } = parse(`
+        Hello takes X
+        Until X is as high as 0
+        Turn down x
+
+        Give back X
+        `);
+
+        expect(statements.length).toEqual(1);
+        expect(statements[0].type).toEqual("function");
+
+        const node = statements[0] as FunctionDeclaration;
+        expect(node.statements.length).toEqual(1);
+        expect(node.statements[0].type).toEqual("loop");
+      });
     });
   });
 });

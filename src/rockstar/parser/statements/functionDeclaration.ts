@@ -12,7 +12,8 @@ import {
   word,
   batch,
   emptyLine,
-  wordSequence
+  wordSequence,
+  optional
 } from "../parsers";
 import { assignment } from "./assignment";
 import { variableDeclaration } from "./variableDeclaration";
@@ -21,6 +22,7 @@ import { arithmeticRounding } from "./arithmeticRounding";
 import { io } from "./io";
 import { ifStatement } from "./ifStatement";
 import { loop } from "./loop";
+import { Parser } from "../types";
 
 const statement = anyOf<Statement>(
   ifStatement,
@@ -33,7 +35,9 @@ const statement = anyOf<Statement>(
   io
 );
 
-const functionHeader = nextLineOrEOF(
+type FunctionHeader = [string, Variable[]];
+
+const functionHeader: Parser<FunctionHeader> = nextLineOrEOF(
   sequence(
     (name, firstArg, restArgs) => [name, [firstArg, ...restArgs]],
     batch($1, identifier, word("takes")),
@@ -42,7 +46,7 @@ const functionHeader = nextLineOrEOF(
   )
 );
 
-const functionBody = sequence($1, zeroOrMany(statement), nextLineOrEOF(emptyLine));
+const functionBody = zeroOrMany(anyOf(statement, optional(nextLineOrEOF(emptyLine))));
 
 const functionFooter = nextLineOrEOF(sequence($2, wordSequence("Give", "back"), simpleExpression));
 
@@ -51,6 +55,7 @@ const functionFooter = nextLineOrEOF(sequence($2, wordSequence("Give", "back"), 
  *
  *    <name> takes <arg0>( and|&|'n' <arg1>)*
  *    <statements>
+ *    <blank line>
  *    Give back <expr>
  */
 export const functionDeclaration = nextLineOrEOF(
@@ -58,10 +63,10 @@ export const functionDeclaration = nextLineOrEOF(
     ([name, args], statements, result) =>
       ({
         type: "function",
-        name: name as string,
-        args: args as Variable[],
+        name,
+        args,
         result,
-        statements
+        statements: statements.filter(x => x)
       } as FunctionDeclaration),
     functionHeader,
     functionBody,

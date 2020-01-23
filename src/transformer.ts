@@ -53,7 +53,7 @@ export const transform = (rockstarAst: rockstar.Program): wasm.Module => {
     memories: [] as wasm.Memory[]
   };
 
-  const processedStatements: rockstar.Statement[] = [];
+  const processedFunctions: rockstar.FunctionDeclaration[] = [];
   const imports = new Map<string, wasm.Import>();
 
   const registerImport = ($import: wasm.Import): void => {
@@ -67,6 +67,12 @@ export const transform = (rockstarAst: rockstar.Program): wasm.Module => {
     args: rockstar.Variable[],
     statements: rockstar.Statement[]
   ): wasm.Function => {
+    const processedStatements: rockstar.Statement[] = args.map(arg => ({
+      type: "variableDeclaration",
+      variable: arg,
+      value: { type: "number", value: 0 }
+    }));
+
     const wasmFn: wasm.Function = {
       id: wasmId(name),
       functionType: {
@@ -80,7 +86,7 @@ export const transform = (rockstarAst: rockstar.Program): wasm.Module => {
     const validateRockstarExpressionType = (expression: rockstar.Expression): void => {
       // all but the last statement
       const scope = processedStatements.slice(0, -1);
-      const expressionType = resolveExpressionType(expression, scope);
+      const expressionType = resolveExpressionType(expression, scope, processedFunctions);
       switch (expressionType) {
         case "float":
           throw new Error("Floats are not supported by the transformation yet");
@@ -299,6 +305,7 @@ export const transform = (rockstarAst: rockstar.Program): wasm.Module => {
   const transformFunctionDeclaration = (func: rockstar.FunctionDeclaration): void => {
     const wasmFn = transformFunctionDeclarationInternal(func.name, func.args, func.statements);
     wasmModule.functions.push(wasmFn);
+    processedFunctions.push(func);
   };
 
   const transformFunctionDeclarations = (funcs: rockstar.FunctionDeclaration[]): void =>

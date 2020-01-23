@@ -1,6 +1,6 @@
 import { Program, Statement, FunctionDeclaration } from "../ast";
 import { anyOf, map, oneOrMany, emptyLineOrEOF } from "./parsers";
-import { functionDeclaration } from "./statements/functionDeclarations";
+import { functionDeclaration } from "./statements/functionDeclaration";
 import { comment } from "./statements/comment";
 import { arithmeticRounding } from "./statements/arithmeticRounding";
 import { incrementDecrement } from "./statements/incrementDecrement";

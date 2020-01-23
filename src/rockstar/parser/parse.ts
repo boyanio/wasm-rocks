@@ -21,9 +21,14 @@ export const parse = (source: string): Program => {
   const result = program(lines, context);
   if (isParseError(result)) throw createParseError(result as ParseError);
 
-  if (lines.length > 0 && context.lineIndex !== lines.length - 1)
+  if (
+    lines.length > 0 &&
+    (context.lineIndex !== lines.length - 1 || context.offset !== lines[lines.length - 1].length)
+  )
     throw new Error(
-      `Parsing ended on line ${context.lineIndex + 1}, but there are ${lines.length} lines`
+      `Unparsed characters. Parsing ended on line ${context.lineIndex + 1}, column ${
+        context.offset
+      }.`
     );
 
   return result as Program;
