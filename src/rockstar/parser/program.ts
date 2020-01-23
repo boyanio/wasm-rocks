@@ -1,5 +1,5 @@
 import { Program, Statement, FunctionDeclaration } from "../ast";
-import { anyOf, map, oneOrMany } from "./parsers";
+import { anyOf, map, oneOrMany, emptyLineOrEOF } from "./parsers";
 import { functionDeclaration } from "./statements/functionDeclarations";
 import { comment } from "./statements/comment";
 import { arithmeticRounding } from "./statements/arithmeticRounding";
@@ -22,10 +22,12 @@ const statement = anyOf<Statement>(
 );
 
 export const program = map(
-  (statements: (Statement | FunctionDeclaration)[]) =>
+  (statements: (Statement | FunctionDeclaration | null)[]) =>
     ({
       type: "program",
-      statements
+      statements: statements.filter(x => x)
     } as Program),
-  oneOrMany(anyOf<Statement | FunctionDeclaration>(functionDeclaration, statement))
+  oneOrMany(
+    anyOf<Statement | FunctionDeclaration | null>(functionDeclaration, statement, emptyLineOrEOF)
+  )
 );
