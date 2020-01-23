@@ -34,7 +34,7 @@ const formatFilteredDataWithIdentation = (
   identation: number
 ): string => {
   const whitespace = " ".repeat(identation * scope);
-  if (data.length === 1) return (scope > 0 ? "\n" : "") + `${whitespace}${data[0]}`;
+  if (data.length === 1) return (scope > 0 ? "\n" : "") + `${whitespace}(${data[0]})`;
 
   const firstItem = data[0] as string;
 

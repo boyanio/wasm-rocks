@@ -86,8 +86,15 @@ export type CallControlInstruction = {
 
 export type IfInstruction = {
   instructionType: "if";
+  condition: Instruction[];
   then: Instruction[];
   $else?: Instruction[];
+};
+
+export type LoopInstruction = {
+  instructionType: "loop";
+  condition: Instruction[];
+  body: Instruction[];
 };
 
 export type ControlInstruction = CallControlInstruction;
@@ -97,7 +104,8 @@ export type Instruction =
   | NumericInstruction
   | ControlInstruction
   | Comment
-  | IfInstruction;
+  | IfInstruction
+  | LoopInstruction;
 
 export type MemoryType = {
   minSize: number;

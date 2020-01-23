@@ -136,6 +136,8 @@ const keywords = new Set<string>([
   "turn",
   "round",
   "around",
+  "give",
+  "back",
   ...commonVariableNamePrefixes,
   ...pronounKeywords,
   ...nullKeywords,

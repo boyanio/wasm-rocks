@@ -261,17 +261,28 @@ export const transform = (rockstarAst: rockstar.Program): wasm.Module => {
         case "if": {
           const { condition, then, $else } = statement;
           return [
-            ...transformExpression(condition),
             {
               instructionType: "if",
+              condition: transformExpression(condition),
               then: then.statements.flatMap(x => transformStatement(x)),
               $else: $else ? $else.statements.flatMap(x => transformStatement(x)) : undefined
             }
           ];
         }
 
+        case "loop": {
+          const { condition, block } = statement;
+          return [
+            {
+              instructionType: "loop",
+              condition: transformExpression(condition),
+              body: block.statements.flatMap(x => transformStatement(x))
+            }
+          ];
+        }
+
         default:
-          throw new Error(`Unknown Rockstar statement: ${statement.type}`);
+          throw new Error("Unknown Rockstar statement");
       }
     };
 

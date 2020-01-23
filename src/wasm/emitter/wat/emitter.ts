@@ -40,8 +40,20 @@ export const emitWat = (ast: Module, format: WatFormatter): string => {
         case "if":
           return [
             "if",
+            ...instruction.condition.map(emitInstruction),
             ["then", ...instruction.then.map(emitInstruction)],
             ...(instruction.$else ? [["else", ...instruction.$else.map(emitInstruction)]] : [])
+          ];
+
+        case "loop":
+          return [
+            "block",
+            [
+              "loop",
+              ["br_if", 1, ...instruction.condition.map(emitInstruction), ["i32.eqz"]],
+              ...instruction.body.map(emitInstruction),
+              ["br", 0]
+            ]
           ];
       }
     };

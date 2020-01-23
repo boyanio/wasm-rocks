@@ -7,7 +7,7 @@ describe("wasm", () => {
         it("formats simple data", () => {
           const encodeVector = identedFormatter(2);
           const result = encodeVector(["top"]);
-          expect(result).toEqual("top");
+          expect(result).toEqual("(top)");
         });
 
         it("joins single-line statements", () => {
@@ -19,7 +19,7 @@ describe("wasm", () => {
         it("formats module's statements on a new line", () => {
           const encodeVector = identedFormatter(2);
           const result = encodeVector(["module", ["one"], ["two"]]);
-          expect(result).toEqual("(module\n  one\n  two\n)");
+          expect(result).toEqual("(module\n  (one)\n  (two)\n)");
         });
 
         it("imports go on a single line", () => {
