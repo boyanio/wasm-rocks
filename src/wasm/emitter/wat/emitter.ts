@@ -1,7 +1,7 @@
-import { WatVectorEncoder } from "../types";
 import { Module, Function, Memory, Export, Import, Instruction } from "../../ast";
+import { WatFormatter } from "./formatter";
 
-export const emitWat = (ast: Module, encodeVector: WatVectorEncoder): string => {
+export const emitWat = (ast: Module, format: WatFormatter): string => {
   const emitMemory = (memory: Memory): unknown[] => [
     "memory",
     memory.id,
@@ -19,7 +19,7 @@ export const emitWat = (ast: Module, encodeVector: WatVectorEncoder): string => 
     }
 
     // body
-    const encodeInstruction = (instruction: Instruction): unknown[] => {
+    const emitInstruction = (instruction: Instruction): unknown[] => {
       switch (instruction.instructionType) {
         case "variable":
           return [`local.${instruction.operation}`, instruction.id];
@@ -40,14 +40,14 @@ export const emitWat = (ast: Module, encodeVector: WatVectorEncoder): string => 
         case "if":
           return [
             "if",
-            ["then", ...instruction.then.map(encodeInstruction)],
-            ...(instruction.$else ? [["else", ...instruction.$else.map(encodeInstruction)]] : [])
+            ["then", ...instruction.then.map(emitInstruction)],
+            ...(instruction.$else ? [["else", ...instruction.$else.map(emitInstruction)]] : [])
           ];
       }
     };
 
     for (const instruction of instructions) {
-      body.push(encodeInstruction(instruction));
+      body.push(emitInstruction(instruction));
     }
 
     // func (param XX)* (result YY) body
@@ -95,5 +95,5 @@ export const emitWat = (ast: Module, encodeVector: WatVectorEncoder): string => 
     ...ast.functions.map(emitFunction),
     ...ast.exports.map(emitExport)
   ];
-  return encodeVector(module);
+  return format(module);
 };

@@ -1,4 +1,4 @@
-import { WatVectorEncoder } from "../types";
+export type WatFormatter = (data: unknown[]) => string;
 
 // remove null / undefined / empty array items
 const filter = (data: unknown[]): unknown[] =>
@@ -12,7 +12,7 @@ const filter = (data: unknown[]): unknown[] =>
     }
   }, []);
 
-const encodeFilteredVectorAsSingleLine = (data: unknown[]): string => {
+const formatFilteredDataAsSingleLine = (data: unknown[]): string => {
   if (data.length === 1) return data[0] as string;
 
   const firstArrayItemIndex = data.findIndex(Array.isArray);
@@ -23,12 +23,12 @@ const encodeFilteredVectorAsSingleLine = (data: unknown[]): string => {
 
   return (
     `(${nonArrayItems.join(" ")}` +
-    (arrayItems.length ? " " + arrayItems.map(encodeFilteredVectorAsSingleLine).join(" ") : "") +
+    (arrayItems.length ? " " + arrayItems.map(formatFilteredDataAsSingleLine).join(" ") : "") +
     ")"
   );
 };
 
-const encodeFilteredVectorWithIdentation = (
+const formatFilteredDataWithIdentation = (
   data: unknown[],
   scope: number,
   identation: number
@@ -39,11 +39,11 @@ const encodeFilteredVectorWithIdentation = (
   const firstItem = data[0] as string;
 
   // param / result vectors should be on the same line with the func
-  if (["param", "result"].includes(firstItem)) return " " + encodeFilteredVectorAsSingleLine(data);
+  if (["param", "result"].includes(firstItem)) return " " + formatFilteredDataAsSingleLine(data);
 
   // import / export vectors should be on the same line
   if (["import", "export"].includes(firstItem))
-    return "\n" + whitespace + encodeFilteredVectorAsSingleLine(data);
+    return "\n" + whitespace + formatFilteredDataAsSingleLine(data);
 
   let result = "";
   if (scope > 0) {
@@ -60,7 +60,7 @@ const encodeFilteredVectorWithIdentation = (
 
   if (i < data.length) {
     for (; i < data.length; i++) {
-      result += encodeFilteredVectorWithIdentation(data[i] as unknown[], scope + 1, identation);
+      result += formatFilteredDataWithIdentation(data[i] as unknown[], scope + 1, identation);
     }
     result += "\n" + whitespace;
   }
@@ -68,9 +68,8 @@ const encodeFilteredVectorWithIdentation = (
   return result;
 };
 
-export const watSingleLineVectorEncoder = (data: unknown[]): string =>
-  encodeFilteredVectorAsSingleLine(filter(data));
+export const singleLineFormatter = (data: unknown[]): string =>
+  formatFilteredDataAsSingleLine(filter(data));
 
-export const watIdentedVectorEncoder = (identation: number): WatVectorEncoder => (
-  data: unknown[]
-): string => encodeFilteredVectorWithIdentation(filter(data), 0, identation);
+export const identedFormatter = (identation: number): WatFormatter => (data: unknown[]): string =>
+  formatFilteredDataWithIdentation(filter(data), 0, identation);
