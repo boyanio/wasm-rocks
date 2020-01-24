@@ -49,23 +49,18 @@ export const emitWat = (ast: Module, format: WatFormatter): string => {
           ];
 
         case "loop":
-          return [
-            instruction.instructionType,
-            instruction.id,
-            ...instruction.instructions.map(emitInstruction)
-          ];
+          return [instruction.instructionType, ...instruction.instructions.map(emitInstruction)];
 
         case "block":
           return [
             instruction.instructionType,
-            instruction.id,
             emitResult(instruction.resultType),
             ...instruction.instructions.map(emitInstruction)
           ];
 
         case "br":
         case "br_if":
-          return [instruction.instructionType, instruction.id];
+          return [instruction.instructionType, instruction.labelIndex];
       }
     };
 

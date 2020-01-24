@@ -88,19 +88,18 @@ export type CallInstruction = {
 
 export type BlockInstruction = {
   instructionType: "block";
-  id?: Identifier;
   resultType?: ValueType;
   instructions: Instruction[];
 };
 
 export type BreakInstruction = {
   instructionType: "br";
-  id: Identifier;
+  labelIndex?: number;
 };
 
 export type BreakIfInstruction = {
   instructionType: "br_if";
-  id: Identifier;
+  labelIndex?: number;
 };
 
 export type IfInstruction = {
@@ -112,7 +111,6 @@ export type IfInstruction = {
 
 export type LoopInstruction = {
   instructionType: "loop";
-  id?: Identifier;
   instructions: Instruction[];
 };
 

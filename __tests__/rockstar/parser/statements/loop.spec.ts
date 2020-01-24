@@ -1,5 +1,5 @@
 import { parse } from "../../../../src/rockstar/parser";
-import { BinaryExpression, Loop } from "../../../../src/rockstar/ast";
+import { BinaryExpression, While } from "../../../../src/rockstar/ast";
 
 describe("rockstar", () => {
   describe("parser", () => {
@@ -13,9 +13,9 @@ describe("rockstar", () => {
           const { statements } = parse(program);
 
           expect(statements.length).toEqual(1);
-          expect(statements[0].type).toEqual("loop");
+          expect(statements[0].type).toEqual(loopType.toLowerCase());
 
-          const loop = statements[0] as Loop;
+          const loop = statements[0] as While;
           expect(loop.condition.type).toEqual("binaryExpression");
 
           const condition = loop.condition as BinaryExpression;
@@ -37,9 +37,9 @@ describe("rockstar", () => {
           const { statements } = parse(program);
 
           expect(statements.length).toEqual(1);
-          expect(statements[0].type).toEqual("loop");
+          expect(statements[0].type).toEqual("while");
 
-          const loop = statements[0] as Loop;
+          const loop = statements[0] as While;
           expect(loop.body.statements[0].type).toEqual("break");
         });
       }
@@ -53,9 +53,9 @@ describe("rockstar", () => {
           const { statements } = parse(program);
 
           expect(statements.length).toEqual(1);
-          expect(statements[0].type).toEqual("loop");
+          expect(statements[0].type).toEqual("while");
 
-          const loop = statements[0] as Loop;
+          const loop = statements[0] as While;
           expect(loop.body.statements[0].type).toEqual("continue");
         });
       }

@@ -30,7 +30,7 @@ describe("rockstar", () => {
         // 2. variable declaration
         // 3. loop
         expect(program.statements.length).toEqual(3);
-        expect(program.statements[2].type).toEqual("loop");
+        expect(program.statements[2].type).toEqual("while");
       });
     });
   });

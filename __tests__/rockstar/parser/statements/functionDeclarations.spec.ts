@@ -71,7 +71,7 @@ describe("rockstar", () => {
 
         const node = statements[0] as FunctionDeclaration;
         expect(node.statements.length).toEqual(1);
-        expect(node.statements[0].type).toEqual("loop");
+        expect(node.statements[0].type).toEqual("until");
       });
     });
   });

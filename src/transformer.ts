@@ -54,7 +54,7 @@ export const transform = (rockstarAst: rockstar.Program): wasm.Module => {
     memories: [] as wasm.Memory[]
   };
 
-  let loopsCount = 0;
+  let blockIndex = 0;
   const processedFunctions: rockstar.FunctionDeclaration[] = [];
   const imports = new Map<string, wasm.Import>();
 
@@ -295,38 +295,46 @@ export const transform = (rockstarAst: rockstar.Program): wasm.Module => {
           ];
         }
 
-        case "loop": {
-          loopsCount++;
+        case "while":
+        case "until": {
+          const firstBlockIndex = blockIndex++;
+          const secondBlockIndex = blockIndex++;
+
+          // For while loops, we negate the condition for
+          // correct break
+          const negateInstruction: wasm.Instruction[] = [];
+          if (statement.type === "while") {
+            negateInstruction.push({
+              instructionType: "unaryOperation",
+              operation: "i32.eqz"
+            });
+          }
+
           const { condition, body } = statement;
           const instructions: wasm.Instruction[] = [
             {
               instructionType: "block",
-              id: wasmId(`loop${loopsCount - 1}block`),
               instructions: [
                 {
                   instructionType: "loop",
-                  id: wasmId(`loop${loopsCount - 1}`),
                   instructions: [
                     ...transformExpression(condition),
-                    {
-                      instructionType: "unaryOperation",
-                      operation: "i32.eqz"
-                    },
+                    ...negateInstruction,
                     {
                       instructionType: "br_if",
-                      id: wasmId(`loop${loopsCount - 1}`)
+                      labelIndex: secondBlockIndex
                     },
                     ...body.statements.flatMap(transformStatement),
                     {
                       instructionType: "br",
-                      id: wasmId(`loop${loopsCount - 1}block`)
+                      labelIndex: firstBlockIndex
                     }
                   ]
                 }
               ]
             }
           ];
-          loopsCount--;
+          blockIndex -= 2;
           return instructions;
         }
 
@@ -334,7 +342,7 @@ export const transform = (rockstarAst: rockstar.Program): wasm.Module => {
           return [
             {
               instructionType: "br",
-              id: wasmId(`loop${loopsCount - 1}`)
+              labelIndex: blockIndex - 1
             }
           ];
 
@@ -342,7 +350,7 @@ export const transform = (rockstarAst: rockstar.Program): wasm.Module => {
           return [
             {
               instructionType: "br",
-              id: wasmId(`loop${loopsCount - 1}block`)
+              labelIndex: blockIndex - 2
             }
           ];
       }

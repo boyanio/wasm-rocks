@@ -1,13 +1,4 @@
-import {
-  batch,
-  $2,
-  oneOrMany,
-  sequence,
-  anyOf,
-  emptyLineOrEOF,
-  anyWord,
-  nextLine
-} from "../parsers";
+import { batch, oneOrMany, sequence, anyOf, emptyLineOrEOF, nextLine, anyWord } from "../parsers";
 import { expression } from "../expressions/expression";
 import { Expression, Statement, Loop } from "src/rockstar/ast";
 import { Parser } from "../types";
@@ -43,12 +34,14 @@ const statement = anyOf<Statement | null>(
  */
 export const loop: Parser<Loop> = batch(
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  (condition: Expression, statements: (Statement | null)[], _) => ({
-    type: "loop",
+  ([type, condition], statements: (Statement | null)[], _) => ({
+    type: type.toLowerCase() as "while" | "until",
     condition,
     body: { statements: statements.filter(x => x) as Statement[] }
   }),
-  nextLine(sequence($2, anyWord("While", "Until"), expression)),
+  nextLine(
+    sequence((a, b) => [a, b] as [string, Expression], anyWord("While", "Until"), expression)
+  ),
   oneOrMany(statement),
   emptyLineOrEOF
 );

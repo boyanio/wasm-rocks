@@ -172,11 +172,19 @@ export type IfStatement = {
   $else?: Block;
 };
 
-export type Loop = {
-  type: "loop";
+export type While = {
+  type: "while";
   condition: Expression;
   body: Block;
 };
+
+export type Until = {
+  type: "until";
+  condition: Expression;
+  body: Block;
+};
+
+export type Loop = While | Until;
 
 export type Program = {
   type: "program";
