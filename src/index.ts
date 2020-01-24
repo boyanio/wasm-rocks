@@ -1,5 +1,5 @@
 import { identedFormatter } from "./wasm/emitter";
-import { toWat } from "./transpiler";
+import { rockstarToWat } from "./compiler";
 import CodeMirror from "codemirror";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -60,7 +60,7 @@ Whisper my world
     const source = inputEditor.getValue();
     let output: string;
     try {
-      output = toWat(source, watFormatter);
+      output = rockstarToWat(source, watFormatter);
     } catch (err) {
       output = err.toString();
     }
