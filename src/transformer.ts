@@ -4,7 +4,8 @@ import { astFactory as wasmFactory } from "./wasm/astFactory";
 import { resolveExpressionType } from "./rockstar/expressionTypeResolver";
 import { getOrThrow } from "./utils/map-utils";
 
-const wasmId = (input: string): wasm.Identifier => "$" + input.replace(/\W/g, "").toLowerCase();
+const wasmId = (input: string | number): wasm.Identifier =>
+  "$" + `${input}`.replace(/\W/g, "").toLowerCase();
 
 class FunctionLocals {
   private locals: Map<string, wasm.Identifier>;
@@ -53,6 +54,7 @@ export const transform = (rockstarAst: rockstar.Program): wasm.Module => {
     memories: [] as wasm.Memory[]
   };
 
+  let loopsCount = 0;
   const processedFunctions: rockstar.FunctionDeclaration[] = [];
   const imports = new Map<string, wasm.Import>();
 
@@ -133,7 +135,7 @@ export const transform = (rockstarAst: rockstar.Program): wasm.Module => {
         case "functionCall":
           return [
             ...expression.args.flatMap(transformExpression),
-            wasmFactory.call(expression.name)
+            wasmFactory.call(wasmId(expression.name))
           ];
 
         case "number":
@@ -270,26 +272,64 @@ export const transform = (rockstarAst: rockstar.Program): wasm.Module => {
             {
               instructionType: "if",
               condition: transformExpression(condition),
-              then: then.statements.flatMap(x => transformStatement(x)),
-              $else: $else ? $else.statements.flatMap(x => transformStatement(x)) : undefined
+              then: then.statements.flatMap(transformStatement),
+              $else: $else ? $else.statements.flatMap(transformStatement) : undefined
             }
           ];
         }
 
         case "loop": {
-          const { condition, block } = statement;
-          return [
+          loopsCount++;
+          const { condition, body } = statement;
+          const instructions: wasm.Instruction[] = [
             {
-              instructionType: "loop",
-              condition: transformExpression(condition),
-              body: block.statements.flatMap(x => transformStatement(x))
+              instructionType: "block",
+              id: wasmId(`loop${loopsCount - 1}block`),
+              instructions: [
+                {
+                  instructionType: "loop",
+                  id: wasmId(`loop${loopsCount - 1}`),
+                  instructions: [
+                    ...transformExpression(condition),
+                    {
+                      instructionType: "unaryOperation",
+                      operation: "i32.eqz"
+                    },
+                    {
+                      instructionType: "br_if",
+                      id: wasmId(`loop${loopsCount - 1}`)
+                    },
+                    ...body.statements.flatMap(transformStatement),
+                    {
+                      instructionType: "br",
+                      id: wasmId(`loop${loopsCount - 1}block`)
+                    }
+                  ]
+                }
+              ]
             }
           ];
+          loopsCount--;
+          return instructions;
         }
 
-        default:
-          throw new Error("Unknown Rockstar statement");
+        case "continue":
+          return [
+            {
+              instructionType: "br",
+              id: wasmId(`loop${loopsCount - 1}`)
+            }
+          ];
+
+        case "break":
+          return [
+            {
+              instructionType: "br",
+              id: wasmId(`loop${loopsCount - 1}block`)
+            }
+          ];
       }
+      throw new Error("Unknown Rockstar statement");
     };
 
     statements.forEach(statement => {

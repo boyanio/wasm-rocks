@@ -107,7 +107,7 @@ const commonVariableNamePrefixes = ["a", "A", "an", "An", "my", "My", "your", "Y
 
 const keywords = new Set<string>([
   "maybe",
-  "definitely maybe",
+  "definitely",
   "if",
   "else",
   "while",
@@ -138,6 +138,9 @@ const keywords = new Set<string>([
   "around",
   "give",
   "back",
+  "break",
+  "continue",
+  "take",
   ...commonVariableNamePrefixes,
   ...pronounKeywords,
   ...nullKeywords,
@@ -148,8 +151,8 @@ const keywords = new Set<string>([
 
 const properVariableName: Parser<Identifier> = map((result: string, toParseError) => {
   const containsKeyword = result
+    .toLowerCase()
     .split(/\s/)
-    .map(x => x.toLowerCase())
     .some(x => keywords.has(x));
   return containsKeyword ? toParseError("Proper variables cannot contain keywords") : result;
 }, batch($1, pattern("[A-Z][a-z]+(\\s[A-Z][a-z]+)+"), punctuation));

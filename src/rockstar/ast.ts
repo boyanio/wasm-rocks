@@ -140,6 +140,14 @@ export type Comment = {
   comment: string;
 };
 
+export type BreakStatement = {
+  type: "break";
+};
+
+export type ContinueStatement = {
+  type: "continue";
+};
+
 export type Statement =
   | Comment
   | Assignment
@@ -149,7 +157,9 @@ export type Statement =
   | IncrementOperation
   | DecrementOperation
   | IfStatement
-  | Loop;
+  | Loop
+  | BreakStatement
+  | ContinueStatement;
 
 export type Block = {
   statements: Statement[];
@@ -159,13 +169,13 @@ export type IfStatement = {
   type: "if";
   condition: Expression;
   then: Block;
-  $else: Block | null;
+  $else?: Block;
 };
 
 export type Loop = {
   type: "loop";
   condition: Expression;
-  block: Block;
+  body: Block;
 };
 
 export type Program = {

@@ -11,8 +11,8 @@ import { io } from "./statements/io";
 import { loop } from "./statements/loop";
 
 const statement = anyOf<Statement>(
-  ifStatement,
   loop,
+  ifStatement,
   comment,
   assignment,
   variableDeclaration,

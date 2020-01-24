@@ -297,6 +297,24 @@ export const optional = <T>(parser: Parser<T>): Parser<T | null> => (
 };
 
 /**
+ * Increases the line number in the context
+ */
+export const nextLine = <T>(parser: Parser<T>): Parser<T> => (
+  lines: string[],
+  context: Context
+): Parsed<T> => {
+  const result = parser(lines, context);
+  if (!isParseError(result)) {
+    if (context.lineIndex >= lines.length - 1)
+      return parseError("Expected another line, but EOF found", context);
+
+    context.lineIndex++;
+    context.offset = 0;
+  }
+  return result;
+};
+
+/**
  * Increases the line number in the context, unless it is the last one
  */
 export const nextLineOrEOF = <T>(parser: Parser<T>): Parser<T> => (
@@ -322,9 +340,19 @@ export const eof = (lines: string[], context: Context): Parsed<null> => {
 /**
  * Matches an empty line.
  */
-export const emptyLine = sequence($1, optional(whitespace), endOfLine);
+export const emptyLine = nextLine(sequence($1, optional(whitespace), endOfLine));
 
 /**
  * Matches an empty line or EOF.
  */
-export const emptyLineOrEOF = nextLineOrEOF(anyOf(emptyLine, eof));
+export const emptyLineOrEOF = anyOf(emptyLine, eof);
+
+export const debug = <T>(parser: Parser<T>, contextName: string): Parser<T> => (
+  lines: string[],
+  context: Context
+): Parsed<T> => {
+  console.log(contextName, "BEFORE:", context);
+  const result = parser(lines, context);
+  console.log(contextName, "AFTER:", context, result);
+  return result;
+};

@@ -3,7 +3,7 @@ import {
   Module,
   Memory,
   Comment,
-  CallControlInstruction,
+  CallInstruction,
   VariableInstruction,
   VariableInstructionOperation,
   Local,
@@ -130,7 +130,7 @@ describe("wasm", () => {
         });
 
         it("emits call to another function", () => {
-          const call: CallControlInstruction = {
+          const call: CallInstruction = {
             instructionType: "call",
             id: "$there"
           };

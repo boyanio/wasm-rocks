@@ -67,7 +67,8 @@ export type UnaryOperation =
   | "f32.ceil"
   | "f32.floor"
   | "f32.convert_i32_s"
-  | "i32.trunc_f32_s";
+  | "i32.trunc_f32_s"
+  | "i32.eqz";
 
 export type UnaryOperationInstruction = {
   instructionType: "unaryOperation";
@@ -79,8 +80,24 @@ export type NumericInstruction =
   | BinaryOperationInstruction
   | UnaryOperationInstruction;
 
-export type CallControlInstruction = {
+export type CallInstruction = {
   instructionType: "call";
+  id: Identifier;
+};
+
+export type BlockInstruction = {
+  instructionType: "block";
+  id?: Identifier;
+  instructions: Instruction[];
+};
+
+export type BreakInstruction = {
+  instructionType: "br";
+  id: Identifier;
+};
+
+export type BreakIfInstruction = {
+  instructionType: "br_if";
   id: Identifier;
 };
 
@@ -93,11 +110,15 @@ export type IfInstruction = {
 
 export type LoopInstruction = {
   instructionType: "loop";
-  condition: Instruction[];
-  body: Instruction[];
+  id?: Identifier;
+  instructions: Instruction[];
 };
 
-export type ControlInstruction = CallControlInstruction;
+export type ControlInstruction =
+  | CallInstruction
+  | BreakInstruction
+  | BreakIfInstruction
+  | BlockInstruction;
 
 export type Instruction =
   | VariableInstruction

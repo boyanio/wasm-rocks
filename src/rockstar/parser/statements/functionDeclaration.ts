@@ -46,7 +46,7 @@ const functionHeader: Parser<FunctionHeader> = nextLineOrEOF(
   )
 );
 
-const functionBody = zeroOrMany(anyOf(statement, optional(nextLineOrEOF(emptyLine))));
+const functionBody = sequence($1, zeroOrMany(statement), optional(emptyLine));
 
 const functionFooter = nextLineOrEOF(sequence($2, wordSequence("Give", "back"), simpleExpression));
 
@@ -66,11 +66,10 @@ export const functionDeclaration = nextLineOrEOF(
         name,
         args,
         result,
-        statements: statements.filter(x => x)
+        statements
       } as FunctionDeclaration),
     functionHeader,
     functionBody,
-    functionFooter,
-    nextLineOrEOF(emptyLine)
+    functionFooter
   )
 );

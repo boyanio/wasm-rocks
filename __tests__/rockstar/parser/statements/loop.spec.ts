@@ -23,8 +23,40 @@ describe("rockstar", () => {
           expect(condition.lhs).toEqual({ type: "variable", name: "tommy" });
           expect(condition.rhs).toEqual({ type: "null" });
 
-          expect(loop.block.statements.length).toEqual(1);
-          expect(loop.block.statements[0].type).toEqual("decrement");
+          expect(loop.body.statements.length).toEqual(1);
+          expect(loop.body.statements[0].type).toEqual("decrement");
+        });
+      }
+
+      for (const br of ["Break", "Break it down"]) {
+        it(`parses loop with: ${br}`, () => {
+          const program = `
+          While Tommy ain't nothing,
+          ${br}
+          `;
+          const { statements } = parse(program);
+
+          expect(statements.length).toEqual(1);
+          expect(statements[0].type).toEqual("loop");
+
+          const loop = statements[0] as Loop;
+          expect(loop.body.statements[0].type).toEqual("break");
+        });
+      }
+
+      for (const cont of ["Continue", "Take it to the top"]) {
+        it(`parses loop with: ${cont}`, () => {
+          const program = `
+          While Tommy ain't nothing,
+          ${cont}
+          `;
+          const { statements } = parse(program);
+
+          expect(statements.length).toEqual(1);
+          expect(statements[0].type).toEqual("loop");
+
+          const loop = statements[0] as Loop;
+          expect(loop.body.statements[0].type).toEqual("continue");
         });
       }
     });

@@ -46,15 +46,16 @@ export const emitWat = (ast: Module, format: WatFormatter): string => {
           ];
 
         case "loop":
+        case "block":
           return [
-            "block",
-            [
-              "loop",
-              ["br_if", 1, ...instruction.condition.map(emitInstruction), ["i32.eqz"]],
-              ...instruction.body.map(emitInstruction),
-              ["br", 0]
-            ]
+            instruction.instructionType,
+            instruction.id,
+            ...instruction.instructions.map(emitInstruction)
           ];
+
+        case "br":
+        case "br_if":
+          return [instruction.instructionType, instruction.id];
       }
     };
 

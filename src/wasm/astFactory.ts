@@ -6,7 +6,7 @@ import {
   UnaryOperationInstruction,
   VariableInstructionOperation,
   VariableInstruction,
-  CallControlInstruction,
+  CallInstruction,
   Local,
   Identifier,
   Param
@@ -35,7 +35,7 @@ export const astFactory = {
     id
   }),
 
-  call: (id: Identifier): CallControlInstruction => ({
+  call: (id: Identifier): CallInstruction => ({
     instructionType: "call",
     id
   }),
