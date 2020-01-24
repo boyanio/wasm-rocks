@@ -7,8 +7,6 @@ export type Identifier = number | string;
 
 export type ValueType = "f32" | "i32";
 
-export type ResultType = "f32" | "i32" | null;
-
 export type Param = {
   valueType: ValueType;
   id?: Identifier;
@@ -16,7 +14,7 @@ export type Param = {
 
 export type FunctionType = {
   params: Param[];
-  result?: ResultType;
+  resultType?: ValueType;
 };
 
 export type Local = {
@@ -55,7 +53,10 @@ export type BinaryOperation =
   | "i32.lt_s"
   | "i32.le_s"
   | "i32.gt_s"
-  | "i32.ge_s";
+  | "i32.ge_s"
+  | "i32.and"
+  | "i32.or"
+  | "i32.xor";
 
 export type BinaryOperationInstruction = {
   instructionType: "binaryOperation";
@@ -88,6 +89,7 @@ export type CallInstruction = {
 export type BlockInstruction = {
   instructionType: "block";
   id?: Identifier;
+  resultType?: ValueType;
   instructions: Instruction[];
 };
 

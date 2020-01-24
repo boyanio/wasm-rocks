@@ -1,4 +1,4 @@
-import { Module, Function, Memory, Export, Import, Instruction } from "../../ast";
+import { Module, Function, Memory, Export, Import, Instruction, ValueType } from "../../ast";
 import { WatFormatter } from "./formatter";
 
 export const emitWat = (ast: Module, format: WatFormatter): string => {
@@ -17,6 +17,9 @@ export const emitWat = (ast: Module, format: WatFormatter): string => {
     if (locals.length) {
       body.push(...locals.map(local => ["local", local.id, local.valueType]));
     }
+
+    const emitResult = (result?: ValueType): unknown[] | undefined =>
+      result ? ["result", result] : undefined;
 
     // body
     const emitInstruction = (instruction: Instruction): unknown[] => {
@@ -46,10 +49,17 @@ export const emitWat = (ast: Module, format: WatFormatter): string => {
           ];
 
         case "loop":
+          return [
+            instruction.instructionType,
+            instruction.id,
+            ...instruction.instructions.map(emitInstruction)
+          ];
+
         case "block":
           return [
             instruction.instructionType,
             instruction.id,
+            emitResult(instruction.resultType),
             ...instruction.instructions.map(emitInstruction)
           ];
 
@@ -68,7 +78,7 @@ export const emitWat = (ast: Module, format: WatFormatter): string => {
       "func",
       id,
       ...functionType.params.map(p => ["param", p.id, p.valueType]),
-      ...(functionType.result ? [functionType.result] : []).map(r => ["result", r]),
+      emitResult(functionType.resultType),
       ...body
     ];
   };

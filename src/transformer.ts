@@ -67,19 +67,21 @@ export const transform = (rockstarAst: rockstar.Program): wasm.Module => {
   const transformFunctionDeclarationInternal = (
     name: string,
     args: rockstar.Variable[],
-    statements: rockstar.Statement[]
+    statements: rockstar.Statement[],
+    result: rockstar.SimpleExpression | null
   ): wasm.Function => {
-    const processedStatements: rockstar.Statement[] = args.map(arg => ({
+    const argStatements: rockstar.Statement[] = args.map(arg => ({
       type: "variableDeclaration",
       variable: arg,
       value: { type: "number", value: 0 }
     }));
+    const processedStatements: rockstar.Statement[] = [];
 
     const wasmFn: wasm.Function = {
       id: wasmId(name),
       functionType: {
         params: args.map<wasm.Param>(arg => ({ valueType: "i32", id: wasmId(arg.name) })),
-        result: "i32"
+        resultType: "i32"
       },
       instructions: [],
       locals: []
@@ -87,7 +89,7 @@ export const transform = (rockstarAst: rockstar.Program): wasm.Module => {
 
     const validateRockstarExpressionType = (expression: rockstar.Expression): void => {
       // all but the last statement
-      const scope = processedStatements.slice(0, -1);
+      const scope = [...argStatements, ...processedStatements.slice(0, -1)];
       const expressionType = resolveExpressionType(expression, scope, processedFunctions);
       switch (expressionType) {
         case "float":
@@ -109,12 +111,24 @@ export const transform = (rockstarAst: rockstar.Program): wasm.Module => {
       .set("greaterThan", "i32.gt_s")
       .set("greaterThanOrEquals", "i32.ge_s")
       .set("lowerThan", "i32.lt_s")
-      .set("lowerThanOrEquals", "i32.le_s");
+      .set("lowerThanOrEquals", "i32.le_s")
+      .set("and", "i32.and")
+      .set("or", "i32.or")
+      .set("xor", "i32.xor");
 
     const transformBinaryOperator = (operator: rockstar.BinaryOperator): wasm.Instruction =>
       wasmFactory.binaryOperation(
         getOrThrow(binaryOperatorMap, operator, `Unknown binary operator: ${operator}`)
       );
+
+    const wrapInBlockIfNecessary = (instructions: wasm.Instruction[]): wasm.Instruction => {
+      if (instructions.length === 1) return instructions[0];
+      return {
+        instructionType: "block",
+        instructions,
+        resultType: "i32"
+      };
+    };
 
     const transformExpression = (expression: rockstar.Expression): wasm.Instruction[] => {
       validateRockstarExpressionType(expression);
@@ -122,20 +136,24 @@ export const transform = (rockstarAst: rockstar.Program): wasm.Module => {
       switch (expression.type) {
         case "binaryExpression":
           return [
-            ...transformExpression(expression.lhs),
-            ...transformExpression(expression.rhs),
-            transformBinaryOperator(expression.operator)
+            wrapInBlockIfNecessary([
+              wrapInBlockIfNecessary(transformExpression(expression.lhs)),
+              wrapInBlockIfNecessary(transformExpression(expression.rhs)),
+              transformBinaryOperator(expression.operator)
+            ])
           ];
 
         case "unaryExpression": {
           // TODO
-          return [];
+          throw new Error("Unary expressions are not implemented yet");
         }
 
         case "functionCall":
           return [
-            ...expression.args.flatMap(transformExpression),
-            wasmFactory.call(wasmId(expression.name))
+            wrapInBlockIfNecessary([
+              ...expression.args.flatMap(transformExpression),
+              wasmFactory.call(wasmId(expression.name))
+            ])
           ];
 
         case "number":
@@ -210,8 +228,7 @@ export const transform = (rockstarAst: rockstar.Program): wasm.Module => {
               name: "func",
               id,
               functionType: {
-                params: [{ valueType: "i32", id: wasmId("what") }],
-                result: null
+                params: [{ valueType: "i32", id: wasmId("what") }]
               }
             }
           });
@@ -229,7 +246,7 @@ export const transform = (rockstarAst: rockstar.Program): wasm.Module => {
               id,
               functionType: {
                 params: [],
-                result: "i32"
+                resultType: "i32"
               }
             }
           });
@@ -336,6 +353,10 @@ export const transform = (rockstarAst: rockstar.Program): wasm.Module => {
       wasmFn.instructions.push(...transformStatement(statement));
     });
 
+    if (result) {
+      wasmFn.instructions.push(...transformExpression(result));
+    }
+
     // build locals
     wasmFn.locals = locals.build();
 
@@ -343,7 +364,12 @@ export const transform = (rockstarAst: rockstar.Program): wasm.Module => {
   };
 
   const transformFunctionDeclaration = (func: rockstar.FunctionDeclaration): void => {
-    const wasmFn = transformFunctionDeclarationInternal(func.name, func.args, func.statements);
+    const wasmFn = transformFunctionDeclarationInternal(
+      func.name,
+      func.args,
+      func.statements,
+      func.result
+    );
     wasmModule.functions.push(wasmFn);
     processedFunctions.push(func);
   };
@@ -352,10 +378,10 @@ export const transform = (rockstarAst: rockstar.Program): wasm.Module => {
     funcs.forEach(transformFunctionDeclaration);
 
   const transformMainFunctionDeclaration = (statements: rockstar.Statement[]): void => {
-    const mainFn = transformFunctionDeclarationInternal("main", [], statements);
+    const mainFn = transformFunctionDeclarationInternal("main", [], statements, null);
 
     // Add result, as we intend to end the main procedure with 0
-    mainFn.functionType.result = "i32";
+    mainFn.functionType.resultType = "i32";
     mainFn.instructions.push(wasmFactory.const(0));
 
     // register the function

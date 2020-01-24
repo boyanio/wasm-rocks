@@ -82,7 +82,7 @@ describe("wasm", () => {
                   id: "$hello",
                   functionType: {
                     params: [{ valueType: "f32", id: "$a" }, { valueType: "f32" }],
-                    result: "f32"
+                    resultType: "f32"
                   }
                 }
               }
@@ -122,7 +122,7 @@ describe("wasm", () => {
                 id: "$hello",
                 instructions: [comment],
                 locals: [],
-                functionType: { params: [], result: null }
+                functionType: { params: [] }
               }
             ]
           });
@@ -140,7 +140,7 @@ describe("wasm", () => {
                 id: "$hello",
                 instructions: [call],
                 locals: [],
-                functionType: { params: [], result: null }
+                functionType: { params: [] }
               }
             ]
           });
@@ -160,7 +160,7 @@ describe("wasm", () => {
                   id: "$hello",
                   instructions: [variable],
                   locals: [],
-                  functionType: { params: [], result: null }
+                  functionType: { params: [] }
                 }
               ]
             });
@@ -180,7 +180,7 @@ describe("wasm", () => {
                 id: "$hello",
                 instructions: [constInstr],
                 locals: [],
-                functionType: { params: [], result: null }
+                functionType: { params: [] }
               }
             ]
           });
@@ -199,7 +199,7 @@ describe("wasm", () => {
                   id: "$hello",
                   instructions: [binaryOperation],
                   locals: [],
-                  functionType: { params: [], result: null }
+                  functionType: { params: [] }
                 }
               ]
             });
@@ -219,7 +219,7 @@ describe("wasm", () => {
                   id: "$hello",
                   instructions: [unaryOperation],
                   locals: [],
-                  functionType: { params: [], result: null }
+                  functionType: { params: [] }
                 }
               ]
             });
@@ -240,7 +240,7 @@ describe("wasm", () => {
                 id: "$hello",
                 locals: [local0, local1],
                 instructions: [],
-                functionType: { params: [], result: null }
+                functionType: { params: [] }
               }
             ]
           });

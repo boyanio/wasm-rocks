@@ -92,7 +92,7 @@ const operators: Operators = {
   aint: "notEquals",
   and: "and",
   or: "or",
-  nor: "nor",
+  xor: "xor",
   without: "subtract",
   minus: "subtract",
   of: "multiply",

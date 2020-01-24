@@ -5,7 +5,7 @@ import { isParseError } from "../parsers";
 const operatorPrecedence = new Map<Operator, number>([
   ["or", 1],
   ["and", 2],
-  ["nor", 3],
+  ["xor", 3],
   ["equals", 6],
   ["notEquals", 6],
   ["greaterThan", 7],

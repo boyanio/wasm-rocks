@@ -60,7 +60,7 @@ export type Comparator =
   | "lowerThan"
   | "lowerThanOrEquals";
 
-export type LogicalOperator = "and" | "or" | "nor" | "not";
+export type LogicalOperator = "and" | "or" | "xor" | "not";
 
 export type ArithmeticOperator = "add" | "subtract" | "multiply" | "divide";
 

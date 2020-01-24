@@ -69,7 +69,7 @@ describe("transformer", () => {
 
     const funcImportType = imports[0].importType as wasm.FunctionImportType;
     expect(funcImportType.functionType.params).toEqual([{ valueType: "i32", id: "$what" }]);
-    expect(funcImportType.functionType.result).toBeNull();
+    expect(funcImportType.functionType.resultType).toBeUndefined();
   });
 
   it("adds an import for I/O: listen", () => {
@@ -90,7 +90,7 @@ describe("transformer", () => {
 
     const funcImportType = imports[0].importType as wasm.FunctionImportType;
     expect(funcImportType.functionType.params.length).toEqual(0);
-    expect(funcImportType.functionType.result).toEqual("i32");
+    expect(funcImportType.functionType.resultType).toEqual("i32");
   });
 
   describe("assignments", () => {
@@ -165,9 +165,15 @@ describe("transformer", () => {
           { instructionType: "variable", id: "$mydesire", operation: "set" },
           { instructionType: "const", value: 6, valueType: "i32" },
           { instructionType: "variable", id: "$y", operation: "set" },
-          { instructionType: "variable", id: "$y", operation: "get" },
-          { instructionType: "const", value: 10, valueType: "i32" },
-          { instructionType: "binaryOperation", operation: binaryOperation },
+          {
+            instructionType: "block",
+            resultType: "i32",
+            instructions: [
+              { instructionType: "variable", id: "$y", operation: "get" },
+              { instructionType: "const", value: 10, valueType: "i32" },
+              { instructionType: "binaryOperation", operation: binaryOperation }
+            ]
+          },
           { instructionType: "variable", id: "$mydesire", operation: "set" },
           { instructionType: "const", value: 0, valueType: "i32" } // main fn ends with this
         ]);
@@ -210,9 +216,15 @@ describe("transformer", () => {
       expect(mainFn.instructions).toEqual([
         { instructionType: "const", value: 5, valueType: "i32" },
         { instructionType: "variable", id: "$x", operation: "set" },
-        { instructionType: "variable", id: "$x", operation: "get" },
-        { instructionType: "const", value: 5, valueType: "i32" },
-        { instructionType: "binaryOperation", operation: binaryOperation },
+        {
+          instructionType: "block",
+          resultType: "i32",
+          instructions: [
+            { instructionType: "variable", id: "$x", operation: "get" },
+            { instructionType: "const", value: 5, valueType: "i32" },
+            { instructionType: "binaryOperation", operation: binaryOperation }
+          ]
+        },
         { instructionType: "variable", id: "$x", operation: "set" },
         { instructionType: "const", value: 0, valueType: "i32" } // main fn ends with this
       ]);
@@ -331,7 +343,7 @@ describe("transformer", () => {
     const fn = wasmAst.functions.find(f => f.id === "$hello") as wasm.Function;
     expect(fn).toBeTruthy();
     expect(fn.functionType.params.length).toEqual(1);
-    expect(fn.functionType.result).toEqual("i32");
+    expect(fn.functionType.resultType).toEqual("i32");
   });
 
   it("does not transform function params as locals", () => {
