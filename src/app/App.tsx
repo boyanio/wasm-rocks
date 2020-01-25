@@ -3,18 +3,14 @@ import { RockstarEditor } from "./RockstarEditor";
 import { WebAssemblyEditor } from "./WebAssemblyEditor";
 
 interface State {
-  rockstarSource: string | null;
+  rockstarSource: string;
 }
 
 export class App extends Component<{}, State> {
   constructor() {
     super();
-
-    this.state = {
-      rockstarSource: null
-    };
-
     this.handleSourceChange = this.handleSourceChange.bind(this);
+    this.state = { rockstarSource: "" };
   }
 
   handleSourceChange(source: string): void {

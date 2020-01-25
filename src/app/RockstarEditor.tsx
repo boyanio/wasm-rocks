@@ -72,7 +72,7 @@ export class RockstarEditor extends Component<Props> {
       <Fragment>
         <ul className="nav nav-tabs">
           <li className="nav-item">
-            <a className="nav-link active" href="#">
+            <a className="nav-link active" href="#" onClick={(e): void => e.preventDefault()}>
               Rockstar
             </a>
           </li>

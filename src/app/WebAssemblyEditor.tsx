@@ -17,11 +17,11 @@ const compileToWat = (rockstarSource: string): string => {
 };
 
 interface Props {
-  rockstarSource: string | null;
+  rockstarSource: string;
 }
 
 interface State {
-  wasmOutput: string | null;
+  wasmOutput: string;
   canCompileToWasm: boolean;
   activeTab: "wat" | "output";
 }
@@ -34,7 +34,9 @@ export class WebAssemblyEditor extends Component<Props, State> {
   constructor(props: Props) {
     super(props);
     this.handleCompileToWasmClick = this.handleCompileToWasmClick.bind(this);
-    this.state = { wasmOutput: null, canCompileToWasm: false, activeTab: "wat" };
+    this.handleWebAssemblyTabClick = this.handleWebAssemblyTabClick.bind(this);
+    this.handleOutputTabClick = this.handleOutputTabClick.bind(this);
+    this.state = { wasmOutput: "", canCompileToWasm: false, activeTab: "wat" };
   }
 
   componentDidMount(): void {
@@ -54,7 +56,7 @@ export class WebAssemblyEditor extends Component<Props, State> {
   }
 
   componentDidUpdate(): void {
-    if (this.editor) this.editor.setValue(compileToWat(this.props.rockstarSource || ""));
+    if (this.editor) this.editor.setValue(compileToWat(this.props.rockstarSource));
   }
 
   handleCompileToWasmClick(): void {
@@ -62,6 +64,16 @@ export class WebAssemblyEditor extends Component<Props, State> {
       this.wabt.compileToWasm(this.editor.getValue());
       this.setState({ activeTab: "output" });
     }
+  }
+
+  handleWebAssemblyTabClick(e: Event): void {
+    e.preventDefault();
+    this.setState({ activeTab: "wat" });
+  }
+
+  handleOutputTabClick(e: Event): void {
+    e.preventDefault();
+    this.setState({ activeTab: "output" });
   }
 
   render(): h.JSX.Element {
@@ -78,20 +90,12 @@ export class WebAssemblyEditor extends Component<Props, State> {
       <Fragment>
         <ul className="nav nav-tabs">
           <li className="nav-item">
-            <a
-              className={watTabClassName}
-              href="#"
-              onClick={(): void => this.setState({ activeTab: "wat" })}
-            >
+            <a className={watTabClassName} href="#" onClick={this.handleWebAssemblyTabClick}>
               WebAssembly
             </a>
           </li>
           <li className="nav-item">
-            <a
-              className={outputTabClassName}
-              href="#"
-              onClick={(): void => this.setState({ activeTab: "output" })}
-            >
+            <a className={outputTabClassName} href="#" onClick={this.handleOutputTabClick}>
               Output
             </a>
           </li>
@@ -101,7 +105,7 @@ export class WebAssemblyEditor extends Component<Props, State> {
           <p>
             <button
               type="button"
-              className="btn btn-primary mt-1"
+              className="btn btn-primary mt-2"
               disabled={!this.state.canCompileToWasm}
               onClick={this.handleCompileToWasmClick}
             >

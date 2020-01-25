@@ -5,11 +5,17 @@ body {
 
 .CodeMirror {
   border: 1px solid black;
-  font-size: 13px;
+  font-size: 0.9rem;
+  height: 400px;
 }
 
-#app {
-  margin-top: 10px;
+.wasm-output {
+  border: 1px solid black;
+  padding: 0.5rem;
+  height: 400px;
+  overflow-y: scroll;
+  background-color: #fff;
+  font-size: 0.9rem;
 }
 
 .navbar {
@@ -30,12 +36,4 @@ body {
 .nav-tabs .nav-link.active {
   border-color: black;
   border-bottom: 0;
-}
-
-.wasm-output {
-  border: 1px solid black;
-  padding: 0.5rem;
-  height: 300px;
-  overflow-y: scroll;
-  background-color: #fff;
 }
