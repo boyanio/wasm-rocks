@@ -82,7 +82,7 @@ Whisper my world
         const features = {};
         module = wabt.parseWat("test.wast", wat, features);
         module.resolveNames();
-        module.validate(features);
+        module.validate();
 
         // eslint-disable-next-line @typescript-eslint/camelcase
         const binaryOutput = module.toBinary({});
