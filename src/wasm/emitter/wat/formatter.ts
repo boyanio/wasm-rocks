@@ -15,15 +15,15 @@ const filter = (data: unknown[]): unknown[] =>
 const formatFilteredDataAsSingleLine = (data: unknown[]): string => {
   if (data.length === 1) return data[0] as string;
 
-  const firstArrayItemIndex = data.findIndex(Array.isArray);
-  const arrayItems = (firstArrayItemIndex < 0
-    ? []
-    : data.splice(firstArrayItemIndex)) as unknown[][];
-  const nonArrayItems = data;
-
   return (
-    `(${nonArrayItems.join(" ")}` +
-    (arrayItems.length ? " " + arrayItems.map(formatFilteredDataAsSingleLine).join(" ") : "") +
+    "(" +
+    data.reduce(
+      (result, item, index) =>
+        result +
+        ((index === 0 ? "" : " ") +
+          (Array.isArray(item) ? formatFilteredDataAsSingleLine(item) : item)),
+      ""
+    ) +
     ")"
   );
 };
@@ -41,8 +41,8 @@ const formatFilteredDataWithIdentation = (
   // param / result vectors should be on the same line with the func
   if (["param", "result"].includes(firstItem)) return " " + formatFilteredDataAsSingleLine(data);
 
-  // import / export vectors should be on the same line
-  if (["import", "export"].includes(firstItem))
+  // import / export / data vectors should be on the same line
+  if (["import", "export", "data"].includes(firstItem))
     return "\n" + whitespace + formatFilteredDataAsSingleLine(data);
 
   let result = "";

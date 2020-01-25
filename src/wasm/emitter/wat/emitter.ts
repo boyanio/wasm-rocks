@@ -1,4 +1,14 @@
-import { Module, Function, Memory, Export, Import, Instruction, ValueType } from "../../ast";
+import {
+  Module,
+  Function,
+  Memory,
+  Export,
+  Import,
+  Instruction,
+  ValueType,
+  DataSegment,
+  ConstInstruction
+} from "../../ast";
 import { WatFormatter } from "./formatter";
 
 export const emitWat = (ast: Module, format: WatFormatter): string => {
@@ -7,6 +17,11 @@ export const emitWat = (ast: Module, format: WatFormatter): string => {
     memory.id,
     memory.memoryType.minSize,
     memory.memoryType.maxSize ? memory.memoryType.maxSize : undefined
+  ];
+
+  const emitConst = ($const: ConstInstruction): unknown[] => [
+    `${$const.valueType}.const`,
+    $const.value
   ];
 
   const emitFunction = (func: Function): unknown[] => {
@@ -31,7 +46,7 @@ export const emitWat = (ast: Module, format: WatFormatter): string => {
           return ["call", instruction.id];
 
         case "const":
-          return [`${instruction.valueType}.const`, instruction.value];
+          return emitConst(instruction);
 
         case "comment":
           return [";", instruction.value, ";"];
@@ -64,9 +79,8 @@ export const emitWat = (ast: Module, format: WatFormatter): string => {
       }
     };
 
-    for (const instruction of instructions) {
-      body.push(emitInstruction(instruction));
-    }
+    // Append instructions to body
+    body.push(...instructions.map(emitInstruction));
 
     // func (param XX)* (result YY) body
     return [
@@ -106,12 +120,19 @@ export const emitWat = (ast: Module, format: WatFormatter): string => {
     return ["import", `"${im.module}"`, `"${im.name}"`, importType];
   };
 
+  const emitDataSegment = (data: DataSegment): unknown[] => [
+    "data",
+    emitConst(data.offset),
+    `"${data.string}\\00"`
+  ];
+
   const module = [
     "module",
     ...ast.imports.map(emitImport),
     ...ast.memories.map(emitMemory),
     ...ast.functions.map(emitFunction),
-    ...ast.exports.map(emitExport)
+    ...ast.exports.map(emitExport),
+    ...ast.dataSegments.map(emitDataSegment)
   ];
   return format(module);
 };

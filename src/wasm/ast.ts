@@ -166,9 +166,16 @@ export type Import = {
   importType: ImportType;
 };
 
+export type DataSegment = {
+  offset: ConstInstruction;
+  string: string;
+  id?: Identifier;
+};
+
 export type Module = {
   functions: Function[];
   exports: Export[];
   imports: Import[];
   memories: Memory[];
+  dataSegments: DataSegment[];
 };

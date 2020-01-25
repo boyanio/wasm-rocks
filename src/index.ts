@@ -21,15 +21,15 @@ Hate is water
 Until my world is Desire,
 Build my world up
 If Midnight taking my world, Fire is nothing and Midnight taking my world, Hate is nothing
-Shout 1
+Shout "FizzBuzz!"
 Take it to the top
 
 If Midnight taking my world, Fire is nothing
-Shout 2
+Shout "Fizz!"
 Take it to the top
 
 If Midnight taking my world, Hate is nothing
-Say 3
+Shout "Buzz!"
 Take it to the top
 
 Whisper my world
@@ -73,6 +73,14 @@ Whisper my world
   WabtModule().then((wabt: any) => {
     const wasmOutput = document.getElementById("wasm-output") as HTMLElement;
 
+    const decodeString = (heap: Uint8Array, offset: number): string => {
+      let s = "";
+      for (let i = offset; heap[i]; i++) {
+        s += String.fromCharCode(heap[i]);
+      }
+      return s;
+    };
+
     const compileToWasm = (wat: string): void => {
       wasmOutput.innerHTML = "";
 
@@ -84,14 +92,23 @@ Whisper my world
         module.resolveNames();
         module.validate();
 
-        // eslint-disable-next-line @typescript-eslint/camelcase
         const binaryOutput = module.toBinary({});
         wasmOutput.textContent = binaryOutput.log;
 
+        let heap: Uint8Array | null = null;
         const buffer = binaryOutput.buffer as BufferSource;
         WebAssembly.instantiate(buffer, {
           env: {
-            print: (what: number): void => {
+            printNumber: (what: number): void => {
+              wasmOutput.innerHTML = (wasmOutput.innerHTML || "") + what + "<br/>";
+            },
+            printString: (offset: number): void => {
+              let what: string;
+              if (!heap) {
+                what = "Error: The WebAssembly heap is not exported";
+              } else {
+                what = decodeString(heap as Uint8Array, offset);
+              }
               wasmOutput.innerHTML = (wasmOutput.innerHTML || "") + what + "<br/>";
             },
             prompt: (): number => {
@@ -103,6 +120,7 @@ Whisper my world
             }
           }
         }).then(({ instance }) => {
+          heap = new Uint8Array((instance.exports.memory as WebAssembly.Memory).buffer);
           const main = instance.exports.main as Function;
           main();
         });

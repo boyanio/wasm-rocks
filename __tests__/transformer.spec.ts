@@ -51,7 +51,7 @@ describe("transformer", () => {
     expect(() => transform(rockstarAst)).toThrow();
   });
 
-  it("adds an import for I/O: say", () => {
+  it("adds an import for I/O: say number", () => {
     const rockstarAst: rockstar.Program = {
       type: "program",
       statements: [{ type: "say", what: { type: "number", value: 5 } }]
@@ -61,9 +61,30 @@ describe("transformer", () => {
     const imports = wasmAst.imports.filter(
       im =>
         im.module === "env" &&
-        im.name === "print" &&
+        im.name === "printNumber" &&
         im.importType.name === "func" &&
-        im.importType.id === "$print"
+        im.importType.id === "$printnumber"
+    );
+    expect(imports.length).toEqual(1);
+
+    const funcImportType = imports[0].importType as wasm.FunctionImportType;
+    expect(funcImportType.functionType.params).toEqual([{ valueType: "i32", id: "$what" }]);
+    expect(funcImportType.functionType.resultType).toBeUndefined();
+  });
+
+  it("adds an import for I/O: say string", () => {
+    const rockstarAst: rockstar.Program = {
+      type: "program",
+      statements: [{ type: "say", what: { type: "string", value: "5" } }]
+    };
+    const wasmAst = transform(rockstarAst);
+
+    const imports = wasmAst.imports.filter(
+      im =>
+        im.module === "env" &&
+        im.name === "printString" &&
+        im.importType.name === "func" &&
+        im.importType.id === "$printstring"
     );
     expect(imports.length).toEqual(1);
 

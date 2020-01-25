@@ -1,8 +1,8 @@
 import * as rockstar from "./rockstar/ast";
 import * as wasm from "./wasm/ast";
 import { astFactory as wasmFactory } from "./wasm/astFactory";
-import { resolveExpressionType } from "./rockstar/expressionTypeResolver";
 import { getOrThrow } from "./utils/map-utils";
+import { resolveExpressionType } from "./rockstar/expressionTypeResolver";
 
 const wasmId = (input: string | number): wasm.Identifier =>
   "$" + `${input}`.replace(/\W/g, "").toLowerCase();
@@ -47,17 +47,29 @@ class FunctionLocals {
 }
 
 export const transform = (rockstarAst: rockstar.Program): wasm.Module => {
-  const wasmModule = {
-    exports: [] as wasm.Export[],
-    functions: [] as wasm.Function[],
-    imports: [] as wasm.Import[],
-    memories: [] as wasm.Memory[]
+  const wasmModule: wasm.Module = {
+    exports: [],
+    functions: [],
+    imports: [],
+    memories: [],
+    dataSegments: []
   };
 
   let blockIndex = 0;
-  const processedFunctions: rockstar.FunctionDeclaration[] = [];
-  const imports = new Map<string, wasm.Import>();
 
+  const dataStrings = new Map<string, number>();
+  const registerDataString = (str: string): number => {
+    let value: number;
+    if (!dataStrings.has(str)) {
+      value = (dataStrings.size + 1) * 16;
+      dataStrings.set(str, value);
+    } else {
+      value = dataStrings.get(str) as number;
+    }
+    return value;
+  };
+
+  const imports = new Map<string, wasm.Import>();
   const registerImport = ($import: wasm.Import): void => {
     if (!imports.has($import.name)) {
       imports.set($import.name, $import);
@@ -85,18 +97,6 @@ export const transform = (rockstarAst: rockstar.Program): wasm.Module => {
       },
       instructions: [],
       locals: []
-    };
-
-    const validateRockstarExpressionType = (expression: rockstar.Expression): void => {
-      // all but the last statement
-      const scope = [...argsAsStatements, ...processedStatements.slice(0, -1)];
-      const expressionType = resolveExpressionType(expression, scope, processedFunctions);
-      switch (expressionType) {
-        case "float":
-          throw new Error("Floats are not supported by the transformation yet");
-        case "string":
-          throw new Error("Strings are not supported by the transformation yet");
-      }
     };
 
     const locals = new FunctionLocals(args);
@@ -131,8 +131,6 @@ export const transform = (rockstarAst: rockstar.Program): wasm.Module => {
     };
 
     const transformExpression = (expression: rockstar.Expression): wasm.Instruction[] => {
-      validateRockstarExpressionType(expression);
-
       switch (expression.type) {
         case "binaryExpression": {
           const { lhs, rhs, operator } = expression;
@@ -174,7 +172,7 @@ export const transform = (rockstarAst: rockstar.Program): wasm.Module => {
           return [wasmFactory.const("i32", expression.value ? 1 : 0)];
 
         case "string":
-          throw new Error("String expressions are not supperted by the transofmration yet");
+          return [wasmFactory.const("i32", registerDataString(expression.value))];
 
         case "mysterious":
         case "null":
@@ -231,10 +229,21 @@ export const transform = (rockstarAst: rockstar.Program): wasm.Module => {
 
         case "say": {
           const { what } = statement as rockstar.SayStatement;
-          const id = wasmId("print");
+          const isString =
+            resolveExpressionType(
+              what,
+              [...argsAsStatements, ...processedStatements.slice(0, -1)],
+              []
+            ) === "string";
+
+          // Strings should be decoded from the memory, while
+          // numbers can be printed directly. At the end, the parameter
+          // is always a number, so we need a way to distinguish these two
+          const name = isString ? "printString" : "printNumber";
+          const id = wasmId(name);
           registerImport({
             module: "env",
-            name: "print",
+            name,
             importType: {
               name: "func",
               id,
@@ -355,7 +364,6 @@ export const transform = (rockstarAst: rockstar.Program): wasm.Module => {
       func.result
     );
     wasmModule.functions.push(wasmFn);
-    processedFunctions.push(func);
   };
 
   const transformFunctionDeclarations = (funcs: rockstar.FunctionDeclaration[]): void =>
@@ -364,11 +372,11 @@ export const transform = (rockstarAst: rockstar.Program): wasm.Module => {
   const transformMainFunctionDeclaration = (statements: rockstar.Statement[]): void => {
     const mainFn = transformFunctionDeclarationInternal("main", [], statements, null);
 
-    // Add result, as we intend to end the main procedure with 0
+    // Main procedure ends with an integer
     mainFn.functionType.resultType = "i32";
     mainFn.instructions.push(wasmFactory.const("i32", 0));
 
-    // register the function
+    // Register the main function
     wasmModule.functions.push(mainFn);
 
     // Export the main function
@@ -399,6 +407,11 @@ export const transform = (rockstarAst: rockstar.Program): wasm.Module => {
   // memory
   wasmModule.memories.push({ id: wasmId("memory"), memoryType: { minSize: 1 } });
   wasmModule.exports.push({ id: wasmId("memory"), exportType: "memory", name: "memory" });
+
+  // data segments
+  wasmModule.dataSegments = [...dataStrings.entries()].map(([key, value]) =>
+    wasmFactory.dataSegment(wasmFactory.const("i32", value), key)
+  );
 
   return wasmModule;
 };

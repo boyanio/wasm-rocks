@@ -15,7 +15,8 @@ import {
   IfInstruction,
   Instruction,
   BreakInstruction,
-  BreakIfInstruction
+  BreakIfInstruction,
+  DataSegment
 } from "./ast";
 
 export const astFactory = {
@@ -76,5 +77,11 @@ export const astFactory = {
   breakIf: (labelIndex?: number): BreakIfInstruction => ({
     instructionType: "br_if",
     labelIndex
+  }),
+
+  dataSegment: (offset: ConstInstruction, string: string, id?: Identifier): DataSegment => ({
+    offset,
+    string,
+    id
   })
 };

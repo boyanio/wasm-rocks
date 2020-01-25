@@ -101,6 +101,12 @@ describe("wasm", () => {
             "(module\n  (func $func (param f32) (result f32)\n    (call $x)\n  )\n)"
           );
         });
+
+        it("formats data segment on a single line", () => {
+          const encodeVector = identedFormatter(2);
+          const result = encodeVector(["module", ["data", ["i32.const", 16], '"Hello\\00"']]);
+          expect(result).toEqual('(module\n  (data (i32.const 16) "Hello\\00")\n)');
+        });
       });
     });
   });

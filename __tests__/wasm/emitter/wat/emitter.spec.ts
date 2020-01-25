@@ -30,7 +30,8 @@ const createModule = (options: ModuleOptions): Module =>
       exports: [],
       memories: [],
       imports: [],
-      functions: []
+      functions: [],
+      dataSegments: []
     },
     options
   );
