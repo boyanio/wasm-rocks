@@ -32,3 +32,7 @@ For now, I use [WebAssembly Binary Kit](https://github.com/WebAssembly/wabt) to 
 - [
   Build your own WebAssembly Compiler
   ](https://blog.scottlogic.com/2019/05/17/webassembly-compiler.html) by Colin Eberhardt
+
+## Questions & contribution
+
+You can follow me on Twitter [@boyanio](https://twitter.com/boyanio) and ask me any questions you might have. You can directly open issues here on GitHub or sent a Pull-Requests :-)
