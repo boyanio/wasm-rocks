@@ -1,4 +1,41 @@
+html,
+body {
+  background-color: #f4f4f4;
+}
+
 .CodeMirror {
   border: 1px solid black;
   font-size: 13px;
+}
+
+#app {
+  margin-top: 10px;
+}
+
+.navbar {
+  background-color: #0b3c5b;
+  color: #fff;
+}
+
+.navbar h1 {
+  font-size: 1.5rem;
+  margin: 0;
+}
+
+.github-icon {
+  width: 3rem;
+  color: #fff;
+}
+
+.nav-tabs .nav-link.active {
+  border-color: black;
+  border-bottom: 0;
+}
+
+.wasm-output {
+  border: 1px solid black;
+  padding: 0.5rem;
+  height: 300px;
+  overflow-y: scroll;
+  background-color: #fff;
 }

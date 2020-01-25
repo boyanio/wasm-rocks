@@ -4,7 +4,26 @@
 
 [Rockstar](https://codewithrockstar.com) is a computer programming language designed for creating programs that are also hair metal power ballads.
 
-This is a work-in-progress transpilation for the Rockstar language to WebAssembly. You can choose to transpile to WebAssembly's [text format](https://webassembly.org/docs/text-format/) or [binary encoding](https://webassembly.org/docs/binary-encoding/).
+This is a work-in-progress transpilation for the Rockstar language to WebAssembly. You can compile to WebAssembly's [text format](https://webassembly.org/docs/text-format/) and then compile to the [binary encoding](https://webassembly.org/docs/binary-encoding/), which is also executed in the browser.
+
+## Get started
+
+```
+yarn install
+yarn build
+```
+
+This will create a `build` folder, where you can open `index.html` in your favorite browser.
+
+## How does it work?
+
+The idea is to do a [AST-to-AST](https://en.wikipedia.org/wiki/Abstract_syntax_tree) transformation. The sequence is:
+
+1. Parse Rockstar source, which procudes a Rockstar AST
+2. Transform Rockstar AST to WebAssembly AST
+3. Emit WebAssembly AST in WebAssembly Text Format (wat)
+
+For now, I use [WebAssembly Binary Kit](https://github.com/WebAssembly/wabt) to compile the WebAssembly Text Format to the binary encoded version. In the future, I will add direct compilation to wasm.
 
 ## References
 

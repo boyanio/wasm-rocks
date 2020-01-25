@@ -11,7 +11,10 @@
     "lib": ["es2019", "dom"],
     "strictNullChecks": true,
     "baseUrl": ".",
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "jsx": "react",
+    "jsxFactory": "h"
   },
-  "exclude": ["node_modules"]
+  "exclude": ["node_modules"],
+  "include": ["**/*.tsx", "**/*.ts"]
 }
