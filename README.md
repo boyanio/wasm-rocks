@@ -25,6 +25,13 @@ The idea is to do a [AST-to-AST](https://en.wikipedia.org/wiki/Abstract_syntax_t
 
 For now, I use [WebAssembly Binary Kit](https://github.com/WebAssembly/wabt) to compile the WebAssembly Text Format to the binary encoded version. In the future, I will add direct compilation to wasm.
 
+## Known limitations
+
+- Rockstar parsing does not support arrays
+- Rockstar parsing does not support list arithmetics
+- Rockstar strings can only be used in _say_ statements, i.e. outputting something. If you try to do some operations with strings, you might not get what you expect. This is because WebAssembly does not support string operations so far.
+- WebAssembly operations are done with 32-bit signed integers only. While floats exist in WebAssembly and Rockstar, I have decided to omit them for easier transformation.
+
 ## References
 
 - [typed-parser](https://github.com/jinjor/typed-parser) A parser library for TypeScript, inspired by elm/parser and Parsec(Haskell)
