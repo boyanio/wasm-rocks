@@ -40,7 +40,7 @@ export const emitWat = (ast: Module, format: WatFormatter): string => {
     const emitInstruction = (instruction: Instruction): unknown[] => {
       switch (instruction.instructionType) {
         case "variable":
-          return [`local.${instruction.operation}`, instruction.id];
+          return [instruction.operation, instruction.id];
 
         case "call":
           return ["call", instruction.id];

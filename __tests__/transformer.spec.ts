@@ -137,9 +137,9 @@ describe("transformer", () => {
       expect(mainFn.locals.length).toEqual(1);
       expect(mainFn.instructions).toEqual([
         { instructionType: "const", value: 5, valueType: "i32" },
-        { instructionType: "variable", id: "$x", operation: "set" },
+        { instructionType: "variable", id: "$x", operation: "local.set" },
         { instructionType: "const", value: 10, valueType: "i32" },
-        { instructionType: "variable", id: "$x", operation: "set" },
+        { instructionType: "variable", id: "$x", operation: "local.set" },
         { instructionType: "const", value: 0, valueType: "i32" } // main fn ends with this
       ]);
     });
@@ -147,7 +147,7 @@ describe("transformer", () => {
     type Case = [rockstar.ArithmeticOperator, wasm.BinaryOperation];
     for (const [arithmeticOperator, binaryOperation] of [
       ["add", "i32.add"],
-      ["divide", "i32.div"],
+      ["divide", "i32.div_s"],
       ["multiply", "i32.mul"],
       ["subtract", "i32.sub"]
     ] as Case[]) {
@@ -183,19 +183,19 @@ describe("transformer", () => {
         expect(mainFn.locals.length).toEqual(2);
         expect(mainFn.instructions).toEqual([
           { instructionType: "const", value: 5, valueType: "i32" },
-          { instructionType: "variable", id: "$mydesire", operation: "set" },
+          { instructionType: "variable", id: "$mydesire", operation: "local.set" },
           { instructionType: "const", value: 6, valueType: "i32" },
-          { instructionType: "variable", id: "$y", operation: "set" },
+          { instructionType: "variable", id: "$y", operation: "local.set" },
           {
             instructionType: "block",
             resultType: "i32",
             instructions: [
-              { instructionType: "variable", id: "$y", operation: "get" },
+              { instructionType: "variable", id: "$y", operation: "local.get" },
               { instructionType: "const", value: 10, valueType: "i32" },
               { instructionType: "binaryOperation", operation: binaryOperation }
             ]
           },
-          { instructionType: "variable", id: "$mydesire", operation: "set" },
+          { instructionType: "variable", id: "$mydesire", operation: "local.set" },
           { instructionType: "const", value: 0, valueType: "i32" } // main fn ends with this
         ]);
       });
@@ -205,7 +205,7 @@ describe("transformer", () => {
   type CompoundAssignmentCase = [rockstar.ArithmeticOperator, wasm.BinaryOperation];
   for (const [arithmeticOperator, binaryOperation] of [
     ["add", "i32.add"],
-    ["divide", "i32.div"],
+    ["divide", "i32.div_s"],
     ["multiply", "i32.mul"],
     ["subtract", "i32.sub"]
   ] as CompoundAssignmentCase[]) {
@@ -236,17 +236,17 @@ describe("transformer", () => {
       expect(mainFn.locals.length).toEqual(1);
       expect(mainFn.instructions).toEqual([
         { instructionType: "const", value: 5, valueType: "i32" },
-        { instructionType: "variable", id: "$x", operation: "set" },
+        { instructionType: "variable", id: "$x", operation: "local.set" },
         {
           instructionType: "block",
           resultType: "i32",
           instructions: [
-            { instructionType: "variable", id: "$x", operation: "get" },
+            { instructionType: "variable", id: "$x", operation: "local.get" },
             { instructionType: "const", value: 5, valueType: "i32" },
             { instructionType: "binaryOperation", operation: binaryOperation }
           ]
         },
-        { instructionType: "variable", id: "$x", operation: "set" },
+        { instructionType: "variable", id: "$x", operation: "local.set" },
         { instructionType: "const", value: 0, valueType: "i32" } // main fn ends with this
       ]);
     });
@@ -279,11 +279,11 @@ describe("transformer", () => {
       expect(mainFn.locals.length).toEqual(1);
       expect(mainFn.instructions).toEqual([
         { instructionType: "const", value: 5, valueType: "i32" },
-        { instructionType: "variable", id: "$x", operation: "set" },
-        { instructionType: "variable", id: "$x", operation: "get" },
+        { instructionType: "variable", id: "$x", operation: "local.set" },
+        { instructionType: "variable", id: "$x", operation: "local.get" },
         { instructionType: "const", value: 1, valueType: "i32" },
         { instructionType: "binaryOperation", operation: binaryOperation },
-        { instructionType: "variable", id: "$x", operation: "set" },
+        { instructionType: "variable", id: "$x", operation: "local.set" },
         { instructionType: "const", value: 0, valueType: "i32" } // main fn ends with this
       ]);
     });
@@ -317,12 +317,12 @@ describe("transformer", () => {
       expect(mainFn.locals.length).toEqual(1);
       expect(mainFn.instructions).toEqual([
         { instructionType: "const", value: 5, valueType: "i32" },
-        { instructionType: "variable", id: "$x", operation: "set" },
-        { instructionType: "variable", id: "$x", operation: "get" },
+        { instructionType: "variable", id: "$x", operation: "local.set" },
+        { instructionType: "variable", id: "$x", operation: "local.get" },
         { instructionType: "unaryOperation", operation: "f32.convert_i32_s" },
         { instructionType: "unaryOperation", operation: unaryOperation },
         { instructionType: "unaryOperation", operation: "i32.trunc_f32_s" },
-        { instructionType: "variable", id: "$x", operation: "set" },
+        { instructionType: "variable", id: "$x", operation: "local.set" },
         { instructionType: "const", value: 0, valueType: "i32" } // main fn ends with this
       ]);
     });

@@ -15,7 +15,7 @@ import {
   Import,
   Export,
   Function
-} from "src/wasm/ast";
+} from "../../../../src/wasm/ast";
 
 type ModuleOptions = {
   memories?: Memory[];
@@ -82,7 +82,10 @@ describe("wasm", () => {
                   name: "func",
                   id: "$hello",
                   functionType: {
-                    params: [{ valueType: "f32", id: "$a" }, { valueType: "f32" }],
+                    params: [
+                      { valueType: "f32", id: "$a" },
+                      { valueType: "f32", id: "$b" }
+                    ],
                     resultType: "f32"
                   }
                 }
@@ -90,7 +93,7 @@ describe("wasm", () => {
             ]
           });
           expect(wat).toEqual(
-            '(module (import "env" "hello" (func $hello (param $a f32) (param f32) (result f32))))'
+            '(module (import "env" "hello" (func $hello (param $a f32) (param $b f32) (result f32))))'
           );
         });
       });
@@ -148,7 +151,11 @@ describe("wasm", () => {
           expect(wat).toEqual("(module (func $hello (call $there)))");
         });
 
-        for (const operation of ["get", "set", "tee"] as VariableInstructionOperation[]) {
+        for (const operation of [
+          "local.get",
+          "local.set",
+          "local.tee"
+        ] as VariableInstructionOperation[]) {
           it(`emits variable instruction: ${operation}`, () => {
             const variable: VariableInstruction = {
               instructionType: "variable",
@@ -165,7 +172,7 @@ describe("wasm", () => {
                 }
               ]
             });
-            expect(wat).toEqual(`(module (func $hello (local.${operation} 0)))`);
+            expect(wat).toEqual(`(module (func $hello (${operation} 0)))`);
           });
         }
 
@@ -188,7 +195,12 @@ describe("wasm", () => {
           expect(wat).toEqual("(module (func $hello (i32.const 10)))");
         });
 
-        for (const operation of ["i32.add", "i32.mul", "i32.sub", "i32.div"] as BinaryOperation[]) {
+        for (const operation of [
+          "i32.add",
+          "i32.mul",
+          "i32.sub",
+          "i32.div_s"
+        ] as BinaryOperation[]) {
           it(`emits binary operation: ${operation}`, () => {
             const binaryOperation: BinaryOperationInstruction = {
               instructionType: "binaryOperation",
@@ -230,10 +242,12 @@ describe("wasm", () => {
 
         it("emits locals declaration", () => {
           const local0: Local = {
-            valueType: "f32"
+            valueType: "f32",
+            id: 0
           };
           const local1: Local = {
-            valueType: "i32"
+            valueType: "i32",
+            id: 1
           };
           const wat = emitWithWithNoFormat({
             functions: [
@@ -245,7 +259,7 @@ describe("wasm", () => {
               }
             ]
           });
-          expect(wat).toEqual("(module (func $hello (local f32) (local i32)))");
+          expect(wat).toEqual("(module (func $hello (local 0 f32) (local 1 i32)))");
         });
       });
     });

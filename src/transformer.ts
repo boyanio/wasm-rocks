@@ -103,7 +103,7 @@ export const transform = (rockstarAst: rockstar.Program): wasm.Module => {
 
     const binaryOperatorMap = new Map<rockstar.BinaryOperator, wasm.BinaryOperation>()
       .set("add", "i32.add")
-      .set("divide", "i32.div")
+      .set("divide", "i32.div_s")
       .set("multiply", "i32.mul")
       .set("subtract", "i32.sub")
       .set("equals", "i32.eq")
@@ -180,7 +180,7 @@ export const transform = (rockstarAst: rockstar.Program): wasm.Module => {
 
         case "pronoun":
         case "variable":
-          return [wasmFactory.variable(locals.getOrAdd(expression), "get")];
+          return [wasmFactory.variable(locals.getOrAdd(expression), "local.get")];
       }
     };
 
@@ -205,19 +205,19 @@ export const transform = (rockstarAst: rockstar.Program): wasm.Module => {
         )
       ),
       wasmFactory.unaryOperation("i32.trunc_f32_s"),
-      wasmFactory.variable(locals.getOrAdd(statement.target), "set")
+      wasmFactory.variable(locals.getOrAdd(statement.target), "local.set")
     ];
 
     const transformAssignment = (statement: rockstar.Assignment): wasm.Instruction[] => [
       ...transformExpression(statement.expression),
-      wasmFactory.variable(locals.getOrAdd(statement.target), "set")
+      wasmFactory.variable(locals.getOrAdd(statement.target), "local.set")
     ];
 
     const transformVariableDeclaration = (
       statement: rockstar.VariableDeclaration
     ): wasm.Instruction[] => [
       ...transformExpression(statement.value),
-      wasmFactory.variable(locals.getOrAdd(statement.variable), "set")
+      wasmFactory.variable(locals.getOrAdd(statement.variable), "local.set")
     ];
 
     const transformStatement = (statement: rockstar.Statement): wasm.Instruction[] => {
@@ -270,7 +270,7 @@ export const transform = (rockstarAst: rockstar.Program): wasm.Module => {
               }
             }
           });
-          return [wasmFactory.call(id), wasmFactory.variable(locals.getOrAdd(to), "set")];
+          return [wasmFactory.call(id), wasmFactory.variable(locals.getOrAdd(to), "local.set")];
         }
 
         case "assignment":
@@ -282,7 +282,7 @@ export const transform = (rockstarAst: rockstar.Program): wasm.Module => {
             ...transformExpression(statement.target),
             wasmFactory.const("i32", statement.times),
             wasmFactory.binaryOperation(statement.type === "decrement" ? "i32.sub" : "i32.add"),
-            wasmFactory.variable(locals.getOrAdd(statement.target), "set")
+            wasmFactory.variable(locals.getOrAdd(statement.target), "local.set")
           ];
 
         case "round":

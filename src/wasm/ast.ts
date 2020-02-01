@@ -9,7 +9,7 @@ export type ValueType = "f32" | "i32";
 
 export type Param = {
   valueType: ValueType;
-  id?: Identifier;
+  id: Identifier;
 };
 
 export type FunctionType = {
@@ -18,7 +18,7 @@ export type FunctionType = {
 };
 
 export type Local = {
-  id?: Identifier;
+  id: Identifier;
   valueType: ValueType;
 };
 
@@ -29,7 +29,7 @@ export type Function = {
   instructions: Instruction[];
 };
 
-export type VariableInstructionOperation = "get" | "set" | "tee";
+export type VariableInstructionOperation = "local.get" | "local.set" | "local.tee";
 
 export type VariableInstruction = {
   instructionType: "variable";
@@ -47,7 +47,7 @@ export type BinaryOperation =
   | "i32.add"
   | "i32.mul"
   | "i32.sub"
-  | "i32.div"
+  | "i32.div_s"
   | "i32.eq"
   | "i32.ne"
   | "i32.lt_s"
@@ -94,12 +94,12 @@ export type BlockInstruction = {
 
 export type BreakInstruction = {
   instructionType: "br";
-  labelIndex?: number;
+  labelIndex: number;
 };
 
 export type BreakIfInstruction = {
   instructionType: "br_if";
-  labelIndex?: number;
+  labelIndex: number;
 };
 
 export type IfInstruction = {
@@ -138,7 +138,7 @@ export type Memory = {
   memoryType: MemoryType;
 };
 
-export type ExportType = "func" | "table" | "memory" | "global";
+export type ExportType = "func" | "memory";
 
 export type Export = {
   name: string;
@@ -169,7 +169,6 @@ export type Import = {
 export type DataSegment = {
   offset: ConstInstruction;
   string: string;
-  id?: Identifier;
 };
 
 export type Module = {

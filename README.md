@@ -21,12 +21,11 @@ The idea is to do a [AST-to-AST](https://en.wikipedia.org/wiki/Abstract_syntax_t
 
 1. Parse Rockstar source, which procudes a Rockstar AST
 2. Transform Rockstar AST to WebAssembly AST
-3. Emit WebAssembly AST in WebAssembly Text Format (wat)
-
-For now, I use [WebAssembly Binary Kit](https://github.com/WebAssembly/wabt) to compile the WebAssembly Text Format to the binary encoded version. In the future, I will add direct compilation to wasm.
+3. Emit WebAssembly AST in WebAssembly Text Format (wat) or Binary Format (wasm)
 
 ## Known limitations
 
+- Rockstar parsing errors could be difficult to understand, because of the composition of many fine-grained parsers
 - Rockstar parsing does not support arrays
 - Rockstar parsing does not support list arithmetics
 - Rockstar strings can only be used in _say_ statements, i.e. outputting something. If you try to do some operations with strings, you might not get what you expect. This is because WebAssembly does not support string operations so far.

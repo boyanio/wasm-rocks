@@ -47,12 +47,12 @@ export const astFactory = {
     id
   }),
 
-  local: (valueType: ValueType, id?: Identifier): Local => ({
+  local: (valueType: ValueType, id: Identifier): Local => ({
     valueType,
     id
   }),
 
-  param: (valueType: ValueType, id?: Identifier): Param => ({
+  param: (valueType: ValueType, id: Identifier): Param => ({
     valueType,
     id
   }),
@@ -69,19 +69,18 @@ export const astFactory = {
     $else
   }),
 
-  break: (labelIndex?: number): BreakInstruction => ({
+  break: (labelIndex: number): BreakInstruction => ({
     instructionType: "br",
     labelIndex
   }),
 
-  breakIf: (labelIndex?: number): BreakIfInstruction => ({
+  breakIf: (labelIndex: number): BreakIfInstruction => ({
     instructionType: "br_if",
     labelIndex
   }),
 
-  dataSegment: (offset: ConstInstruction, string: string, id?: Identifier): DataSegment => ({
+  dataSegment: (offset: ConstInstruction, string: string): DataSegment => ({
     offset,
-    string,
-    id
+    string
   })
 };
