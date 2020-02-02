@@ -1,11 +1,13 @@
 const path = require("path");
 const CopyPlugin = require("copy-webpack-plugin");
+const { CleanWebpackPlugin } = require("clean-webpack-plugin");
+const HtmlWebpackPlugin = require("html-webpack-plugin");
 
 module.exports = {
   entry: "./src/app/index.tsx",
   mode: "development",
   output: {
-    filename: "index.js",
+    filename: "[name].[contenthash].js",
     path: path.resolve(__dirname, "build")
   },
   devtool: "eval-cheap-module-source-map",
@@ -27,5 +29,11 @@ module.exports = {
   resolve: {
     extensions: [".ts", ".tsx"]
   },
-  plugins: [new CopyPlugin([{ from: "public" }])]
+  plugins: [
+    new CleanWebpackPlugin(),
+    new HtmlWebpackPlugin({
+      template: "public/index.html"
+    }),
+    new CopyPlugin([{ from: "public/style.css" }])
+  ]
 };
